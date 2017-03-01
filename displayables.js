@@ -51,7 +51,7 @@ Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayabl
 Declare_Any_Class( "Camera",     // An example of a displayable object that our class Canvas_Manager can manage.  Adds both first-person and
   { 'construct': function( context )     // third-person style camera matrix controls to the canvas.
       { // 1st parameter below is our starting camera matrix.  2nd is the projection:  The matrix that determines how depth is treated.  It projects 3D points onto a plane.
-        context.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-10), rotation(-70,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
+        context.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-12), rotation(-50,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
         this.define_data_members( { graphics_state: context.shared_scratchpad.graphics_state, thrust: vec3(), origin: vec3( 0, 5, 0 ), looking: false } );
 
         // *** Mouse controls: ***
@@ -115,8 +115,9 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       { this.shared_scratchpad    = context.shared_scratchpad;
 	this.shared_scratchpad.animate = 1;
 	//TODO: initialize the actors contained in the world
+	this.level = 1;
 	this.player = new Player(this);
-	this.enemies = [];
+	this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 5;
 	this.projectiles = [];
 	this.mapObjects = [];
 	//set up the (static!) world objects
@@ -131,25 +132,41 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     'init_keys': function( controls )   // init_keys():  Define any extra keyboard shortcuts here
       {
 	this.keyBitMap = {}; //deals with the problem of simultaneous keypresses
-          controls.add( "w", this, function() { this.keyBitMap['w']=true; this.player.moveForward(true); } ); 
-	  controls.add( "w",this, function() {  this.keyBitMap['w']=false; this.player.moveForward(false); if(this.keyBitMap['s']) this.player.moveBackward(true); }, {'type':'keyup'} );
+          controls.add( "up", this, function() { this.keyBitMap["up"]=true; this.player.moveForward(true); } ); 
+	  controls.add( "up",this, function() {  this.keyBitMap["up"]=false; this.player.moveForward(false); if(this.keyBitMap["down"]) this.player.moveBackward(true); }, {'type':'keyup'} );
           
-	  controls.add( "a", this, function() { this.keyBitMap['a']=true; this.player.moveLeft(true); } ); 
-	  controls.add( "a",this, function() {this.keyBitMap['a']=false; this.player.moveLeft(false); if(this.keyBitMap['d']) this.player.moveRight(true); }, {'type':'keyup'} );
+	  controls.add( "left", this, function() { this.keyBitMap["left"]=true; this.player.moveLeft(true); } ); 
+	  controls.add( "left",this, function() {this.keyBitMap["left"]=false; this.player.moveLeft(false); if(this.keyBitMap["right"]) this.player.moveRight(true); }, {'type':'keyup'} );
+         
+	  controls.add( "down", this, function() { this.keyBitMap["down"]=true; this.player.moveBackward(true); } ); 
+	  controls.add( "down",this, function() { this.keyBitMap["down"]=false; this.player.moveBackward(false); if(this.keyBitMap["up"]) this.player.moveForward(true); }, {'type':'keyup'} );
           
-	  controls.add( "s", this, function() { this.keyBitMap['s']=true; this.player.moveBackward(true); } ); 
-	  controls.add( "s",this, function() { this.keyBitMap['s']=false; this.player.moveBackward(false); if(this.keyBitMap['w']) this.player.moveForward(true); }, {'type':'keyup'} );
-          
-	  controls.add( "d", this, function() { this.keyBitMap['d']=true; this.player.moveRight(true); } ); 
-	  controls.add( "d",this, function() {this.keyBitMap['d']=false; this.player.moveRight(false); if(this.keyBitMap['a']) this.player.moveLeft(true); }, {'type':'keyup'} );
+	  controls.add( "right", this, function() { this.keyBitMap["right"]=true; this.player.moveRight(true); } ); 
+	  controls.add( "right",this, function() {this.keyBitMap["right"]=false; this.player.moveRight(false); if(this.keyBitMap["left"]) this.player.moveLeft(true); }, {'type':'keyup'} );
 
-	  controls.add( "space", this, function() { this.projectiles.push(new Projectile(this, this.player.heading, translation(this.player.position[0],this.player.position[1],this.player.position[2])));} ); 
+	  controls.add( "space", this, function() {this.player.attack()} ); 
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
         user_interface_string_manager.string_map["time"]    = "Animation Time: " + Math.round( this.shared_scratchpad.graphics_state.animation_time )/1000 + "s";
         user_interface_string_manager.string_map["animate"] = "Animation " + (this.shared_scratchpad.animate ? "on" : "off") ;
       },
+    'checkPlayerCollision': function(newPosition, tolerance){
+	return length(subtract(this.player.position,newPosition)) < tolerance;
+    },
+    'checkEnemyCollision': function(self,newPosition,tolerance){
+	for(var i=0;i<this.enemies.length;i++){
+	    if(this.enemies[i] != self && 
+	       length(subtract(this.enemies[i].position,newPosition)) < 1.0){
+		return i;
+	    }
+	}
+	return -1;
+    },
+    'checkBounds': function(newPosition){
+	return newPosition[0]>=this.xMin && newPosition[0]<=this.xMax &&
+	     newPosition[1]>=this.yMin && newPosition[1]<=this.yMax
+    },
     'display': function(time)
       {
         var graphics_state  = this.shared_scratchpad.graphics_state,
@@ -170,10 +187,26 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 
         /**********************************
         Start coding down here!!!!
-        **********************************/                                     // From here on down it's just some example shapes drawn for you -- replace them with your own!
+        **********************************/   
 	  
 
 	  //TODO: spawn new actors
+	  if(this.enemySpawnTimer < 0 && this.enemies.length < this.maxEnemies){
+	      //spawn an enemy at a random location
+	      var randomX;
+	      var randomY;
+	      do{
+		  randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
+		  randomY = Math.random()*(this.yMax-this.yMin)+this.yMin;
+	      }
+	      while(this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) || 
+		    this.checkEnemyCollision(null,vec4(randomX,randomY,0,1),3)!= -1);
+	      this.enemies.push(new Enemy(this, translation(randomX,randomY,0)));
+	      this.enemySpawnTimer = 10.0;//TODO: update this with a formula later
+	  }
+	  else{
+	      this.enemySpawnTimer -= graphics_state.animation_delta_time/1000;
+	  }
 	  
 	  //draw the ground
 	  shapes_in_use.groundPlane.draw(graphics_state, scale(1000,1000,1000), ground);
@@ -196,9 +229,9 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
   }, Animation );
 
 Declare_Any_Class( "Player", 
-  { 'construct': function( worldHandle, modelTransMat=mat4(), health=100)
+  { 'construct': function( worldHandle, modelTransMat=mat4(), initHealth=20)
     {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat, position: mult_vec(modelTransMat,vec4(0,0,0,1)), heading:vec4(0,1,0,0), velocity: vec4(0,0,0,0),
-				   moveSpeed: 2, alive: true, autoAttackTimer:0.0, materials:{}});
+				   moveSpeed: 2, alive: true, health:initHealth, autoAttackTimer:0.0, materials:{}});
 	  this.materials.head = new Material(Color(0.4,0.8,0.8,1),1,.8,0,10);
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
@@ -221,31 +254,41 @@ Declare_Any_Class( "Player",
 	this.velocity[0]=newState?this.moveSpeed:0;
     },
     //end navigation interface
-    'changeHealth': function(delta){
-	  this.health += deltaHealth;
+    'changeHealth': function(deltaHealth){
+	this.health += deltaHealth;
 	  if(this.health <= 0)
 	      this.alive = false;
       },
+    'attack': function(){
+	if(this.autoAttackTimer <= 0){
+	    this.world.projectiles.push(new Projectile(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2])));
+	    this.autoAttackTimer = 1/(1.5); // 1/attacks per second
+	}
+    },
     'display': function(delta_time)
       {
 	  if(!this.alive) return;
 	  var graphics_state = this.world.shared_scratchpad.graphics_state;
 	  var displacement = scale_vec(delta_time/1000, this.velocity);
-	  	  
+	 
+	  this.autoAttackTimer -= delta_time/1000;
+ 	  
 	  //change heading of player
 	  if(length(displacement) != 0){
 	      this.heading = normalize(displacement.slice(0));
 	  }
 	  //try going to a new position
 	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
-	  if(newPosition[0]>=this.world.xMin && newPosition[0]<=this.world.xMax &&
-	     newPosition[1]>=this.world.yMin && newPosition[1]<=this.world.yMax){
+	  if(this.world.checkEnemyCollision(this,newPosition,1.2) != -1){
+	      
+	  }
+	  else if(this.world.checkBounds(newPosition)){
 	      this.position=newPosition;
 	      this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
 	      //update camera matrix to follow the player
-	      graphics_state.camera_transform = mult(graphics_state.camera_transform, translation(0,0,10));
+	      graphics_state.camera_transform = mult(graphics_state.camera_transform, translation(0,0,12));
 	      graphics_state.camera_transform = mult(graphics_state.camera_transform,translation(-displacement[0],-displacement[1],0));
-	      graphics_state.camera_transform = mult(graphics_state.camera_transform, translation(0,0,-10));
+	      graphics_state.camera_transform = mult(graphics_state.camera_transform, translation(0,0,-12));
 	  }
 	  //TODO: implement heading rotation
 	  //the member variable modelTransMat ONLY represents the (x,y) coordinates.
@@ -260,10 +303,10 @@ Declare_Any_Class( "Player",
 
 
 Declare_Any_Class( "Enemy", 
-  { 'construct': function( worldHandle, modelTransMat=mat4(), health=100)
+  { 'construct': function( worldHandle, modelTransMat=mat4(), initHealth=3)
     {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
-				     velocity: vec4(0,0,0,0), moveSpeed: 2, alive: true, autoAttackTimer:0.0, materials:{}});
-	  this.materials.head = new Material(Color(0.4,0.8,0.8,1),1,.8,0,10);
+				     velocity: vec4(0,0,0,0), moveSpeed: 1, alive: true, health:initHealth,autoAttackTimer:0.0, restTimer:0.0, materials:{}});
+	  this.materials.head = new Material(Color(1.0,0.5,0.5,1),1,.8,0,10);
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -285,23 +328,43 @@ Declare_Any_Class( "Enemy",
 	this.velocity[0]=newState?this.moveSpeed:0;
     },
     //end navigation interface
-    'changeHealth': function(delta){
-	  this.health += deltaHealth;
-	  if(this.health <= 0)
-	      this.alive = false;
-      },
+    'changeHealth': function(deltaHealth){
+	this.health += deltaHealth;
+	if(this.health <= 0)
+	    this.alive = false;
+    },
     'display': function(delta_time)
       {
 	  if(!this.alive) return;
 	  var graphics_state = this.world.shared_scratchpad.graphics_state;
-	  var displacement = scale_vec(delta_time/1000, this.velocity);
 	  
+	  if(this.restTimer > 0){
+	      this.restTimer -= delta_time/1000;
+	  }
+	  //TODO: attack if near player
+	  else if(this.world.checkPlayerCollision(this.position,1.1)){
+	      console.log("my minions, attack!");
+	      this.velocity=vec4(0,0,0,0);
+	  }
+	  else{ //get vector to player
+	      this.velocity=scale_vec(this.moveSpeed,normalize(subtract(this.world.player.position,this.position)));
+	  }
+	  //calculate new position
+	  var displacement = scale_vec(delta_time/1000, this.velocity);
 	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
-	  if(newPosition[0]>=this.world.xMin && newPosition[0]<=this.world.xMax &&
-	     newPosition[1]>=this.world.yMin && newPosition[1]<=this.world.yMax){
+	  //make sure new position is valid; rest a few ticks if not, then try with a slightly different angle
+	  if(this.world.checkEnemyCollision(this,newPosition,1.2)!= -1){
+	      restTimer = 0.5;
+	      this.displacement=vec4(0,0,0,0);
+	      //this.velocity=mult_vec(rotation(45,0,0,1), this.velocity);
+	      //displacement = scale_vec(delta_time/1000, this.velocity);
+	      //newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
+	  }
+	  else{
 	      this.position=newPosition;
 	      this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
 	  }
+	  
 	  //the member variable modelTransMat ONLY represents the (x,y) coordinates.
 	  //must still build compound shapes using it as a basis (i.e. from the ground up)
 	  var model_transform = this.model_transform; 
@@ -315,8 +378,8 @@ Declare_Any_Class( "Enemy",
 Declare_Any_Class( "Projectile", 
   { 'construct': function( worldHandle, shooterHeading, modelTransMat=mat4())
     {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
-				     velocity: scale_vec(5,shooterHeading), moveSpeed: 2, alive: true,  materials:{}});
-	  this.materials.body = new Material(Color(0.4,0.8,0.8,1),1,.8,0,10);
+				     moveSpeed: 10, velocity: scale_vec(15,shooterHeading), alive: true,  materials:{}});
+	  this.materials.body = new Material(Color(1.0,0.4,0,1),1,.8,0,10);
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -345,8 +408,13 @@ Declare_Any_Class( "Projectile",
 	  var displacement = scale_vec(delta_time/1000, this.velocity);
 	  
 	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
-	  if(newPosition[0]>=this.world.xMin && newPosition[0]<=this.world.xMax &&
-	     newPosition[1]>=this.world.yMin && newPosition[1]<=this.world.yMax){
+
+	  var enemyID = this.world.checkEnemyCollision(this,newPosition,0.4);
+	  if(enemyID != -1){
+	      this.alive=false;
+	      this.world.enemies[enemyID].changeHealth(-1);
+	  }
+	  else if(this.world.checkBounds(newPosition)){
 	      this.position=newPosition;
 	      this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
 	  }
