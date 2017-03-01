@@ -279,7 +279,7 @@ Declare_Any_Class( "Player",
 	  }
 	  //try going to a new position
 	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
-	  if(this.world.checkEnemyCollision(this,newPosition,1.2) != -1){
+	  if(this.world.checkEnemyCollision(this,newPosition,0.7) != -1){
 	      //do nothing
 	  }
 	  else if(this.world.checkBounds(newPosition)){
@@ -552,7 +552,7 @@ Declare_Any_Class( "Projectile",
 	  
 	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
 
-	  var enemyID = this.world.checkEnemyCollision(this,this.position,0.2);
+	  var enemyID = this.world.checkEnemyCollision(this,newPosition,0.2);
 	  if(enemyID != -1){
 	      this.alive=false;
 	      this.world.enemies[enemyID].changeHealth(-1);
