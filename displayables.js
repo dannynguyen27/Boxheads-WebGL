@@ -51,7 +51,7 @@ Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayabl
 Declare_Any_Class( "Camera",     // An example of a displayable object that our class Canvas_Manager can manage.  Adds both first-person and
   { 'construct': function( context )     // third-person style camera matrix controls to the canvas.
       { // 1st parameter below is our starting camera matrix.  2nd is the projection:  The matrix that determines how depth is treated.  It projects 3D points onto a plane.
-        context.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-15), rotation(-70,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
+        context.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-10), rotation(-70,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
         this.define_data_members( { graphics_state: context.shared_scratchpad.graphics_state, thrust: vec3(), origin: vec3( 0, 5, 0 ), looking: false } );
 
         // *** Mouse controls: ***
@@ -117,10 +117,16 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	//TODO: initialize the actors contained in the world
 	this.player = new Player(this);
 	this.enemies = [];
+	this.projectiles = [];
+	this.mapObjects = [];
 	//set up the (static!) world objects
 	shapes_in_use.groundPlane = new Square();
+	//setup boundary
+	this.xMin=-10; this.xMax=10;
+	this.yMin=-10; this.yMax=10;
 	//TODO: set up geometry shared by all actors
 	shapes_in_use.cube = new Cube();
+	shapes_in_use.sphere = new Subdivision_Sphere(3);
       },
     'init_keys': function( controls )   // init_keys():  Define any extra keyboard shortcuts here
       {
@@ -136,6 +142,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           
 	  controls.add( "d", this, function() { this.keyBitMap['d']=true; this.player.moveRight(true); } ); 
 	  controls.add( "d",this, function() {this.keyBitMap['d']=false; this.player.moveRight(false); if(this.keyBitMap['a']) this.player.moveLeft(true); }, {'type':'keyup'} );
+
+	  controls.add( "space", this, function() { this.projectiles.push(new Projectile(this, this.player.heading, translation(this.player.position[0],this.player.position[1],this.player.position[2])));} ); 
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -166,22 +174,30 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	  
 
 	  //TODO: spawn new actors
-
+	  
 	  //draw the ground
 	  shapes_in_use.groundPlane.draw(graphics_state, scale(1000,1000,1000), ground);
 
 	  //let player + each actor do their thing
 	  this.player.display(graphics_state.animation_delta_time);
-	  for(enemy in this.enemies){
-	      enemy.display(graphics_state.animation_delta_time);
+	  for (var i=0;i<this.enemies.length;i++){
+	      if(this.enemies[i].alive){
+	      this.enemies[i].display(graphics_state.animation_delta_time);
+	      }
+	      else this.enemies.splice(i,1);
 	  }
-
+	  for (var i=0;i<this.projectiles.length;i++){
+	      if(this.projectiles[i].alive){
+	      this.projectiles[i].display(graphics_state.animation_delta_time);
+	      }
+	      else this.projectiles.splice(i,1);
+	  }
       }
   }, Animation );
 
 Declare_Any_Class( "Player", 
   { 'construct': function( worldHandle, modelTransMat=mat4(), health=100)
-    {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat, position: mult_vec(modelTransMat,vec4(0,0,0,1)), velocityVec: vec4(0,0,0,0),
+    {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat, position: mult_vec(modelTransMat,vec4(0,0,0,1)), heading:vec4(0,1,0,0), velocity: vec4(0,0,0,0),
 				   moveSpeed: 2, alive: true, autoAttackTimer:0.0, materials:{}});
 	  this.materials.head = new Material(Color(0.4,0.8,0.8,1),1,.8,0,10);
     },
@@ -193,16 +209,16 @@ Declare_Any_Class( "Player",
       },
     //begin navigation interface
     'moveForward': function(newState){
-	this.velocityVec[1]=newState?this.moveSpeed:0;
+	this.velocity[1]=newState?this.moveSpeed:0;
     },
     'moveBackward': function(newState){
-	this.velocityVec[1]=newState?-this.moveSpeed:0;
+	this.velocity[1]=newState?-this.moveSpeed:0;
     },
     'moveLeft': function(newState){
-	this.velocityVec[0]=newState?-this.moveSpeed:0;
+	this.velocity[0]=newState?-this.moveSpeed:0;
     },
     'moveRight': function(newState){
-	this.velocityVec[0]=newState?this.moveSpeed:0;
+	this.velocity[0]=newState?this.moveSpeed:0;
     },
     //end navigation interface
     'changeHealth': function(delta){
@@ -214,15 +230,23 @@ Declare_Any_Class( "Player",
       {
 	  if(!this.alive) return;
 	  var graphics_state = this.world.shared_scratchpad.graphics_state;
-	  var displacement = scale_vec(delta_time/1000, this.velocityVec);
-	  
-	  //update camera matrix to follow the player
-	  graphics_state.camera_transform = mult(graphics_state.camera_transform, translation(0,0,15));
-	  graphics_state.camera_transform = mult(graphics_state.camera_transform,translation(-displacement[0],-displacement[1],0));
-	  graphics_state.camera_transform = mult(graphics_state.camera_transform, translation(0,0,-15));
-	  
-	  this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
-	  this.position = add(vec4(displacement[0],displacement[1],0,0),this.position);
+	  var displacement = scale_vec(delta_time/1000, this.velocity);
+	  	  
+	  //change heading of player
+	  if(length(displacement) != 0){
+	      this.heading = normalize(displacement.slice(0));
+	  }
+	  //try going to a new position
+	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
+	  if(newPosition[0]>=this.world.xMin && newPosition[0]<=this.world.xMax &&
+	     newPosition[1]>=this.world.yMin && newPosition[1]<=this.world.yMax){
+	      this.position=newPosition;
+	      this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
+	      //update camera matrix to follow the player
+	      graphics_state.camera_transform = mult(graphics_state.camera_transform, translation(0,0,10));
+	      graphics_state.camera_transform = mult(graphics_state.camera_transform,translation(-displacement[0],-displacement[1],0));
+	      graphics_state.camera_transform = mult(graphics_state.camera_transform, translation(0,0,-10));
+	  }
 	  //TODO: implement heading rotation
 	  //the member variable modelTransMat ONLY represents the (x,y) coordinates.
 	  //must still build compound shapes using it as a basis (i.e. from the ground up)
@@ -238,7 +262,7 @@ Declare_Any_Class( "Player",
 Declare_Any_Class( "Enemy", 
   { 'construct': function( worldHandle, modelTransMat=mat4(), health=100)
     {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
-				     velocityVec: vec4(0,0,0,0), moveSpeed: 2, alive: true, autoAttackTimer:0.0, materials:{}});
+				     velocity: vec4(0,0,0,0), moveSpeed: 2, alive: true, autoAttackTimer:0.0, materials:{}});
 	  this.materials.head = new Material(Color(0.4,0.8,0.8,1),1,.8,0,10);
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
@@ -249,16 +273,16 @@ Declare_Any_Class( "Enemy",
       },
     //begin navigation interface
     'moveForward': function(newState){
-	this.velocityVec[1]=newState?this.moveSpeed:0;
+	this.velocity[1]=newState?this.moveSpeed:0;
     },
     'moveBackward': function(newState){
-	this.velocityVec[1]=newState?-this.moveSpeed:0;
+	this.velocity[1]=newState?-this.moveSpeed:0;
     },
     'moveLeft': function(newState){
-	this.velocityVec[0]=newState?-this.moveSpeed:0;
+	this.velocity[0]=newState?-this.moveSpeed:0;
     },
     'moveRight': function(newState){
-	this.velocityVec[0]=newState?this.moveSpeed:0;
+	this.velocity[0]=newState?this.moveSpeed:0;
     },
     //end navigation interface
     'changeHealth': function(delta){
@@ -270,10 +294,14 @@ Declare_Any_Class( "Enemy",
       {
 	  if(!this.alive) return;
 	  var graphics_state = this.world.shared_scratchpad.graphics_state;
-	  var displacement = scale_vec(delta_time/1000, this.velocityVec);
+	  var displacement = scale_vec(delta_time/1000, this.velocity);
 	  
-	  this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
-	  this.position = add(vec4(displacement[0],displacement[1],0,0),this.position);
+	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
+	  if(newPosition[0]>=this.world.xMin && newPosition[0]<=this.world.xMax &&
+	     newPosition[1]>=this.world.yMin && newPosition[1]<=this.world.yMax){
+	      this.position=newPosition;
+	      this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
+	  }
 	  //the member variable modelTransMat ONLY represents the (x,y) coordinates.
 	  //must still build compound shapes using it as a basis (i.e. from the ground up)
 	  var model_transform = this.model_transform; 
@@ -284,5 +312,54 @@ Declare_Any_Class( "Enemy",
       }
   });
 
-//TODO: Possible projectile class
+Declare_Any_Class( "Projectile", 
+  { 'construct': function( worldHandle, shooterHeading, modelTransMat=mat4())
+    {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
+				     velocity: scale_vec(5,shooterHeading), moveSpeed: 2, alive: true,  materials:{}});
+	  this.materials.body = new Material(Color(0.4,0.8,0.8,1),1,.8,0,10);
+    },
+    'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
+      {
+	  //TODO: may want to update UI with player info later on
+        /*user_interface_string_manager.string_map["time"]    = "Animation Time: " + Math.round( this.shared_scratchpad.graphics_state.animation_time )/1000 + "s";
+        user_interface_string_manager.string_map["animate"] = "Animation " + (this.shared_scratchpad.animate ? "on" : "off") ;*/
+      },
+    //begin navigation interface
+    'moveForward': function(newState){
+	this.velocity[1]=newState?this.moveSpeed:0;
+    },
+    'moveBackward': function(newState){
+	this.velocity[1]=newState?-this.moveSpeed:0;
+    },
+    'moveLeft': function(newState){
+	this.velocity[0]=newState?-this.moveSpeed:0;
+    },
+    'moveRight': function(newState){
+	this.velocity[0]=newState?this.moveSpeed:0;
+    },
+    //end navigation interface
+    'display': function(delta_time)
+      {
+	  if(!this.alive) return;
+	  var graphics_state = this.world.shared_scratchpad.graphics_state;
+	  var displacement = scale_vec(delta_time/1000, this.velocity);
+	  
+	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
+	  if(newPosition[0]>=this.world.xMin && newPosition[0]<=this.world.xMax &&
+	     newPosition[1]>=this.world.yMin && newPosition[1]<=this.world.yMax){
+	      this.position=newPosition;
+	      this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
+	  }
+	  else{
+	      this.alive=false;
+	  }
+	  //the member variable modelTransMat ONLY represents the (x,y) coordinates.
+	  //must still build compound shapes using it as a basis (i.e. from the ground up)
+	  var model_transform = this.model_transform; 
+	  //TODO: draw all the object's shapes, using the animation time as a reference
+	  model_transform = mult(model_transform, translation(0,0,0.5));
+	  model_transform = mult(model_transform, scale(0.1,0.1,0.1));
+	  shapes_in_use.sphere.draw(graphics_state, model_transform, this.materials.body);
+      }
+  });
 
