@@ -411,8 +411,14 @@ Declare_Any_Class( "Enemy",
 	  }
 	  //TODO: attack if near player
 	  else if(this.world.checkPlayerCollision(this.position,1.1)){
-	      console.log("my minions, attack!");
 	      this.velocity=vec4(0,0,0,0);
+	      if(this.autoAttackTimer <= 0){
+		  console.log("my minions, attack!");
+		  this.autoAttackTimer = 1/1.2; //attack speed for bots 
+	      }
+	      else{
+		  this.autoAttackTimer -= delta_time/1000;
+	      }
 	  }
 	  else{ //get vector to player
 	      this.velocity=scale_vec(this.moveSpeed,normalize(subtract(this.world.player.position,this.position)));
@@ -552,7 +558,7 @@ Declare_Any_Class( "Projectile",
 	  
 	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
 
-	  var enemyID = this.world.checkEnemyCollision(this,newPosition,0.2);
+	  var enemyID = this.world.checkEnemyCollision(this,this.position,0.4);
 	  if(enemyID != -1){
 	      this.alive=false;
 	      this.world.enemies[enemyID].changeHealth(-1);
