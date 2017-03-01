@@ -4,8 +4,6 @@
 
 // Now go down to Animation's display() function to see where the sample shapes you see drawn are coded, and a good place to begin filling in your own code.
 
-var i = 0, test = 0;
-var up_flag = false;
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
   { 'construct': function( context )
       { this.define_data_members( { string_map: context.shared_scratchpad.string_map, start_index: 0, tick: 0, visible: false, graphicsState: new Graphics_State() } );
@@ -159,7 +157,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     'checkEnemyCollision': function(self,newPosition,tolerance){
 	for(var i=0;i<this.enemies.length;i++){
 	    if(this.enemies[i] != self && 
-	       length(subtract(this.enemies[i].position,newPosition)) < 1.0){
+	       length(subtract(this.enemies[i].position,newPosition)) < tolerance){
 		return i;
 	    }
 	}
@@ -233,7 +231,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 Declare_Any_Class( "Player", 
   { 'construct': function( worldHandle, modelTransMat=mat4(), initHealth=20)
     {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat, position: mult_vec(modelTransMat,vec4(0,0,0,1)), heading:vec4(0,1,0,0), velocity: vec4(0,0,0,0),
-				   moveSpeed: 2, alive: true, health:initHealth, autoAttackTimer:0.0, materials:{}});
+				   bool_reverseAnimate:false, limbAngle:0,moveSpeed: 2, alive: true, health:initHealth, autoAttackTimer:0.0, materials:{}});
 	  this.materials.head = new Material(Color(0.4,0.8,0.8,1),1,.8,0,10);
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
@@ -263,8 +261,8 @@ Declare_Any_Class( "Player",
       },
     'attack': function(){
 	if(this.autoAttackTimer <= 0){
-	    this.world.projectiles.push(new Projectile(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2])));
-	    this.autoAttackTimer = 1/(1.5); // 1/attacks per second
+	    this.world.projectiles.push(new Projectile(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
+	    this.autoAttackTimer = 1/(1.8); // 1/attacks per second
 	}
     },
     'display': function(delta_time)
@@ -282,7 +280,7 @@ Declare_Any_Class( "Player",
 	  //try going to a new position
 	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
 	  if(this.world.checkEnemyCollision(this,newPosition,1.2) != -1){
-	      
+	      //do nothing
 	  }
 	  else if(this.world.checkBounds(newPosition)){
 	      this.position=newPosition;
@@ -292,83 +290,81 @@ Declare_Any_Class( "Player",
 	      graphics_state.camera_transform = mult(graphics_state.camera_transform,translation(-displacement[0],-displacement[1],0));
 	      graphics_state.camera_transform = mult(graphics_state.camera_transform, translation(0,0,-12));
 	  }
-	  //TODO: implement heading rotation
 	  //the member variable modelTransMat ONLY represents the (x,y) coordinates.
 	  //must still build compound shapes using it as a basis (i.e. from the ground up)
 	  var model_transform = this.model_transform; 
-    var stack = []
-	  //TODO: draw all the object's shapes, using the animation time as a reference
+	  var headingAngle = Math.acos(dot(this.heading,vec4(0,1,0,0))) * 180/Math.PI * (this.heading[0]>0?-1:1);
 
-    test+=2;
+	  //get body center and turn by heading angle
+	  var body_center = model_transform = mult(mult(model_transform, translation(0,0,1.5)),rotation(headingAngle,0,0,1));
 
-	  model_transform = mult(model_transform, translation(0,0,1.5));
-    model_transform = mult(model_transform, rotation(0, 0, 0, 1));
-    var body_center = model_transform;
+	  //body
+	  model_transform = mult(model_transform, scale(0.55, 0.25, 1));
+	  shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
+	  
+	  model_transform = body_center;
+	  
+	  //head
+	  model_transform = mult(model_transform, translation(0,0,0.8));
+	  model_transform = mult(model_transform, scale(0.3,0.3,0.35));    
+	  shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
+	  
+	  //get angle offsets for leg animation
+	  var maxLimbAngle=30;
+	  if(length(displacement) > 0){
+	      if(this.bool_reverseAnimate){
+		  //angle rate of change calculated based on movement speed
+		  this.limbAngle += this.moveSpeed/0.7*180/Math.PI*delta_time/1000
+		  if(this.limbAngle > maxLimbAngle )
+		      this.bool_reverseAnimate = !this.bool_reverseAnimate;
+	      }
+	      else{
+		  this.limbAngle -= this.moveSpeed/0.7*180/Math.PI*delta_time/1000
+		  if(this.limbAngle < -maxLimbAngle){
+		      this.bool_reverseAnimate = !this.bool_reverseAnimate;
+		  }
+	      }
+	  }
+	  else
+	      this.limbAngle=0;
 
-    model_transform = mult(model_transform, scale(0.75, 0.75, 1));
+	  // right leg	  
+	  model_transform = body_center;
+	  model_transform = mult(model_transform, translation(0.2,0,-0.7));               
+          model_transform = mult(model_transform, rotation(-this.limbAngle, 1, 0, 0));
+	  model_transform = mult(model_transform, translation(0,0,-0.3));
+	  //always scale at end
+	  model_transform = mult(model_transform, scale(0.1,0.1,0.8));	  
+
+	  shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
+	  
+	  // left leg	  
+	  model_transform = body_center;
+	  model_transform = mult(model_transform, translation(-0.2,0,-0.7));               
+          model_transform = mult(model_transform, rotation(this.limbAngle, 1, 0, 0));
+	  model_transform = mult(model_transform, translation(0,0,-0.3));
+	  //always scale at end
+	  model_transform = mult(model_transform, scale(0.1,0.1,0.8));	  
+
+	  shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
+	  
+	  // left arm
+	  model_transform = body_center;  
+	  model_transform = mult(model_transform, translation(-0.4,0,0));
+          model_transform = mult(model_transform, rotation(-this.limbAngle, 1, 0, 0));
+	  model_transform = mult(model_transform, translation(0,0,-0.2));
+	  model_transform = mult(model_transform, rotation(20, 0, 1, 0));
+	  model_transform = mult(model_transform, scale(0.1,0.1,0.5));
 	  shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
 
-    model_transform = body_center;
-
-    model_transform = mult(model_transform, translation(0,0,1));
-    model_transform = mult(model_transform, scale(0.5,0.5,0.5));    
-        
-    shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
-    
-    if(up_flag){
-        i += 2;
-    }
-    else{
-        i -= 2;
-    }
-
-    if(i == 40)
-        up_flag = false;
-    if(i == -40)
-        up_flag = true;
-
-
-    model_transform = body_center;
-    model_transform = mult(model_transform, translation(0.3,0,-1));               // right leg
-    model_transform = mult(model_transform, scale(0.2,0.3,1));
-
-    if(this.velocity[1] != 0 || this.velocity[0] != 0)
-        model_transform = mult(model_transform, rotation(-i, 1, 0, 0));
-
-    shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
-
-    model_transform = body_center;
-    model_transform = mult(model_transform, translation(-0.3,0,-1 ));             // left leg
-    model_transform = mult(model_transform, scale(0.2,0.3,1));   
-
-    if(this.velocity[1] != 0 || this.velocity[0] != 0)
-        model_transform = mult(model_transform, rotation(i, 1, 0, 0));
-
-    shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
-
-    model_transform = body_center;  
-    model_transform = mult(model_transform, translation(-0.7,0,0));             // left arm
-    
-    if(this.velocity[1] != 0 || this.velocity[0] != 0)
-        model_transform = mult(model_transform, rotation(i, 1, 0, 0));
-
-    model_transform = mult(model_transform, rotation(30, 0, 1, 0));
-    model_transform = mult(model_transform, scale(0.2,0.3,0.5));
-    shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
-  
-    model_transform = body_center;
-    model_transform = mult(model_transform, translation(0.7,0,0));             // right arm
-    
-
-    if(this.velocity[1] != 0 || this.velocity[0] != 0)
-        model_transform = mult(model_transform, rotation(-i, 1, 0, 0));
-
-    model_transform = mult(model_transform, rotation(-30, 0, 1, 0));
-    model_transform = mult(model_transform, scale(0.2,0.3,0.5));
-    shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
-    
-
-
+	  // right arm
+	  model_transform = body_center;
+	  model_transform = mult(model_transform, translation(0.4,0,0));
+          model_transform = mult(model_transform, rotation(this.limbAngle, 1, 0, 0));
+	  model_transform = mult(model_transform, translation(0,0,-0.2));
+	  model_transform = mult(model_transform, rotation(-20, 0, 1, 0));
+	  model_transform = mult(model_transform, scale(0.1,0.1,0.5));
+	  shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
       }
   });
 
@@ -376,7 +372,7 @@ Declare_Any_Class( "Player",
 Declare_Any_Class( "Enemy", 
   { 'construct': function( worldHandle, modelTransMat=mat4(), initHealth=3)
     {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
-				     velocity: vec4(0,0,0,0), moveSpeed: 1, alive: true, health:initHealth,autoAttackTimer:0.0, restTimer:0.0, materials:{}});
+				     velocity: vec4(0,0,0,0), heading:vec4(0,0,0,0), bool_reverseAnimate:false, limbAngle:0,moveSpeed: 1, alive: true, health:initHealth,autoAttackTimer:0.0, restTimer:0.0, materials:{}});
 	  this.materials.head = new Material(Color(1.0,0.5,0.5,1),1,.8,0,10);
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
@@ -408,7 +404,8 @@ Declare_Any_Class( "Enemy",
       {
 	  if(!this.alive) return;
 	  var graphics_state = this.world.shared_scratchpad.graphics_state;
-	  
+	  var displacement = scale_vec(delta_time/1000, this.velocity);
+
 	  if(this.restTimer > 0){
 	      this.restTimer -= delta_time/1000;
 	  }
@@ -420,8 +417,12 @@ Declare_Any_Class( "Enemy",
 	  else{ //get vector to player
 	      this.velocity=scale_vec(this.moveSpeed,normalize(subtract(this.world.player.position,this.position)));
 	  }
+	  //change heading of this enemy
+	  if(length(displacement) != 0){
+	      this.heading = normalize(displacement.slice(0));
+	  }
+
 	  //calculate new position
-	  var displacement = scale_vec(delta_time/1000, this.velocity);
 	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
 	  //make sure new position is valid; rest a few ticks if not, then try with a slightly different angle
 	  if(this.world.checkEnemyCollision(this,newPosition,1.2)!= -1){
@@ -440,9 +441,79 @@ Declare_Any_Class( "Enemy",
 	  //must still build compound shapes using it as a basis (i.e. from the ground up)
 	  var model_transform = this.model_transform; 
 
-	  //TODO: draw all the object's shapes, using the animation time as a reference
-	  model_transform = mult(model_transform, translation(0,0,0.5));
+	  var headingAngle = Math.acos(dot(this.heading,vec4(0,1,0,0))) * 180/Math.PI * (this.heading[0]>0?-1:1);
+
+	  //get body center and turn by heading angle
+	  var body_center = model_transform = mult(mult(model_transform, translation(0,0,1.5)),rotation(headingAngle,0,0,1));
+
+	  //body
+	  model_transform = mult(model_transform, scale(0.55, 0.25, 1));
 	  shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
+	  
+	  model_transform = body_center;
+	  
+	  //head
+	  model_transform = mult(model_transform, translation(0,0,0.8));
+	  model_transform = mult(model_transform, scale(0.3,0.3,0.35));    
+	  shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
+	  
+	  //get angle offsets for leg animation
+	  var maxLimbAngle=30;
+	  if(length(displacement) > 0){
+	      if(this.bool_reverseAnimate){
+		  //angle rate of change calculated based on movement speed
+		  this.limbAngle += this.moveSpeed/0.7*180/Math.PI*delta_time/1000
+		  if(this.limbAngle > maxLimbAngle )
+		      this.bool_reverseAnimate = !this.bool_reverseAnimate;
+	      }
+	      else{
+		  this.limbAngle -= this.moveSpeed/0.7*180/Math.PI*delta_time/1000
+		  if(this.limbAngle < -maxLimbAngle){
+		      this.bool_reverseAnimate = !this.bool_reverseAnimate;
+		  }
+	      }
+	  }
+	  else
+	      this.limbAngle=0;
+
+	  // right leg	  
+	  model_transform = body_center;
+	  model_transform = mult(model_transform, translation(0.2,0,-0.7));               
+          model_transform = mult(model_transform, rotation(-this.limbAngle, 1, 0, 0));
+	  model_transform = mult(model_transform, translation(0,0,-0.3));
+	  //always scale at end
+	  model_transform = mult(model_transform, scale(0.1,0.1,0.8));	  
+
+	  shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
+	  
+	  // left leg	  
+	  model_transform = body_center;
+	  model_transform = mult(model_transform, translation(-0.2,0,-0.7));               
+          model_transform = mult(model_transform, rotation(this.limbAngle, 1, 0, 0));
+	  model_transform = mult(model_transform, translation(0,0,-0.3));
+	  //always scale at end
+	  model_transform = mult(model_transform, scale(0.1,0.1,0.8));	  
+
+	  shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
+	  
+	  // left arm
+	  model_transform = body_center;  
+	  model_transform = mult(model_transform, translation(-0.4,0,0));
+          model_transform = mult(model_transform, rotation(-this.limbAngle, 1, 0, 0));
+	  model_transform = mult(model_transform, translation(0,0,-0.2));
+	  model_transform = mult(model_transform, rotation(20, 0, 1, 0));
+	  model_transform = mult(model_transform, scale(0.1,0.1,0.5));
+	  shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
+
+	  // right arm
+	  model_transform = body_center;
+	  model_transform = mult(model_transform, translation(0.4,0,0));
+          model_transform = mult(model_transform, rotation(this.limbAngle, 1, 0, 0));
+	  model_transform = mult(model_transform, translation(0,0,-0.2));
+	  model_transform = mult(model_transform, rotation(-20, 0, 1, 0));
+	  model_transform = mult(model_transform, scale(0.1,0.1,0.5));
+	  shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
+
       }
   });
 
@@ -450,6 +521,7 @@ Declare_Any_Class( "Projectile",
   { 'construct': function( worldHandle, shooterHeading, modelTransMat=mat4())
     {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
 				     moveSpeed: 10, velocity: scale_vec(15,shooterHeading), alive: true,  materials:{}});
+	  this.position[2]=0;
 	  this.materials.body = new Material(Color(1.0,0.4,0,1),1,.8,0,10);
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
@@ -480,7 +552,7 @@ Declare_Any_Class( "Projectile",
 	  
 	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
 
-	  var enemyID = this.world.checkEnemyCollision(this,newPosition,0.4);
+	  var enemyID = this.world.checkEnemyCollision(this,this.position,0.2);
 	  if(enemyID != -1){
 	      this.alive=false;
 	      this.world.enemies[enemyID].changeHealth(-1);
@@ -493,9 +565,7 @@ Declare_Any_Class( "Projectile",
 	      this.alive=false;
 	  }
 	  //the member variable modelTransMat ONLY represents the (x,y) coordinates.
-	  //must still build compound shapes using it as a basis (i.e. from the ground up)
 	  var model_transform = this.model_transform; 
-	  //TODO: draw all the object's shapes, using the animation time as a reference
 	  model_transform = mult(model_transform, translation(0,0,0.5));
 	  model_transform = mult(model_transform, scale(0.1,0.1,0.1));
 	  shapes_in_use.sphere.draw(graphics_state, model_transform, this.materials.body);
