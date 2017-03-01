@@ -4,6 +4,8 @@
 
 // Now go down to Animation's display() function to see where the sample shapes you see drawn are coded, and a good place to begin filling in your own code.
 
+var i = 0, test = 0;
+var up_flag = false;
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
   { 'construct': function( context )
       { this.define_data_members( { string_map: context.shared_scratchpad.string_map, start_index: 0, tick: 0, visible: false, graphicsState: new Graphics_State() } );
@@ -294,10 +296,79 @@ Declare_Any_Class( "Player",
 	  //the member variable modelTransMat ONLY represents the (x,y) coordinates.
 	  //must still build compound shapes using it as a basis (i.e. from the ground up)
 	  var model_transform = this.model_transform; 
-
+    var stack = []
 	  //TODO: draw all the object's shapes, using the animation time as a reference
-	  model_transform = mult(model_transform, translation(0,0,0.5));
+
+    test+=2;
+
+	  model_transform = mult(model_transform, translation(0,0,1.5));
+    model_transform = mult(model_transform, rotation(0, 0, 0, 1));
+    var body_center = model_transform;
+
+    model_transform = mult(model_transform, scale(0.75, 0.75, 1));
 	  shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
+
+    model_transform = body_center;
+
+    model_transform = mult(model_transform, translation(0,0,1));
+    model_transform = mult(model_transform, scale(0.5,0.5,0.5));    
+        
+    shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
+    
+    if(up_flag){
+        i += 2;
+    }
+    else{
+        i -= 2;
+    }
+
+    if(i == 40)
+        up_flag = false;
+    if(i == -40)
+        up_flag = true;
+
+
+    model_transform = body_center;
+    model_transform = mult(model_transform, translation(0.3,0,-1));               // right leg
+    model_transform = mult(model_transform, scale(0.2,0.3,1));
+
+    if(this.velocity[1] != 0 || this.velocity[0] != 0)
+        model_transform = mult(model_transform, rotation(-i, 1, 0, 0));
+
+    shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
+
+    model_transform = body_center;
+    model_transform = mult(model_transform, translation(-0.3,0,-1 ));             // left leg
+    model_transform = mult(model_transform, scale(0.2,0.3,1));   
+
+    if(this.velocity[1] != 0 || this.velocity[0] != 0)
+        model_transform = mult(model_transform, rotation(i, 1, 0, 0));
+
+    shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
+
+    model_transform = body_center;  
+    model_transform = mult(model_transform, translation(-0.7,0,0));             // left arm
+    
+    if(this.velocity[1] != 0 || this.velocity[0] != 0)
+        model_transform = mult(model_transform, rotation(i, 1, 0, 0));
+
+    model_transform = mult(model_transform, rotation(30, 0, 1, 0));
+    model_transform = mult(model_transform, scale(0.2,0.3,0.5));
+    shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
+  
+    model_transform = body_center;
+    model_transform = mult(model_transform, translation(0.7,0,0));             // right arm
+    
+
+    if(this.velocity[1] != 0 || this.velocity[0] != 0)
+        model_transform = mult(model_transform, rotation(-i, 1, 0, 0));
+
+    model_transform = mult(model_transform, rotation(-30, 0, 1, 0));
+    model_transform = mult(model_transform, scale(0.2,0.3,0.5));
+    shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.head);
+    
+
+
       }
   });
 
