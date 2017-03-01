@@ -181,7 +181,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 
 Declare_Any_Class( "Player", 
   { 'construct': function( worldHandle, modelTransMat=mat4(), health=100)
-    {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat, velocityVec: vec4(0,0,0,0),
+    {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat, position: mult_vec(modelTransMat,vec4(0,0,0,1)), velocityVec: vec4(0,0,0,0),
 				   moveSpeed: 2, alive: true, autoAttackTimer:0.0, materials:{}});
 	  this.materials.head = new Material(Color(0.4,0.8,0.8,1),1,.8,0,10);
     },
@@ -222,6 +222,7 @@ Declare_Any_Class( "Player",
 	  graphics_state.camera_transform = mult(graphics_state.camera_transform, translation(0,0,-15));
 	  
 	  this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
+	  this.position = add(vec4(displacement[0],displacement[1],0,0),this.position);
 	  //TODO: implement heading rotation
 	  //the member variable modelTransMat ONLY represents the (x,y) coordinates.
 	  //must still build compound shapes using it as a basis (i.e. from the ground up)
@@ -236,8 +237,8 @@ Declare_Any_Class( "Player",
 
 Declare_Any_Class( "Enemy", 
   { 'construct': function( worldHandle, modelTransMat=mat4(), health=100)
-    {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat, velocityVec: vec4(0,0,0,0),
-				   moveSpeed: 2, alive: true, autoAttackTimer:0.0, materials:{}});
+    {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
+				     velocityVec: vec4(0,0,0,0), moveSpeed: 2, alive: true, autoAttackTimer:0.0, materials:{}});
 	  this.materials.head = new Material(Color(0.4,0.8,0.8,1),1,.8,0,10);
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
@@ -272,6 +273,7 @@ Declare_Any_Class( "Enemy",
 	  var displacement = scale_vec(delta_time/1000, this.velocityVec);
 	  
 	  this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
+	  this.position = add(vec4(displacement[0],displacement[1],0,0),this.position);
 	  //the member variable modelTransMat ONLY represents the (x,y) coordinates.
 	  //must still build compound shapes using it as a basis (i.e. from the ground up)
 	  var model_transform = this.model_transform; 
