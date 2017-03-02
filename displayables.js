@@ -7,10 +7,11 @@
 /********** DECLARE ALL CONSTANTS HERE **********/
 
 // Constants for player ammunition
-const MAX_AMMO = 20;
-const START_AMMO = 5;
+const MAX_AMMO = 40;
+const START_AMMO = 10;
 
 const AMMO_PER_CRATE = 8;
+const ATTACK_TIMER = 1 / 5.4; // Three shots per second
 
 /********** DECLARE ALL CONSTANTS HERE **********/
 
@@ -257,7 +258,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       if(this.ammoCrate[i].alive){
         this.ammoCrate[i].display(graphics_state.animation_delta_time);
       }
-      else this.projectiles.splice(i,1);
+      else this.ammoCrate.splice(i,1);
     }
       }
   }, Animation );
@@ -309,7 +310,7 @@ Declare_Any_Class( "Player",
     return;
 	if(this.autoAttackTimer <= 0){
 	    this.world.projectiles.push(new Projectile(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
-	    this.autoAttackTimer = 1/(1.8); // 1/attacks per second
+	    this.autoAttackTimer = ATTACK_TIMER;
       this.ammo--;
 	}
     },
@@ -645,20 +646,6 @@ Declare_Any_Class( "AmmoCrate",
         /*user_interface_string_manager.string_map["time"]    = "Animation Time: " + Math.round( this.shared_scratchpad.graphics_state.animation_time )/1000 + "s";
         user_interface_string_manager.string_map["animate"] = "Animation " + (this.shared_scratchpad.animate ? "on" : "off") ;*/
       },
-    //begin navigation interface
-    'moveForward': function(newState){
-  this.velocity[1]=newState?this.moveSpeed:0;
-    },
-    'moveBackward': function(newState){
-  this.velocity[1]=newState?-this.moveSpeed:0;
-    },
-    'moveLeft': function(newState){
-  this.velocity[0]=newState?-this.moveSpeed:0;
-    },
-    'moveRight': function(newState){
-  this.velocity[0]=newState?this.moveSpeed:0;
-    },
-    //end navigation interface
     'display': function(delta_time)
       {
     if(!this.alive) return;
