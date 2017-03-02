@@ -4,6 +4,16 @@
 
 // Now go down to Animation's display() function to see where the sample shapes you see drawn are coded, and a good place to begin filling in your own code.
 
+/********** DECLARE ALL CONSTANTS HERE **********/
+
+// Constants for player ammunition
+const MAX_AMMO = 20;
+const START_AMMO = 5;
+
+const AMMO_PER_CRATE = 8;
+
+/********** DECLARE ALL CONSTANTS HERE **********/
+
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
   { 'construct': function( context )
       { this.define_data_members( { string_map: context.shared_scratchpad.string_map, start_index: 0, tick: 0, visible: false, graphicsState: new Graphics_State() } );
@@ -119,6 +129,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	this.player = new Player(this);
 	this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 5;
 	this.projectiles = [];
+  this.ammoCrate = []; this.crateSpawnTimer = 0; this.maxCrates = 4;
 	this.mapObjects = [];
 	//set up the (static!) world objects
 	shapes_in_use.groundPlane = new Square();
@@ -207,7 +218,24 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	  else{
 	      this.enemySpawnTimer -= graphics_state.animation_delta_time/1000;
 	  }
-	  
+
+    // Spawn Ammo Crates
+    if(this.crateSpawnTimer < 0 && this.ammoCrate.length < this.maxCrates){
+        //spawn ammo crate at random location
+        var randomX;
+        var randomY;
+        do{
+          randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
+          randomY = Math.random()*(this.yMax-this.yMin)+this.yMin;
+        } while(this.checkPlayerCollision(vec4(randomX,randomY,0,1),3));
+
+        this.ammoCrate.push(new AmmoCrate(this, translation(randomX,randomY,0)));
+        this.crateSpawnTimer = 2.0; //TODO: update this with a formula later
+    }
+    else{
+        this.crateSpawnTimer -= graphics_state.animation_delta_time/1000;
+    }
+
 	  //draw the ground
 	  shapes_in_use.groundPlane.draw(graphics_state, scale(1000,1000,1000), ground);
 
@@ -219,19 +247,30 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	      }
 	      else this.enemies.splice(i,1);
 	  }
-	  for (var i=0;i<this.projectiles.length;i++){
-	      if(this.projectiles[i].alive){
-	      this.projectiles[i].display(graphics_state.animation_delta_time);
-	      }
-	      else this.projectiles.splice(i,1);
-	  }
+    for (var i=0;i<this.projectiles.length;i++){
+        if(this.projectiles[i].alive){
+        this.projectiles[i].display(graphics_state.animation_delta_time);
+        }
+        else this.projectiles.splice(i,1);
+    }
+    for (var i = 0; i < this.ammoCrate.length; i++){
+      if(this.ammoCrate[i].alive){
+        this.ammoCrate[i].display(graphics_state.animation_delta_time);
+      }
+      else this.projectiles.splice(i,1);
+    }
       }
   }, Animation );
 
 Declare_Any_Class( "Player", 
   { 'construct': function( worldHandle, modelTransMat=mat4(), initHealth=20)
-    {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat, position: mult_vec(modelTransMat,vec4(0,0,0,1)), heading:vec4(0,1,0,0), velocity: vec4(0,0,0,0),
-				   bool_reverseAnimate:false, limbAngle:0,moveSpeed: 2, alive: true, health:initHealth, autoAttackTimer:0.0, materials:{}});
+    {     
+      this.define_data_members(
+        { world: worldHandle, model_transform: modelTransMat, position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
+          heading:vec4(0,1,0,0), velocity: vec4(0,0,0,0),
+				  bool_reverseAnimate:false, limbAngle:0,moveSpeed: 2, alive: true, 
+          health:initHealth, autoAttackTimer:0.0, ammo: START_AMMO, materials:{}
+        });
 	  this.materials.head = new Material(Color(0.4,0.8,0.8,1),1,.8,0,10);
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
@@ -259,10 +298,19 @@ Declare_Any_Class( "Player",
 	  if(this.health <= 0)
 	      this.alive = false;
       },
+    'changeAmmo': function(deltaAmmo){
+  this.ammo += deltaAmmo;
+    if(this.ammo > MAX_AMMO)
+        this.ammo = MAX_AMMO;
+      },
     'attack': function(){
+  // Cannot shoot if player has no ammo
+  if(this.ammo <= 0 )
+    return;
 	if(this.autoAttackTimer <= 0){
 	    this.world.projectiles.push(new Projectile(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
 	    this.autoAttackTimer = 1/(1.8); // 1/attacks per second
+      this.ammo--;
 	}
     },
     'display': function(delta_time)
@@ -553,6 +601,7 @@ Declare_Any_Class( "Projectile",
     'display': function(delta_time)
       {
 	  if(!this.alive) return;
+    console.log("Alive");
 	  var graphics_state = this.world.shared_scratchpad.graphics_state;
 	  var displacement = scale_vec(delta_time/1000, this.velocity);
 	  
@@ -560,6 +609,7 @@ Declare_Any_Class( "Projectile",
 
 	  var enemyID = this.world.checkEnemyCollision(this,this.position,0.4);
 	  if(enemyID != -1){
+      console.log("hit enemy");
 	      this.alive=false;
 	      this.world.enemies[enemyID].changeHealth(-1);
 	  }
@@ -568,6 +618,7 @@ Declare_Any_Class( "Projectile",
 	      this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
 	  }
 	  else{
+        console.log("out of bounds");
 	      this.alive=false;
 	  }
 	  //the member variable modelTransMat ONLY represents the (x,y) coordinates.
@@ -578,3 +629,51 @@ Declare_Any_Class( "Projectile",
       }
   });
 
+Declare_Any_Class( "AmmoCrate", 
+  { 'construct': function( worldHandle, modelTransMat=mat4())
+    {     
+      this.define_data_members({ 
+          world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
+          alive: true,  materials:{}
+        });
+    this.position[2]=0;
+    this.materials.body = new Material(Color(1.0,0.4,0,1),1,.8,0,10);
+    },
+    'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
+      {
+    //TODO: may want to update UI with player info later on
+        /*user_interface_string_manager.string_map["time"]    = "Animation Time: " + Math.round( this.shared_scratchpad.graphics_state.animation_time )/1000 + "s";
+        user_interface_string_manager.string_map["animate"] = "Animation " + (this.shared_scratchpad.animate ? "on" : "off") ;*/
+      },
+    //begin navigation interface
+    'moveForward': function(newState){
+  this.velocity[1]=newState?this.moveSpeed:0;
+    },
+    'moveBackward': function(newState){
+  this.velocity[1]=newState?-this.moveSpeed:0;
+    },
+    'moveLeft': function(newState){
+  this.velocity[0]=newState?-this.moveSpeed:0;
+    },
+    'moveRight': function(newState){
+  this.velocity[0]=newState?this.moveSpeed:0;
+    },
+    //end navigation interface
+    'display': function(delta_time)
+      {
+    if(!this.alive) return;
+    var graphics_state = this.world.shared_scratchpad.graphics_state;
+
+    if (this.world.checkPlayerCollision(this.position, 1))
+    {
+      this.world.player.changeAmmo(AMMO_PER_CRATE)
+      this.alive = false;
+      return;
+    }
+
+    //the member variable modelTransMat ONLY represents the (x,y) coordinates.
+    var model_transform = this.model_transform; 
+    model_transform = mult(model_transform, scale(1, 1, 1));
+    shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.body);
+      }
+  });
