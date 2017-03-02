@@ -11,6 +11,8 @@ const MAX_AMMO = 40;
 const START_AMMO = 10;
 
 const AMMO_PER_CRATE = 8;
+const MAX_AMMO_CRATES = 3;
+const AMMO_SPAWN_RADIUS = 15;
 const ATTACK_TIMER = 1 / 5.4; // Three shots per second
 
 /********** DECLARE ALL CONSTANTS HERE **********/
@@ -130,7 +132,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	this.player = new Player(this);
 	this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 5;
 	this.projectiles = [];
-  this.ammoCrate = []; this.crateSpawnTimer = 0; this.maxCrates = 4;
+  this.ammoCrate = []; this.crateSpawnTimer = 0; this.maxCrates = MAX_AMMO_CRATES;
 	this.mapObjects = [];
 	//set up the (static!) world objects
 	shapes_in_use.groundPlane = new Square();
@@ -173,8 +175,22 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 		return i;
 	    }
 	}
-	return -1;
+    return -1;
     },
+
+    'canSpawnCrates': function(self, newPosition, tolerance){
+      for (var i = 0; i < this.ammoCrate.length; i++){
+        if (this.ammoCrate[i] == self)
+          continue;
+        if (length(subtract(this.ammoCrate[i].position, newPosition)) < tolerance)
+        {
+          return false;
+        }
+          
+      }
+      return true;
+    },
+
     'checkBounds': function(newPosition){
 	return newPosition[0]>=this.xMin && newPosition[0]<=this.xMax &&
 	     newPosition[1]>=this.yMin && newPosition[1]<=this.yMax
@@ -228,7 +244,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         do{
           randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
           randomY = Math.random()*(this.yMax-this.yMin)+this.yMin;
-        } while(this.checkPlayerCollision(vec4(randomX,randomY,0,1),3));
+        } while (this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) || (!this.canSpawnCrates(null, vec4(randomX, randomY, 0, 1), AMMO_SPAWN_RADIUS)) );
 
         this.ammoCrate.push(new AmmoCrate(this, translation(randomX,randomY,0)));
         this.crateSpawnTimer = 2.0; //TODO: update this with a formula later
@@ -602,7 +618,6 @@ Declare_Any_Class( "Projectile",
     'display': function(delta_time)
       {
 	  if(!this.alive) return;
-    console.log("Alive");
 	  var graphics_state = this.world.shared_scratchpad.graphics_state;
 	  var displacement = scale_vec(delta_time/1000, this.velocity);
 	  
@@ -610,7 +625,6 @@ Declare_Any_Class( "Projectile",
 
 	  var enemyID = this.world.checkEnemyCollision(this,this.position,0.4);
 	  if(enemyID != -1){
-      console.log("hit enemy");
 	      this.alive=false;
 	      this.world.enemies[enemyID].changeHealth(-1);
 	  }
@@ -619,7 +633,6 @@ Declare_Any_Class( "Projectile",
 	      this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
 	  }
 	  else{
-        console.log("out of bounds");
 	      this.alive=false;
 	  }
 	  //the member variable modelTransMat ONLY represents the (x,y) coordinates.
