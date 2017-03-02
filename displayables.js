@@ -651,7 +651,10 @@ Declare_Any_Class( "AmmoCrate",
           alive: true,  materials:{}
         });
     this.position[2]=0;
-    this.materials.body = new Material(Color(1.0,0.4,0,1),1,.8,0,10);
+
+    // Normal Brown Crate Color
+    //this.materials.body = new Material(Color(0.424,0.353,0.298,1),1,.8,0,10);
+    this.materials.body = new Material(Color(1,1,1,1),0.4,.4,0,10, "Memes/Troll_Lose_Ammo.jpg");
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -673,6 +676,7 @@ Declare_Any_Class( "AmmoCrate",
 
     //the member variable modelTransMat ONLY represents the (x,y) coordinates.
     var model_transform = this.model_transform; 
+    //model_transform = mult(model_transform, translation(0, 1, 0));
     model_transform = mult(model_transform, scale(1, 1, 1));
     shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.body);
       }

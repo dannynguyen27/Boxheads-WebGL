@@ -20,6 +20,7 @@ index.html - The web page document containing the canvas (drawing surface), that
                                                                                 // IMPORTANT: -- You have to include all your new images in here:
       texture_filenames_to_load.push( "text.png" );                             // Put all our texture images in the GPU.
       texture_filenames_to_load.push( "ground_texture.jpg" );
+      texture_filenames_to_load.push( "Memes/Troll_Lose_Ammo.jpg" );
       for( var i = 0; i < texture_filenames_to_load.length; i++ ) textures_in_use[ texture_filenames_to_load[i] ] = ( new Texture( texture_filenames_to_load[i], true ) );
       
       main_canvas.register_display_object( new Debug_Screen     ( main_canvas ) );  // We instantiate some of our custom "Animation" subclasses and register these displayable
