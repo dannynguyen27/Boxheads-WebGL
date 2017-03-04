@@ -211,9 +211,9 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 
         // *** Materials: 
         // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
-        var ground = new Material( Color( 0,0,0,1 ), .8, .4, 0, 0, "ground_texture.jpg" ), // Omit the final (string) parameter if you want no texture
+        var ground = new Material( Color( 0,0,0,1 ), .8, .4, 0, 0, "Visuals/ground_texture.jpg" ), // Omit the final (string) parameter if you want no texture
               placeHolder = new Material( Color(0,0,0,0), 0,0,0,0, "Blank" );
-              wall = new Material( Color( 0,0,0,1 ), 0.6, 0.4, 0, 10, "simple_outline.jpg");
+              wall = new Material( Color( 0,0,0,1 ), 0.6, 0.4, 0, 10, "Visuals/simple_outline.jpg");
 
         /**********************************
         Start coding down here!!!!
@@ -334,8 +334,8 @@ Declare_Any_Class( "Player",
 				  bool_reverseAnimate:false, limbAngle:0,moveSpeed: 4, alive: true, 
           health:initHealth, autoAttackTimer:0.0, ammo: START_AMMO, materials:{}
         });
-    this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "player_head.jpg");
-    this.materials.body = new Material(Color(0,0,0,1),0.8,.4,0,10, "player_body.jpg");
+    this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/player_head.jpg");
+    this.materials.body = new Material(Color(0,0,0,1),0.8,.4,0,10, "Visuals/player_body.jpg");
     this.materials.default = new Material(Color(0.39,0.2,0.08,1),1,0.6,0,20);
 
     },
@@ -374,7 +374,7 @@ Declare_Any_Class( "Player",
       },
     'attack': function(){
   // Cannot shoot if player has no ammo
-  if(this.ammo <= 0 )
+  if(this.ammo <= 0 || !this.alive )
     return;
 	if(this.autoAttackTimer <= 0){
 	    this.world.projectiles.push(new Projectile(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
@@ -451,7 +451,7 @@ Declare_Any_Class( "Player",
 	  // right leg	  
 	  model_transform = body_center;
 	  model_transform = mult(model_transform, translation(0.2,0,-0.7));               
-          model_transform = mult(model_transform, rotation(-this.limbAngle, 1, 0, 0));
+    model_transform = mult(model_transform, rotation(-this.limbAngle, 1, 0, 0));
 	  model_transform = mult(model_transform, translation(0,0,-0.3));
 	  //always scale at end
 	  model_transform = mult(model_transform, scale(0.15,0.15,0.8));	  
@@ -493,8 +493,8 @@ Declare_Any_Class( "Enemy",
   { 'construct': function( worldHandle, modelTransMat=mat4(), initHealth=3)
     {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
 				     velocity: vec4(0,0,0,0), heading:vec4(0,0,0,0), bool_reverseAnimate:false, limbAngle:0,moveSpeed: 2.5, alive: true, health:initHealth,autoAttackTimer:0.0, restTimer:0.0, materials:{}});
-	  this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "enemy_head.jpg");
-    this.materials.body = new Material(Color(0,0,0,1),1,.4,0,10, "enemy_body.jpg");
+	  this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/enemy_head.jpg");
+    this.materials.body = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/enemy_body.jpg");
     this.materials.default = new Material(Color(0.1,0.1,0.1,1),0.1,0.6,0,20);
 
 
