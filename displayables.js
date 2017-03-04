@@ -676,8 +676,7 @@ Declare_Any_Class( "AmmoCrate",
 
     //the member variable modelTransMat ONLY represents the (x,y) coordinates.
     var model_transform = this.model_transform; 
-    //model_transform = mult(model_transform, translation(0, 1, 0));
-    model_transform = mult(model_transform, scale(1, 1, 1));
+    model_transform = mult(model_transform, translation(0, 0, 0.5));
     shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.body);
       }
   });
