@@ -150,6 +150,15 @@ Declare_Any_Class("Cube",
 				  vec3(-0.5,0.5,-0.5),
 				  vec3(0.5,0.5,-0.5),
 				  vec3(0.5,-0.5,-0.5));
+   this.normal_vertices = []
+   this.normal_vertices.push(
+          vec3( 0.0, -1.0,  0.0),
+          vec3(-1.0,  0.0,  0.0),
+          vec3( 0.0,  1.0,  0.0),
+          vec3( 1.0,  0.0,  0.0),
+          vec3( 0.0,  0.0, -1.0),
+          vec3( 0.0,  0.0,  1.0));
+
 	 //generate positions for 2 triangles per face
 	 this.genFacePoints(0,1,2,3);
 	 this.genFacePoints(0,4,5,1);
@@ -158,9 +167,9 @@ Declare_Any_Class("Cube",
 	 this.genFacePoints(3,7,4,0);
 	 this.genFacePoints(5,6,2,1);
 	 //normals will just be the normalized position vectors
-	 for(var i=0; i<this.positions.length;i++){
-	     this.normals.push(normalize(this.positions[i]));
-	 }
+	 for(var i=0; i<6;i++)
+      for(var j=0; j<6;j++)
+	       this.normals.push(this.normal_vertices[j]);
 
      },
      'genFacePoints': function(a,b,c,d){
@@ -209,16 +218,11 @@ Declare_Any_Class("Oriented_Cube",
      'genFacePoints': function(a,b,c,d, front=false){
    var triangulationOrder = [ a,b,d,b,c,d ];
    //define the texture coordinates that correspond to each point on a face
-   //var textureCoords = [vec2(0,0),vec2(0,1),vec2(1,0),vec2(0,1),vec2(1,1),vec2(1,0)];
-   
-   
    if(front == false){
       textureCoords = [vec2(0,0),vec2(0,1),vec2(0.5,0),vec2(0,1),vec2(0.5,1),vec2(0.5,0)];
    }
    else
       textureCoords = [vec2(0.5,0),vec2(0.5,1),vec2(1,0),vec2(0.5,1),vec2(1,1),vec2(1,0)];
-   
-      //textureCoords = [vec2(0.5,0),vec2(0.5,1),vec2(1,0),vec2(0,1),vec2(1,1),vec2(1,0)];
    
    //generate points to be drawn using gl.TRIANGLE primitive
    for(var i=0;i<triangulationOrder.length;i++){

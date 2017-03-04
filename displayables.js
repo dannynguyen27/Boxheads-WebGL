@@ -213,25 +213,70 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
         var ground = new Material( Color( 0,0,0,1 ), .8, .4, 0, 0, "ground_texture.jpg" ), // Omit the final (string) parameter if you want no texture
               placeHolder = new Material( Color(0,0,0,0), 0,0,0,0, "Blank" );
+              wall = new Material( Color( 0,0,0,1 ), 0.6, 0.4, 0, 10, "simple_outline.jpg");
 
         /**********************************
         Start coding down here!!!!
         **********************************/   
 	  
+    for(var i = -11; i < 12; i++){
+      if(i > -2 && i < 2)           //  opening for enemies to walk through
+        continue;
+      model_transform = mat4();
+      model_transform = mult(model_transform, translation(-11, i, 0));      // initialize walls for left side
+      model_transform = mult(model_transform, scale(0.8, 1, 5));
+      shapes_in_use.cube.draw(graphics_state, model_transform, wall);
+    }
+    for(var i = -11; i < 12; i++){                                          // front side
+      if(i > -2 && i < 2)
+        continue;
+      model_transform = mat4();
+      model_transform = mult(model_transform, translation(i, -11, 0));
+      model_transform = mult(model_transform, scale(1, 0.8, 2));
+      shapes_in_use.cube.draw(graphics_state, model_transform, wall);
+    }
+    for(var i = -11; i < 12; i++){                                          // right side
+      if(i > -2 && i < 2)
+        continue;
+      model_transform = mat4();
+      model_transform = mult(model_transform, translation(11, i, 0));
+      model_transform = mult(model_transform, scale(0.8, 1, 5));
+      shapes_in_use.cube.draw(graphics_state, model_transform, wall);
+    }
+    for(var i = -11; i < 12; i++){                                          // back side
+      if(i > -2 && i < 2)
+        continue;
+      model_transform = mat4();
+      model_transform = mult(model_transform, translation(i, 11, 0));
+      model_transform = mult(model_transform, scale(1, 0.8, 5));
+      shapes_in_use.cube.draw(graphics_state, model_transform, wall);
+    }
 
 	  //TODO: spawn new actors
 	  if(this.enemySpawnTimer < 0 && this.enemies.length < this.maxEnemies){
 	      //spawn an enemy at a random location
-	      var randomX;
-	      var randomY;
-	      do{
-		  randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
-		  randomY = Math.random()*(this.yMax-this.yMin)+this.yMin;
+	      var random = Math.floor(Math.random()*4);
+	      var XCoord, YCoord;
+        switch (random) {
+          case 0:
+            XCoord = 0; YCoord = -10; break;
+          case 1:
+            XCoord = -10; YCoord = 0; break;
+          case 2:
+            XCoord = 10; YCoord = 0; break;
+          case 3:
+            XCoord = 0; YCoord = 10; break;
+        }
+	      /*
+        do{
+		    randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
+		    randomY = Math.random()*(this.yMax-this.yMin)+this.yMin;
+
 	      }
 	      while(this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) || 
-		    this.checkEnemyCollision(null,vec4(randomX,randomY,0,1),3)!= -1);
-	      this.enemies.push(new Enemy(this, translation(randomX,randomY,0)));
-	      this.enemySpawnTimer = 10.0;//TODO: update this with a formula later
+		    this.checkEnemyCollision(null,vec4(randomX,randomY,0,1),3)!= -1); */
+	      this.enemies.push(new Enemy(this, translation(XCoord,YCoord,0)));
+	      this.enemySpawnTimer = 4.0;//TODO: update this with a formula later
 	  }
 	  else{
 	      this.enemySpawnTimer -= graphics_state.animation_delta_time/1000;
@@ -339,7 +384,10 @@ Declare_Any_Class( "Player",
     },
     'display': function(delta_time)
       {
-	  if(!this.alive) return;
+	  if(!this.alive){ 
+      // rotate, fall to the ground, disappear, prompt end screen
+      return;
+    }
 	  var graphics_state = this.world.shared_scratchpad.graphics_state;
 	  var displacement = scale_vec(delta_time/1000, this.velocity);
 	 
@@ -654,13 +702,12 @@ Declare_Any_Class( "Projectile",
       }
   });
 
-var i = 0;
 Declare_Any_Class( "AmmoCrate", 
   { 'construct': function( worldHandle, modelTransMat=mat4())
     {     
       this.define_data_members({ 
           world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
-          alive: true,  materials:{}
+          alive: true, rotationSpeed:0, materials:{}
         });
     this.position[2]=0;
 
@@ -686,13 +733,13 @@ Declare_Any_Class( "AmmoCrate",
       return;
     }
 
-    i+=2;
+    this.rotationSpeed+=(36*delta_time/1000);
 
     //the member variable modelTransMat ONLY represents the (x,y) coordinates.
     var model_transform = this.model_transform; 
     model_transform = mult(model_transform, translation(0, 0, 1));
     model_transform = mult(model_transform, scale(0.5, 0.5, 0.5));
-    model_transform = mult(model_transform, rotation(i, 0, 0, 1));
+    model_transform = mult(model_transform, rotation(this.rotationSpeed, 0, 0, 1));
     shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.body);
       }
   });
