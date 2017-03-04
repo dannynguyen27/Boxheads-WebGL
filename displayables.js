@@ -331,7 +331,7 @@ Declare_Any_Class( "Player",
       this.define_data_members(
         { world: worldHandle, model_transform: modelTransMat, position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
           heading:vec4(0,1,0,0), velocity: vec4(0,0,0,0),
-				  bool_reverseAnimate:false, limbAngle:0,moveSpeed: 2, alive: true, 
+				  bool_reverseAnimate:false, limbAngle:0,moveSpeed: 4, alive: true, 
           health:initHealth, autoAttackTimer:0.0, ammo: START_AMMO, materials:{}
         });
     this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "player_head.jpg");
@@ -492,7 +492,7 @@ Declare_Any_Class( "Player",
 Declare_Any_Class( "Enemy", 
   { 'construct': function( worldHandle, modelTransMat=mat4(), initHealth=3)
     {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
-				     velocity: vec4(0,0,0,0), heading:vec4(0,0,0,0), bool_reverseAnimate:false, limbAngle:0,moveSpeed: 1, alive: true, health:initHealth,autoAttackTimer:0.0, restTimer:0.0, materials:{}});
+				     velocity: vec4(0,0,0,0), heading:vec4(0,0,0,0), bool_reverseAnimate:false, limbAngle:0,moveSpeed: 2.5, alive: true, health:initHealth,autoAttackTimer:0.0, restTimer:0.0, materials:{}});
 	  this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "enemy_head.jpg");
     this.materials.body = new Material(Color(0,0,0,1),1,.4,0,10, "enemy_body.jpg");
     this.materials.default = new Material(Color(0.1,0.1,0.1,1),0.1,0.6,0,20);
@@ -518,6 +518,11 @@ Declare_Any_Class( "Enemy",
     'moveRight': function(newState){
 	this.velocity[0]=newState?this.moveSpeed:0;
     },
+    'recoil': function(newState){
+  this.velocity=vec4(0,0,0,0);
+  this.restTimer = 0.3;                     // move backwards?!?!
+  //this.moveBackward(2);
+    },
     //end navigation interface
     'changeHealth': function(deltaHealth){
 	this.health += deltaHealth;
@@ -533,8 +538,8 @@ Declare_Any_Class( "Enemy",
 	  if(this.restTimer > 0){
 	      this.restTimer -= delta_time/1000;
 	  }
-	  //TODO: attack if near player
-	  else if(this.world.checkPlayerCollision(this.position,1.1)){
+    //TODO: attack if near player
+    else if(this.world.checkPlayerCollision(this.position,1.1)){
 	      this.velocity=vec4(0,0,0,0);
 	      if(this.autoAttackTimer <= 0){
 		    this.world.player.changeHealth(-1);
@@ -686,6 +691,7 @@ Declare_Any_Class( "Projectile",
 	  if(enemyID != -1){
 	      this.alive=false;
 	      this.world.enemies[enemyID].changeHealth(-1);
+        this.world.enemies[enemyID].recoil();
 	  }
 	  else if(this.world.checkBounds(newPosition)){
 	      this.position=newPosition;
