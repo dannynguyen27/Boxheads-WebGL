@@ -141,7 +141,8 @@ Declare_Any_Class("Cube",
 	 this.vertices = []
 	 //push all vertices of cube; positions will later be
 	 //generated from these vertices
-	 this.vertices.push(      vec3(-0.5,-0.5,0.5),
+	 this.vertices.push(      
+          vec3(-0.5,-0.5,0.5),
 				  vec3(-0.5,0.5,0.5),
 				  vec3(0.5,0.5,0.5),
 				  vec3(0.5,-0.5,0.5),
@@ -173,6 +174,58 @@ Declare_Any_Class("Cube",
 	     this.indices.push(this.indices.length);
 	     this.texture_coords.push(textureCoords[i]);
 	 }
+     }
+   },
+  Shape)
+
+Declare_Any_Class("Oriented_Cube",
+   { 'populate': function()
+     {
+   this.vertices = []
+   //push all vertices of cube; positions will later be
+   //generated from these vertices
+   this.vertices.push(      
+          vec3(-0.5,-0.5,0.5),
+          vec3(-0.5,0.5,0.5),
+          vec3(0.5,0.5,0.5),
+          vec3(0.5,-0.5,0.5),
+          vec3(-0.5,-0.5,-0.5),
+          vec3(-0.5,0.5,-0.5),
+          vec3(0.5,0.5,-0.5),
+          vec3(0.5,-0.5,-0.5));
+   //generate positions for 2 triangles per face
+   this.genFacePoints(0,1,2,3);
+   this.genFacePoints(0,4,5,1);
+   this.genFacePoints(4,7,6,5);
+   this.genFacePoints(3,2,6,7);
+   this.genFacePoints(3,7,4,0);
+   this.genFacePoints(6,2,1,5, true);
+   //normals will just be the normalized position vectors
+   for(var i=0; i<this.positions.length;i++){
+       this.normals.push(normalize(this.positions[i]));
+   }
+
+     },
+     'genFacePoints': function(a,b,c,d, front=false){
+   var triangulationOrder = [ a,b,d,b,c,d ];
+   //define the texture coordinates that correspond to each point on a face
+   //var textureCoords = [vec2(0,0),vec2(0,1),vec2(1,0),vec2(0,1),vec2(1,1),vec2(1,0)];
+   
+   
+   if(front == false){
+      textureCoords = [vec2(0,0),vec2(0,1),vec2(0.5,0),vec2(0,1),vec2(0.5,1),vec2(0.5,0)];
+   }
+   else
+      textureCoords = [vec2(0.5,0),vec2(0.5,1),vec2(1,0),vec2(0.5,1),vec2(1,1),vec2(1,0)];
+   
+      //textureCoords = [vec2(0.5,0),vec2(0.5,1),vec2(1,0),vec2(0,1),vec2(1,1),vec2(1,0)];
+   
+   //generate points to be drawn using gl.TRIANGLE primitive
+   for(var i=0;i<triangulationOrder.length;i++){
+       this.positions.push(this.vertices[triangulationOrder[i]]);
+       this.indices.push(this.indices.length);
+       this.texture_coords.push(textureCoords[i]);
+   }
      }
    },
   Shape)

@@ -21,6 +21,13 @@ index.html - The web page document containing the canvas (drawing surface), that
       texture_filenames_to_load.push( "text.png" );                             // Put all our texture images in the GPU.
       texture_filenames_to_load.push( "ground_texture.jpg" );
       texture_filenames_to_load.push( "Memes/Troll_Lose_Ammo.jpg" );
+      texture_filenames_to_load.push( "player_head.jpg");
+      texture_filenames_to_load.push( "player_body.jpg");
+      texture_filenames_to_load.push( "enemy_head.jpg");
+      texture_filenames_to_load.push( "enemy_body.jpg");
+
+
+
       for( var i = 0; i < texture_filenames_to_load.length; i++ ) textures_in_use[ texture_filenames_to_load[i] ] = ( new Texture( texture_filenames_to_load[i], true ) );
       
       main_canvas.register_display_object( new Debug_Screen     ( main_canvas ) );  // We instantiate some of our custom "Animation" subclasses and register these displayable
@@ -35,7 +42,7 @@ index.html - The web page document containing the canvas (drawing surface), that
     })();
 </script>
 </head><body>
-<canvas id="gl-canvas" width="1366" height="768"></canvas><p>
+<canvas id="gl-canvas" width="1920" height="1080"></canvas><p>
 <a href="#" onclick='document.getElementById( "instructions" ).style = "display:block"; this.style = "display:none";'> Click for instructions </a><div id="instructions" style = "display:none">
 Controlling this Graphics Object: 
 <ul><li>Animation is paused when this program starts, so first you should press ALT+a to play or pause animation. <li>
