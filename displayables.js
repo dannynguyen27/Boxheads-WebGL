@@ -11,8 +11,7 @@ const MAX_AMMO = 40;
 const START_AMMO = 10;
 
 const ATTACK_TIMER = 1 / 5.4; // Three shots per second
-
-                                          /********** CRATE CONSTANTS**********/
+/********** CRATE CONSTANTS**********/
 
 const AMMO_PER_CRATE = 8;
 const MAX_AMMO_CRATES = 3;
@@ -140,15 +139,17 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	//TODO: initialize the actors contained in the world
 	this.level = 1;
 	this.player = new Player(this);
-	this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 5;
+	this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 30;
 	this.projectiles = [];
   this.ammoCrate = []; this.crateSpawnTimer = 0; this.maxCrates = MAX_AMMO_CRATES;
 	this.mapObjects = [];
 	//set up the (static!) world objects
 	shapes_in_use.groundPlane = new Square();
 	//setup boundary
-	this.xMin=-10; this.xMax=10;
-	this.yMin=-10; this.yMax=10;
+	this.xMin=-16; this.xMax=16;
+	this.yMin=-16; this.yMax=16;
+
+  this.wallsArray = [];
 	//TODO: set up geometry shared by all actors
 	shapes_in_use.cube = new Cube();
 	shapes_in_use.sphere = new Subdivision_Sphere(3);
@@ -177,18 +178,25 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         user_interface_string_manager.string_map["animate"] = "Animation " + (this.shared_scratchpad.animate ? "on" : "off") ;
       },
     'checkPlayerCollision': function(newPosition, tolerance){
-	return length(subtract(this.player.position,newPosition)) < tolerance;
+	     return length(subtract(this.player.position,newPosition)) < tolerance;
     },
     'checkEnemyCollision': function(self,newPosition,tolerance){
-	for(var i=0;i<this.enemies.length;i++){
-	    if(this.enemies[i] != self && 
-	       length(subtract(this.enemies[i].position,newPosition)) < tolerance){
-		return i;
-	    }
-	}
-    return -1;
+	      for(var i=0;i<this.enemies.length;i++){
+	       if(this.enemies[i] != self && 
+	           length(subtract(this.enemies[i].position,newPosition)) < tolerance){
+		         return i;
+	           }
+	       }
+        return -1;
     },
-
+    'checkWallCollision': function(newPosition,tolerance){
+        for(var i=0;i<this.wallsArray.length; i++){
+          if(length(subtract(vec4(this.wallsArray[i][0], this.wallsArray[i][1],0,1),newPosition)) < tolerance){
+            return i;
+          }
+        }
+        return -1;
+    },
     'canSpawnCrates': function(self, newPosition, tolerance){
       for (var i = 0; i < this.ammoCrate.length; i++){
         if (this.ammoCrate[i] == self)
@@ -197,7 +205,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         {
           return false;
         }
-          
       }
       return true;
     },
@@ -206,6 +213,15 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	return newPosition[0]>=this.xMin && newPosition[0]<=this.xMax &&
 	     newPosition[1]>=this.yMin && newPosition[1]<=this.yMax
     },
+    'initializeWalls': function(wallsArray){
+      for(var i = 0; i < wallsArray.length; i++){
+        model_transform = mat4();
+        model_transform = mult(model_transform, translation(wallsArray[i][0], wallsArray[i][1], 0));
+        model_transform = mult(model_transform, scale(1, 1, 5));
+        shapes_in_use.cube.draw(this.shared_scratchpad.graphics_state, model_transform, wall);
+      }
+    },
+
     'display': function(time)
       {
         var graphics_state  = this.shared_scratchpad.graphics_state,
@@ -216,7 +232,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         // If you want more than two lights, you're going to need to increase a number in the vertex shader file (index.html).  For some reason this won't work in Firefox.
         graphics_state.lights = [];                    // First clear the light list each frame so we can replace & update lights.
 
-	//One light to illuminate them all
+	      //One light to illuminate them all
         graphics_state.lights.push( new Light( vec4(  0,  0,  100, 1 ), Color(1, 1, 1, 1 ), 10000000 ) );
 
         // *** Materials: 
@@ -229,38 +245,64 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         Start coding down here!!!!
         **********************************/   
 	  
-    for(var i = -11; i < 12; i++){
+    for(var i = this.xMin-1; i < this.xMax+2; i++){
       if(i > -2 && i < 2)           //  opening for enemies to walk through
         continue;
       model_transform = mat4();
-      model_transform = mult(model_transform, translation(-11, i, 0));      // initialize walls for left side
+      model_transform = mult(model_transform, translation(this.xMin-1, i, 0));      // initialize walls for left side
       model_transform = mult(model_transform, scale(0.8, 1, 5));
       shapes_in_use.cube.draw(graphics_state, model_transform, wall);
     }
-    for(var i = -11; i < 12; i++){                                          // front side
+    for(var i = this.yMin-1; i < this.yMax+2; i++){                                          // front side
       if(i > -2 && i < 2)
         continue;
       model_transform = mat4();
-      model_transform = mult(model_transform, translation(i, -11, 0));
-      model_transform = mult(model_transform, scale(1, 0.8, 2));
-      shapes_in_use.cube.draw(graphics_state, model_transform, wall);
-    }
-    for(var i = -11; i < 12; i++){                                          // right side
-      if(i > -2 && i < 2)
-        continue;
-      model_transform = mat4();
-      model_transform = mult(model_transform, translation(11, i, 0));
-      model_transform = mult(model_transform, scale(0.8, 1, 5));
-      shapes_in_use.cube.draw(graphics_state, model_transform, wall);
-    }
-    for(var i = -11; i < 12; i++){                                          // back side
-      if(i > -2 && i < 2)
-        continue;
-      model_transform = mat4();
-      model_transform = mult(model_transform, translation(i, 11, 0));
+      model_transform = mult(model_transform, translation(i, this.yMin-1, 0));
       model_transform = mult(model_transform, scale(1, 0.8, 5));
       shapes_in_use.cube.draw(graphics_state, model_transform, wall);
     }
+    for(var i = this.xMin-1; i < this.xMax+2; i++){                                          // right side
+      if(i > -2 && i < 2)
+        continue;
+      model_transform = mat4();
+      model_transform = mult(model_transform, translation(this.xMax+1, i, 0));
+      model_transform = mult(model_transform, scale(0.8, 1, 5));
+      shapes_in_use.cube.draw(graphics_state, model_transform, wall);
+    }
+    for(var i = this.yMin-1; i < this.yMax+2; i++){                                          // back side
+      if(i > -2 && i < 2)
+        continue;
+      model_transform = mat4();
+      model_transform = mult(model_transform, translation(i, this.yMax+1, 0));
+      model_transform = mult(model_transform, scale(1, 0.8, 5));
+      shapes_in_use.cube.draw(graphics_state, model_transform, wall);
+    }
+
+    this.wallsArray =            // castle layout
+    [ [-10,12],[-9,12],[-8,12],[-7,12],[-6,12],[-5,12],[-4,12],[-3,12],[-2,12],       // start inner rim
+      [-10,11],[-10,10],[-10,9],[-10,8],[-10,7],[-10,6],[-10,5],[-10,4],[-10,3],[-10,2],
+      [10,12],[9,12],[8,12],[7,12],[6,12],[5,12],[4,12],[3,12],[2,12],
+      [10,11],[10,10],[10,9],[10,8],[10,7],[10,6],[10,5],[10,4],[10,3],[10,2],
+      [-10,-11],[-10,-10],[-10,-9],[-10,-8],[-10,-7],[-10,-6],[-10,-5],[-10,-4],[-10,-3],[-10,-2],
+      [-10,-12],[-9,-12],[-8,-12],[-7,-12],[-6,-12],[-5,-12],[-4,-12],[-3,-12],[-2,-12],
+      [10,-12],[9,-12],[8,-12],[7,-12],[6,-12],[5,-12],[4,-12],[3,-12],[2,-12],
+      [10,-11],[10,-10],[10,-9],[10,-8],[10,-7],[10,-6],[10,-5],[10,-4],[10,-3],[10,-2],    // end inner rim
+
+      [-4,8],[-4,7],[-4,6],[-5,6],[-6,6],
+      [-4,-8],[-4,-7],[-4,-6],[-5,-6],[-6,-6],
+      [4,8],[4,7],[4,6],[5,6],[6,6],
+      [4,-8],[4,-7],[4,-6],[5,-6],[6,-6],
+      
+      [-5,3],[-5,2],[-5,1],[-5,0],[-5,-1],[-5,-2],[-5,-3],
+      [5,3],[5,2],[5,1],[5,0],[5,-1],[5,-2],[5,-3],   
+
+      [-2,3],[-1,3],[2,3],
+      [-2,2],[-2,1],[-2,0],[-2,-1],[-2,-2],[2,2],[2,1],[2,0],[2,-1],[2,-2],
+      [-2,-3],[-1,-3],[0,-3],[1,-3],[2,-3]
+      
+    ];
+
+    this.initializeWalls( this.wallsArray );
 
 	  //TODO: spawn new actors
 	  if(this.enemySpawnTimer < 0 && this.enemies.length < this.maxEnemies){
@@ -272,13 +314,13 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           var random = Math.floor(Math.random() * 4);
             switch (random) {
             case 0:
-              XCoord = 0; YCoord = -10; break;
+              XCoord = 0; YCoord = -16; break;
             case 1:
-              XCoord = -10; YCoord = 0; break;
+              XCoord = -16; YCoord = 0; break;
             case 2:
-              XCoord = 10; YCoord = 0; break;
+              XCoord = 16; YCoord = 0; break;
             case 3:
-              XCoord = 0; YCoord = 10; break;
+              XCoord = 0; YCoord = 16; break;
           }
         } while (this.checkPlayerCollision(vec4(XCoord,YCoord,0,1),3) || this.checkEnemyCollision(null,vec4(XCoord,YCoord,0,1),3) != -1);
 
@@ -309,8 +351,9 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           attempts_spawning++;
           randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
           randomY = Math.random()*(this.yMax-this.yMin)+this.yMin;
-        } while (attempts_spawning < 4 && (this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) || 
-            (!this.canSpawnCrates(null, vec4(randomX, randomY, 0, 1), AMMO_SPAWN_RADIUS))) );
+        } while (attempts_spawning < 4 && (this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) != -1) ||
+            this.checkWallCollision(vec4(randomX,randomY,0,1),2) != -1 ||  
+            (!this.canSpawnCrates(null, vec4(randomX, randomY, 0, 1), AMMO_SPAWN_RADIUS)) );
 
         var randomType = Math.floor(Math.random() * NUM_TYPES_OF_CRATES);
         this.ammoCrate.push(new AmmoCrate(this, randomType, translation(randomX,randomY,0)));
@@ -399,7 +442,8 @@ Declare_Any_Class( "Player",
       console.log("My # ammo has changed to: " + this.ammo);
       },
     'boostSpeed': function(deltaSpeed){
-      this.moveSpeed += deltaSpeed;
+      if(this.buff_timer == 0.0)          // doesn't stack
+        this.moveSpeed += deltaSpeed;
       this.buff_timer = 5.0;
       },
     'attack': function(){
@@ -431,9 +475,10 @@ Declare_Any_Class( "Player",
 	  }
 	  //try going to a new position
 	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
-	  if(this.world.checkEnemyCollision(this,newPosition,0.7) != -1){
+	  if(this.world.checkEnemyCollision(this,newPosition,0.7) != -1 || this.world.checkWallCollision(newPosition,0.8) != -1){
 	      //do nothing
 	  }
+
 	  else if(this.world.checkBounds(newPosition)){
 	      this.position=newPosition;
 	      this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
@@ -446,9 +491,10 @@ Declare_Any_Class( "Player",
     //if a buff has been applied to a player, decrement timer. once it hits 0 or less, reset player to normal
     if(this.buff_timer > 0)
         this.buff_timer -= delta_time/1000;
-    else if(this.buff_timer <= 0)
+    else if(this.buff_timer <= 0){
         this.moveSpeed = this.defaultSpeed;
-
+        this.buff_timer = 0;
+    }
 	  //the member variable modelTransMat ONLY represents the (x,y) coordinates.
 	  //must still build compound shapes using it as a basis (i.e. from the ground up)
 	  var model_transform = this.model_transform; 
@@ -626,6 +672,8 @@ Declare_Any_Class( "Enemy",
 	      //displacement = scale_vec(delta_time/1000, this.velocity);
 	      //newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
 	  }
+    else if(this.world.checkWallCollision(newPosition,1.1) != -1){ 
+    }
 	  else{
 	      this.position=newPosition;
 	      this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
@@ -832,7 +880,7 @@ Declare_Any_Class( "AmmoCrate",
           this.alive = false;
           return;
         case SPEED_BOX:
-          this.world.player.boostSpeed(5);
+          this.world.player.boostSpeed(2);
           this.alive = false;
           return;
         case TROLL_BOX:
@@ -849,7 +897,7 @@ Declare_Any_Class( "AmmoCrate",
     //the member variable modelTransMat ONLY represents the (x,y) coordinates.
     var model_transform = this.model_transform; 
     model_transform = mult(model_transform, translation(0, 0, 1));
-    model_transform = mult(model_transform, scale(0.5, 0.5, 0.5));
+    model_transform = mult(model_transform, scale(0.75, 0.75, 0.75));
     model_transform = mult(model_transform, rotation(this.rotationSpeed, 0, 0, 1));
 
     switch(this.type)
