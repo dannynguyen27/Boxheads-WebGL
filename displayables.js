@@ -492,11 +492,14 @@ Declare_Any_Class( "Player",
 Declare_Any_Class( "Enemy", 
   { 'construct': function( worldHandle, modelTransMat=mat4(), initHealth=3)
     {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
-				     velocity: vec4(0,0,0,0), heading:vec4(0,0,0,0), bool_reverseAnimate:false, limbAngle:0,moveSpeed: 2.5, alive: true, health:initHealth,autoAttackTimer:0.0, restTimer:0.0, materials:{}});
+				     velocity: vec4(0,0,0,0), heading:vec4(0,0,0,0), bool_reverseAnimate:false, limbAngle:0,moveSpeed: 2.5, alive: true, health:initHealth, maxHealth: initHealth, 
+             autoAttackTimer:0.0, restTimer:0.0, lowHPThres: 0.35, midHPThres: 0.67, materials:{}});
 	  this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/enemy_head.jpg");
     this.materials.body = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/enemy_body.jpg");
+    this.materials.fullBar = new Material(Color(0,0.7,0,1),1,0,0,10);
+    this.materials.midBar = new Material(Color(1,0.6,0,1),1,0,0,10);
+    this.materials.lowBar = new Material(Color(0.6,0,0,1),1,0,0,10);
     this.materials.default = new Material(Color(0.1,0.1,0.1,1),0.1,0.6,0,20);
-
 
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
@@ -649,7 +652,24 @@ Declare_Any_Class( "Enemy",
 	  model_transform = mult(model_transform, scale(0.1,0.1,0.5));
 	  shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.default);
 
-      }
+    // health bar
+    var scaling_factor = 1/this.maxHealth;
+    for(var i = 0; i < this.health; i++){
+        model_transform = mult(body_center, translation(-0.5+(scaling_factor/2), 0, 1.3));          // center the bar
+        model_transform = mult(model_transform, translation(scaling_factor*i, 0, 0));               // translate each bar
+        model_transform = mult(model_transform, scale(scaling_factor, 0.1, 0.1));                   // scale to proportion
+        var hpPercent = this.health/this.maxHealth;
+        if(hpPercent < this.lowHPThres){
+            console.log("got here");
+            shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.lowBar);
+        }
+        else if(hpPercent < this.midHPThres)
+            shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.midBar);
+        else
+            shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.fullBar);
+    }    
+
+    }
   });
 
 Declare_Any_Class( "Projectile", 
