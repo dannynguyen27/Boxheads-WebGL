@@ -13,8 +13,8 @@ const START_AMMO = 10;
 const ATTACK_TIMER = 1 / 5.4; // Three shots per second
 /********** CRATE CONSTANTS**********/
 
-const AMMO_PER_CRATE = 8;
-const MAX_AMMO_CRATES = 3;
+const AMMO_PER_CRATE = 10;
+const MAX_AMMO_CRATES = 10;
 const AMMO_SPAWN_RADIUS = 15;
 const CRATE_DESPAWN_TIMER = 15;
 
@@ -239,7 +239,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
         var ground = new Material( Color( 0,0,0,1 ), .8, .4, 0, 0, "Visuals/ground_texture.jpg" ), // Omit the final (string) parameter if you want no texture
               placeHolder = new Material( Color(0,0,0,0), 0,0,0,0, "Blank" );
-              wall = new Material( Color( 0,0,0,1 ), 0.6, 0.4, 0, 10, "Visuals/simple_outline.jpg");
+              wall = new Material( Color( 0,0,0,1 ), 0.3, 0.4, 0, 10, "Visuals/simple_outline.jpg");
+              portal = new Material( Color( 0.3,0.3,0.3,1 ), 0.5, 0.4, 0, 10, "Visuals/portal.jpg");
 
         /**********************************
         Start coding down here!!!!
@@ -304,6 +305,11 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 
     this.initializeWalls( this.wallsArray );
 
+    model_transform = mat4();
+    model_transform = mult(model_transform, translation(0, 17, 1.5));
+    model_transform = mult(model_transform, scale(2, 1, 2));
+    shapes_in_use.cube.draw(graphics_state, model_transform, portal);
+
 	  //TODO: spawn new actors
 	  if(this.enemySpawnTimer < 0 && this.enemies.length < this.maxEnemies){
 	      // This currently spawns enemies in the corners of the map
@@ -333,6 +339,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	      while(this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) || 
 		    this.checkEnemyCollision(null,vec4(randomX,randomY,0,1),3)!= -1); */
 	      this.enemies.push(new Enemy(this, translation(XCoord,YCoord,0)));
+        //var audio = new Audio('init_dog.mp3');
+        //audio.play();
 	      this.enemySpawnTimer = 4.0;//TODO: update this with a formula later
 	  }
 	  else{
@@ -404,7 +412,7 @@ Declare_Any_Class( "Player",
     this.materials.fullBar = new Material(Color(0,0.7,0,1),1,0,0,10);
     this.materials.midBar = new Material(Color(1,0.6,0,1),1,0,0,10);
     this.materials.lowBar = new Material(Color(0.6,0,0,1),1,0,0,10);
-    this.materials.default = new Material(Color(0.39,0.2,0.08,1),1,0.6,0,20);
+    this.materials.default = new Material(Color(0.6,0.32,0.138,1),0.8,0,0,20);
 
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
@@ -448,12 +456,15 @@ Declare_Any_Class( "Player",
       },
     'attack': function(){
   // Cannot shoot if player has no ammo
+  var audio = new Audio('gunshot.mp3');
+  
   if(this.ammo <= 0 || !this.alive )
     return;
 	if(this.autoAttackTimer <= 0){
 	    this.world.projectiles.push(new Projectile(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
 	    this.autoAttackTimer = ATTACK_TIMER;
       this.ammo--;
+      audio.play();
       console.log("My # ammo has changed to: " + this.ammo);
 	}
     },
@@ -814,6 +825,8 @@ Declare_Any_Class( "Projectile",
 	      this.alive=false;
 	      this.world.enemies[enemyID].changeHealth(-1);
         this.world.enemies[enemyID].recoil();
+        var audio = new Audio('dog_hurt.mp3');
+        audio.play();
 	  }
 	  else if(this.world.checkBounds(newPosition)){
 	      this.position=newPosition;
@@ -866,6 +879,7 @@ Declare_Any_Class( "AmmoCrate",
       this.timeAlive += delta_time/1000;
 
     var graphics_state = this.world.shared_scratchpad.graphics_state;
+    var audio;
 
     if (this.world.checkPlayerCollision(this.position, 1))
     {
@@ -873,6 +887,8 @@ Declare_Any_Class( "AmmoCrate",
       {
         case AMMO_BOX:
           this.world.player.changeAmmo(AMMO_PER_CRATE);
+          audio = new Audio('reload.mp3');
+          audio.play();
           this.alive = false;
           return;
         case HEALTH_BOX:
@@ -881,6 +897,8 @@ Declare_Any_Class( "AmmoCrate",
           return;
         case SPEED_BOX:
           this.world.player.boostSpeed(2);
+          audio = new Audio('thunder.mp3');
+          audio.play();
           this.alive = false;
           return;
         case TROLL_BOX:
@@ -890,6 +908,7 @@ Declare_Any_Class( "AmmoCrate",
           this.alive = false;
           return;
       }
+
     }
 
     this.rotationSpeed+=(36*delta_time/1000);
