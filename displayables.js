@@ -10,10 +10,20 @@
 const MAX_AMMO = 40;
 const START_AMMO = 10;
 
+const ATTACK_TIMER = 1 / 5.4; // Three shots per second
+
+                                          /********** CRATE CONSTANTS**********/
+
 const AMMO_PER_CRATE = 8;
 const MAX_AMMO_CRATES = 3;
 const AMMO_SPAWN_RADIUS = 15;
-const ATTACK_TIMER = 1 / 5.4; // Three shots per second
+const CRATE_DESPAWN_TIMER = 15;
+
+const NUM_TYPES_OF_CRATES = 4; // Specifies the different types of crates possible
+const AMMO_BOX = 0;
+const HEALTH_BOX = 1;
+const SPEED_BOX = 2;
+const TROLL_BOX = 3;
 
 /********** DECLARE ALL CONSTANTS HERE **********/
 
@@ -254,7 +264,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 
 	  //TODO: spawn new actors
 	  if(this.enemySpawnTimer < 0 && this.enemies.length < this.maxEnemies){
-	      //spawn an enemy at a random location
+	      // This currently spawns enemies in the corners of the map
 	      var random = Math.floor(Math.random()*4);
 	      var XCoord, YCoord;
         switch (random) {
@@ -283,16 +293,22 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	  }
 
     // Spawn Ammo Crates
+
+    // To help with script timeout issues
+    var attempts_spawning = 0;
     if(this.crateSpawnTimer < 0 && this.ammoCrate.length < this.maxCrates){
-        //spawn ammo crate at random location
+        // Spawn at random locations, make sure that crates do not bunch together
         var randomX;
         var randomY;
         do{
+          attempts_spawning++;
           randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
           randomY = Math.random()*(this.yMax-this.yMin)+this.yMin;
-        } while (this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) || (!this.canSpawnCrates(null, vec4(randomX, randomY, 0, 1), AMMO_SPAWN_RADIUS)) );
+        } while (attempts_spawning < 4 && (this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) || 
+            (!this.canSpawnCrates(null, vec4(randomX, randomY, 0, 1), AMMO_SPAWN_RADIUS))) );
 
-        this.ammoCrate.push(new AmmoCrate(this, translation(randomX,randomY,0)));
+        var randomType = Math.floor(Math.random() * NUM_TYPES_OF_CRATES);
+        this.ammoCrate.push(new AmmoCrate(this, randomType, translation(randomX,randomY,0)));
         this.crateSpawnTimer = 2.0; //TODO: update this with a formula later
     }
     else{
@@ -331,11 +347,15 @@ Declare_Any_Class( "Player",
       this.define_data_members(
         { world: worldHandle, model_transform: modelTransMat, position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
           heading:vec4(0,1,0,0), velocity: vec4(0,0,0,0),
-				  bool_reverseAnimate:false, limbAngle:0,moveSpeed: 4, alive: true, 
-          health:initHealth, autoAttackTimer:0.0, ammo: START_AMMO, materials:{}
+				  bool_reverseAnimate:false, limbAngle:0,moveSpeed: 4, defaultSpeed: 4, alive: true, 
+          health:initHealth, maxHealth:initHealth, autoAttackTimer:0.0, ammo: START_AMMO, materials:{},
+          lowHPThres: 0.4, midHPThres: 0.6, buff_timer: 0.0
         });
     this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/player_head.jpg");
     this.materials.body = new Material(Color(0,0,0,1),0.8,.4,0,10, "Visuals/player_body.jpg");
+    this.materials.fullBar = new Material(Color(0,0.7,0,1),1,0,0,10);
+    this.materials.midBar = new Material(Color(1,0.6,0,1),1,0,0,10);
+    this.materials.lowBar = new Material(Color(0.6,0,0,1),1,0,0,10);
     this.materials.default = new Material(Color(0.39,0.2,0.08,1),1,0.6,0,20);
 
     },
@@ -361,16 +381,21 @@ Declare_Any_Class( "Player",
     //end navigation interface
     'changeHealth': function(deltaHealth){
 	     this.health += deltaHealth;
-        console.log("ouch! i have health: " + this.health);
+       this.health = Math.min(this.health, this.maxHealth);
+        console.log("My health has changed to: " + this.health);
 	     if(this.health <= 0){
 	       this.alive = false;
        }
-
       },
     'changeAmmo': function(deltaAmmo){
-  this.ammo += deltaAmmo;
-    if(this.ammo > MAX_AMMO)
+      this.ammo += deltaAmmo;
+      if(this.ammo > MAX_AMMO)
         this.ammo = MAX_AMMO;
+      console.log("My # ammo has changed to: " + this.ammo);
+      },
+    'boostSpeed': function(deltaSpeed){
+      this.moveSpeed += deltaSpeed;
+      this.buff_timer = 5.0;
       },
     'attack': function(){
   // Cannot shoot if player has no ammo
@@ -380,6 +405,7 @@ Declare_Any_Class( "Player",
 	    this.world.projectiles.push(new Projectile(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
 	    this.autoAttackTimer = ATTACK_TIMER;
       this.ammo--;
+      console.log("My # ammo has changed to: " + this.ammo);
 	}
     },
     'display': function(delta_time)
@@ -388,6 +414,7 @@ Declare_Any_Class( "Player",
       // rotate, fall to the ground, disappear, prompt end screen
       return;
     }
+
 	  var graphics_state = this.world.shared_scratchpad.graphics_state;
 	  var displacement = scale_vec(delta_time/1000, this.velocity);
 	 
@@ -410,6 +437,13 @@ Declare_Any_Class( "Player",
 	      graphics_state.camera_transform = mult(graphics_state.camera_transform,translation(-displacement[0],-displacement[1],0));
 	      graphics_state.camera_transform = mult(graphics_state.camera_transform, translation(0,0,-12));
 	  }
+
+    //if a buff has been applied to a player, decrement timer. once it hits 0 or less, reset player to normal
+    if(this.buff_timer > 0)
+        this.buff_timer -= delta_time/1000;
+    else if(this.buff_timer <= 0)
+        this.moveSpeed = this.defaultSpeed;
+
 	  //the member variable modelTransMat ONLY represents the (x,y) coordinates.
 	  //must still build compound shapes using it as a basis (i.e. from the ground up)
 	  var model_transform = this.model_transform; 
@@ -485,14 +519,31 @@ Declare_Any_Class( "Player",
 	  model_transform = mult(model_transform, rotation(-20, 0, 1, 0));
 	  model_transform = mult(model_transform, scale(0.1,0.1,0.5));
 	  shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.default);
-      }
+     
+
+    // health bar
+    var scaling_factor = 1/this.maxHealth;
+    for(var i = 0; i < this.health; i++){
+        model_transform = mult(this.model_transform, translation(-0.5+(scaling_factor/2), 0, 2.8));          // center the bar
+        model_transform = mult(model_transform, translation(scaling_factor*i, 0, 0));               // translate each bar
+        model_transform = mult(model_transform, scale(scaling_factor, 0.1, 0.1));                   // scale to proportion
+        var hpPercent = this.health/this.maxHealth;
+        if(hpPercent < this.lowHPThres)
+            shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.lowBar);
+        else if(hpPercent < this.midHPThres)
+            shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.midBar);
+        else
+            shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.fullBar);
+    }   
+
+  }
   });
 
 
 Declare_Any_Class( "Enemy", 
   { 'construct': function( worldHandle, modelTransMat=mat4(), initHealth=3)
     {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
-				     velocity: vec4(0,0,0,0), heading:vec4(0,0,0,0), bool_reverseAnimate:false, limbAngle:0,moveSpeed: 2.5, alive: true, health:initHealth, maxHealth: initHealth, 
+				     velocity: vec4(0,0,0,0), heading:vec4(0,0,0,0), bool_reverseAnimate:false, limbAngle:0,moveSpeed: 1.5, alive: true, health:initHealth, maxHealth: initHealth, 
              autoAttackTimer:0.0, restTimer:0.0, lowHPThres: 0.35, midHPThres: 0.67, materials:{}});
 	  this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/enemy_head.jpg");
     this.materials.body = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/enemy_body.jpg");
@@ -655,14 +706,12 @@ Declare_Any_Class( "Enemy",
     // health bar
     var scaling_factor = 1/this.maxHealth;
     for(var i = 0; i < this.health; i++){
-        model_transform = mult(body_center, translation(-0.5+(scaling_factor/2), 0, 1.3));          // center the bar
+        model_transform = mult(this.model_transform, translation(-0.5+(scaling_factor/2), 0, 2.8));          // center the bar
         model_transform = mult(model_transform, translation(scaling_factor*i, 0, 0));               // translate each bar
         model_transform = mult(model_transform, scale(scaling_factor, 0.1, 0.1));                   // scale to proportion
         var hpPercent = this.health/this.maxHealth;
-        if(hpPercent < this.lowHPThres){
-            console.log("got here");
+        if(hpPercent < this.lowHPThres)
             shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.lowBar);
-        }
         else if(hpPercent < this.midHPThres)
             shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.midBar);
         else
@@ -728,18 +777,21 @@ Declare_Any_Class( "Projectile",
       }
   });
 
-Declare_Any_Class( "AmmoCrate", 
-  { 'construct': function( worldHandle, modelTransMat=mat4())
+Declare_Any_Class( "AmmoCrate",              
+  { 'construct': function( worldHandle, crateType, modelTransMat=mat4())   // crateTypes: 0: ammo refill, 1: health refill, 2: speed boost, 3: troll box
     {     
       this.define_data_members({ 
           world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
-          alive: true, rotationSpeed:0, materials:{}
+          alive: true, type:crateType, rotationSpeed:0, timeAlive:0, materials:{}
         });
     this.position[2]=0;
 
     // Normal Brown Crate Color
     //this.materials.body = new Material(Color(0.424,0.353,0.298,1),1,.8,0,10);
-    this.materials.body = new Material(Color(1,1,1,1),0.4,.4,0,10, "Memes/Troll_Lose_Ammo.jpg");
+    this.materials.ammo = new Material(Color(0,0,0,1),0.8,.4,0,10, "ammo.jpg");
+    this.materials.health = new Material(Color(0,0,0,1),0.8,.4,0,10, "health.jpg");
+    this.materials.speed = new Material(Color(0,0,0,1),0.8,.4,0,10, "speed.jpg");
+    this.materials.troll = new Material(Color(0,0,0,1),0.8,.4,0,10, "Memes/Troll_Lose_Ammo.jpg");
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -750,13 +802,41 @@ Declare_Any_Class( "AmmoCrate",
     'display': function(delta_time)
       {
     if(!this.alive) return;
+
+    // This regulates how long a crate stays on the screen
+    if (this.timeAlive >= CRATE_DESPAWN_TIMER)
+    {
+      this.alive = false;
+      return;
+    }
+    else
+      this.timeAlive += delta_time/1000;
+
     var graphics_state = this.world.shared_scratchpad.graphics_state;
 
     if (this.world.checkPlayerCollision(this.position, 1))
     {
-      this.world.player.changeAmmo(AMMO_PER_CRATE)
-      this.alive = false;
-      return;
+      switch(this.type)
+      {
+        case AMMO_BOX:
+          this.world.player.changeAmmo(AMMO_PER_CRATE);
+          this.alive = false;
+          return;
+        case HEALTH_BOX:
+          this.world.player.changeHealth(20);
+          this.alive = false;
+          return;
+        case SPEED_BOX:
+          this.world.player.boostSpeed(5);
+          this.alive = false;
+          return;
+        case TROLL_BOX:
+          // TODO: ADD EXTRA TROLL FUNCTIONALITY
+          console.log("Troll crate opened! You get:");
+          randomPowerUp = Math.random()
+          this.alive = false;
+          return;
+      }
     }
 
     this.rotationSpeed+=(36*delta_time/1000);
@@ -766,6 +846,21 @@ Declare_Any_Class( "AmmoCrate",
     model_transform = mult(model_transform, translation(0, 0, 1));
     model_transform = mult(model_transform, scale(0.5, 0.5, 0.5));
     model_transform = mult(model_transform, rotation(this.rotationSpeed, 0, 0, 1));
-    shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.body);
+
+    switch(this.type)
+    {
+      case AMMO_BOX:
+        shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.ammo);
+        break;
+      case HEALTH_BOX:
+        shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.health);
+        break;
+      case SPEED_BOX:
+        shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.speed);
+        break;
+      case TROLL_BOX:
+        shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.troll);
+        break;
+    }
       }
   });
