@@ -265,18 +265,23 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	  //TODO: spawn new actors
 	  if(this.enemySpawnTimer < 0 && this.enemies.length < this.maxEnemies){
 	      // This currently spawns enemies in the corners of the map
-	      var random = Math.floor(Math.random()*4);
-	      var XCoord, YCoord;
-        switch (random) {
-          case 0:
-            XCoord = 0; YCoord = -10; break;
-          case 1:
-            XCoord = -10; YCoord = 0; break;
-          case 2:
-            XCoord = 10; YCoord = 0; break;
-          case 3:
-            XCoord = 0; YCoord = 10; break;
-        }
+        var XCoord, YCoord;
+        do 
+        {
+          console.log("help")
+          var random = Math.floor(Math.random() * 4);
+            switch (random) {
+            case 0:
+              XCoord = 0; YCoord = -10; break;
+            case 1:
+              XCoord = -10; YCoord = 0; break;
+            case 2:
+              XCoord = 10; YCoord = 0; break;
+            case 3:
+              XCoord = 0; YCoord = 10; break;
+          }
+        } while (this.checkPlayerCollision(vec4(XCoord,YCoord,0,1),3) || this.checkEnemyCollision(null,vec4(XCoord,YCoord,0,1),3) != -1);
+
 	      /*
         do{
 		    randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
