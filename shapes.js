@@ -150,14 +150,6 @@ Declare_Any_Class("Cube",
 				  vec3(-0.5,0.5,-0.5),
 				  vec3(0.5,0.5,-0.5),
 				  vec3(0.5,-0.5,-0.5));
-   this.normal_vertices = []
-   this.normal_vertices.push(
-          vec3( 0.0, -1.0,  0.0),
-          vec3(-1.0,  0.0,  0.0),
-          vec3( 0.0,  1.0,  0.0),
-          vec3( 1.0,  0.0,  0.0),
-          vec3( 0.0,  0.0, -1.0),
-          vec3( 0.0,  0.0,  1.0));
 
 	 //generate positions for 2 triangles per face
 	 this.genFacePoints(0,1,2,3);
@@ -166,10 +158,8 @@ Declare_Any_Class("Cube",
 	 this.genFacePoints(3,2,6,7);
 	 this.genFacePoints(3,7,4,0);
 	 this.genFacePoints(5,6,2,1);
-	 //normals will just be the normalized position vectors
-	 for(var i=0; i<6;i++)
-      for(var j=0; j<6;j++)
-	       this.normals.push(this.normal_vertices[j]);
+
+	 this.flat_shade();
 
      },
      'genFacePoints': function(a,b,c,d){

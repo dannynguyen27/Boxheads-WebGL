@@ -318,10 +318,10 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	  if(this.enemySpawnTimer < 0 && this.enemies.length < this.maxEnemies){
 	      // This currently spawns enemies in the corners of the map
         var XCoord, YCoord;
-        do 
+        var timeOut = 0;
+	do 
         {
-          var random = Math.floor(Math.random());
-          //var random = Math.floor(Math.random() * 4);
+          var random = Math.floor(Math.random() * 4);
             switch (random) {
             case 0:
               XCoord = 0; YCoord = 16; break;
@@ -332,8 +332,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
             case 3:
               XCoord = 0; YCoord = -16; break;
           }
-        } while (this.checkPlayerCollision(vec4(XCoord,YCoord,0,1),3) || this.checkEnemyCollision(null,vec4(XCoord,YCoord,0,1),3) != -1);
-
+        } while (timeOut++ < 5 || this.checkPlayerCollision(vec4(XCoord,YCoord,0,1),3) || this.checkEnemyCollision(null,vec4(XCoord,YCoord,0,1),3) != -1);
 	      /*
         do{
 		    randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
