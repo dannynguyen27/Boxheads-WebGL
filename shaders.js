@@ -155,7 +155,7 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
 		//use the angle between the halfway vector and the normal (Blinn-Phong model) to calculate the specular lighting intensity
 		float specular = pow(max(dot(H[i],N),0.0),smoothness);
 		
-		gl_FragColor.xyz += attenuation_multiplier * (shapeColor.xyz * diffusivity * diffuse  + lightColor[i].xyz * shininess * specular );
+		gl_FragColor.xyz += attenuation_multiplier * (tex_color.xyz * diffusivity * diffuse  + lightColor[i].xyz * shininess * specular );
             }
             gl_FragColor.a = gl_FragColor.w;
           }`;

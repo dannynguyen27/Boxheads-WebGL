@@ -237,7 +237,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         graphics_state.lights = [];                    // First clear the light list each frame so we can replace & update lights.
 
 	      //One light to illuminate them all
-        graphics_state.lights.push( new Light( vec4(  0,  0,  100, 1 ), Color(1, 1, 1, 1 ), 10000000 ) );
+        graphics_state.lights.push( new Light( vec4(  0,  0,  10, 1 ), Color(1, 1, 1, 1 ), 1000 ) );
 
         // *** Materials: 
         // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
