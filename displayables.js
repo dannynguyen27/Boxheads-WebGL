@@ -7,8 +7,8 @@
 /********** DECLARE ALL CONSTANTS HERE **********/
 
 // Constants for player ammunition
-const MAX_AMMO = 40;
-const START_AMMO = 10;
+const MAX_AMMO = 1000;
+const START_AMMO = 100;
 
 const ATTACK_TIMER = 1 / 5.4; // Three shots per second
 /********** CRATE CONSTANTS**********/
@@ -23,6 +23,9 @@ const AMMO_BOX = 0;
 const HEALTH_BOX = 1;
 const SPEED_BOX = 2;
 const TROLL_BOX = 3;
+
+
+var angle = 0;
 
 /********** DECLARE ALL CONSTANTS HERE **********/
 
@@ -182,20 +185,21 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     },
     'checkEnemyCollision': function(self,newPosition,tolerance){
 	      for(var i=0;i<this.enemies.length;i++){
-	       if(this.enemies[i] != self && 
+	       if(this.enemies[i] != self && this.enemies[i].dying == false &&
 	           length(subtract(this.enemies[i].position,newPosition)) < tolerance){
 		         return i;
 	           }
 	       }
         return -1;
     },
-    'checkWallCollision': function(newPosition,tolerance){
+    // returns true if it collides with wall, false otherwise
+    'collidesWithWall': function(newPosition,tolerance){
         for(var i=0;i<this.wallsArray.length; i++){
           if(length(subtract(vec4(this.wallsArray[i][0], this.wallsArray[i][1],0,1),newPosition)) < tolerance){
-            return i;
+            return false;
           }
         }
-        return -1;
+        return true;
     },
     'canSpawnCrates': function(self, newPosition, tolerance){
       for (var i = 0; i < this.ammoCrate.length; i++){
@@ -244,7 +248,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 
         /**********************************
         Start coding down here!!!!
-        **********************************/   
+        **********************************/ 
+
     for(var i = this.xMin-1; i < this.xMax+2; i++){
       if(i > -2 && i < 2)           //  opening for enemies to walk through
         continue;
@@ -315,17 +320,17 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         var XCoord, YCoord;
         do 
         {
-          console.log("help")
-          var random = Math.floor(Math.random() * 4);
+          var random = Math.floor(Math.random());
+          //var random = Math.floor(Math.random() * 4);
             switch (random) {
             case 0:
-              XCoord = 0; YCoord = -16; break;
+              XCoord = 0; YCoord = 16; break;
             case 1:
               XCoord = -16; YCoord = 0; break;
             case 2:
               XCoord = 16; YCoord = 0; break;
             case 3:
-              XCoord = 0; YCoord = 16; break;
+              XCoord = 0; YCoord = -16; break;
           }
         } while (this.checkPlayerCollision(vec4(XCoord,YCoord,0,1),3) || this.checkEnemyCollision(null,vec4(XCoord,YCoord,0,1),3) != -1);
 
@@ -347,21 +352,16 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	  }
 
     // Spawn Ammo Crates
-
-    // To help with script timeout issues
-    var attempts_spawning = 0;
     if(this.crateSpawnTimer < 0 && this.ammoCrate.length < this.maxCrates){
         // Spawn at random locations, make sure that crates do not bunch together
         var randomX;
         var randomY;
         do{
-          attempts_spawning++;
           randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
           randomY = Math.random()*(this.yMax-this.yMin)+this.yMin;
-        //  console.log("i get stuck here");
-        } while (attempts_spawning < 4 && (this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) != -1) &&
-            this.checkWallCollision(vec4(randomX,randomY,0,1),3) != -1 &&  
-            (!this.canSpawnCrates(null, vec4(randomX, randomY, 0, 1), AMMO_SPAWN_RADIUS)) );
+        } while (this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) ||
+            !this.collidesWithWall(vec4(randomX,randomY,0,1),3)); //||
+            // (!this.canSpawnCrates(null, vec4(randomX, randomY, 0, 1), AMMO_SPAWN_RADIUS)) );
 
         var randomType = Math.floor(Math.random() * NUM_TYPES_OF_CRATES);
         this.ammoCrate.push(new AmmoCrate(this, randomType, translation(randomX,randomY,0)));
@@ -486,7 +486,7 @@ Declare_Any_Class( "Player",
 	  }
 	  //try going to a new position
 	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
-	  if(this.world.checkEnemyCollision(this,newPosition,0.7) != -1 || this.world.checkWallCollision(newPosition,0.8) != -1){
+	  if(this.world.checkEnemyCollision(this,newPosition,0.7) != -1 || !this.world.collidesWithWall(newPosition,0.8)){
 	      //do nothing
 	  }
 
@@ -601,12 +601,11 @@ Declare_Any_Class( "Player",
   }
   });
 
-
 Declare_Any_Class( "Enemy", 
   { 'construct': function( worldHandle, modelTransMat=mat4(), initHealth=3)
     {     this.define_data_members({ world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
-				     velocity: vec4(0,0,0,0), heading:vec4(0,0,0,0), bool_reverseAnimate:false, limbAngle:0,moveSpeed: 1.5, alive: true, health:initHealth, maxHealth: initHealth, 
-             autoAttackTimer:0.0, restTimer:0.0, lowHPThres: 0.35, midHPThres: 0.67, materials:{}});
+				     velocity: vec4(0,0,0,0), heading:vec4(0,0,0,0), bool_reverseAnimate:false, limbAngle:0,moveSpeed: 1.5, alive: true, dying: false, health:initHealth, maxHealth: initHealth, 
+             autoAttackTimer:0.0, restTimer:0.0, lowHPThres: 0.35, midHPThres: 0.67, fallAngle: 0, fadeTimer: 1, fadeRate: 0, materials:{}});
 	  this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/enemy_head.jpg");
     this.materials.body = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/enemy_body.jpg");
     this.materials.fullBar = new Material(Color(0,0.7,0,1),1,0,0,10);
@@ -641,13 +640,15 @@ Declare_Any_Class( "Enemy",
     },
     //end navigation interface
     'changeHealth': function(deltaHealth){
-	this.health += deltaHealth;
-	if(this.health <= 0)
-	    this.alive = false;
-    },
+	     this.health += deltaHealth;
+	     if(this.health <= 0)
+	       this.dying = true;
+       },
     'display': function(delta_time)
       {
+
 	  if(!this.alive) return;
+
 	  var graphics_state = this.world.shared_scratchpad.graphics_state;
 	  var displacement = scale_vec(delta_time/1000, this.velocity);
 
@@ -668,6 +669,11 @@ Declare_Any_Class( "Enemy",
 	  else{ //get vector to player
 	      this.velocity=scale_vec(this.moveSpeed,normalize(subtract(this.world.player.position,this.position)));
 	  }
+
+    if(this.dying){
+        displacement[0]=0; displacement[1]=0;
+    }
+
 	  //change heading of this enemy
 	  if(length(displacement) != 0){
 	      this.heading = normalize(displacement.slice(0));
@@ -675,6 +681,7 @@ Declare_Any_Class( "Enemy",
 
 	  //calculate new position
 	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
+
 	  //make sure new position is valid; rest a few ticks if not, then try with a slightly different angle
 	  if(this.world.checkEnemyCollision(this,newPosition,1.2)!= -1){
 	      restTimer = 0.5;
@@ -683,7 +690,7 @@ Declare_Any_Class( "Enemy",
 	      //displacement = scale_vec(delta_time/1000, this.velocity);
 	      //newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
 	  }
-    else if(this.world.checkWallCollision(newPosition,1.1) != -1){ 
+    else if(!this.world.collidesWithWall(newPosition,1.1)){ 
     }
 	  else{
 	      this.position=newPosition;
@@ -696,7 +703,22 @@ Declare_Any_Class( "Enemy",
 
 	  var headingAngle = Math.acos(dot(this.heading,vec4(0,1,0,0))) * 180/Math.PI * (this.heading[0]>0?-1:1);
 
-	  //get body center and turn by heading angle
+    if(this.dying){
+      if(this.fallAngle < 90)
+        this.fallAngle+=10;
+      if(this.fallAngle == 90 && this.fadeTimer > 0){
+        this.fadeRate += 0.01;
+        model_transform = mult(model_transform, translation(0, 0, -this.fadeRate));  
+        this.fadeTimer -= delta_time/1000 ;
+      }
+      else if(this.fadeTimer <= 0){
+        this.alive = false;
+        return;
+      }                         // -y, x gives us the axis where the enemy will fall in its normal's direction
+      model_transform = mult(model_transform, rotation(-this.fallAngle, -this.heading[1], this.heading[0],0));   
+    }
+
+    //get body center and turn by heading angle
 	  var body_center = model_transform = mult(mult(model_transform, translation(0,0,1.5)),rotation(headingAngle,0,0,1));
 
 	  //body
@@ -893,6 +915,8 @@ Declare_Any_Class( "AmmoCrate",
           return;
         case HEALTH_BOX:
           this.world.player.changeHealth(20);
+          audio = new Audio('health.mp3');
+          audio.play();
           this.alive = false;
           return;
         case SPEED_BOX:
