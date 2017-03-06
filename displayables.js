@@ -364,9 +364,13 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
             !this.collidesWithWall(vec4(randomX,randomY,0,1),3) ||
              (!this.canSpawnCrates(null, vec4(randomX, randomY, 0, 1), AMMO_SPAWN_RADIUS))) );
 
-        var randomType = Math.floor(Math.random() * NUM_TYPES_OF_CRATES);
-        this.ammoCrate.push(new AmmoCrate(this, randomType, translation(randomX,randomY,0)));
-        this.crateSpawnTimer = 2.0; //TODO: update this with a formula later
+        // Makes sure that browser doesn't say script is too slow
+        if (timeout < 5)
+        {
+          var randomType = Math.floor(Math.random() * NUM_TYPES_OF_CRATES);
+          this.ammoCrate.push(new AmmoCrate(this, randomType, translation(randomX,randomY,0)));
+          this.crateSpawnTimer = 2.0; //TODO: update this with a formula later
+        }
     }
     else{
         this.crateSpawnTimer -= graphics_state.animation_delta_time/1000;
