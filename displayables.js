@@ -239,13 +239,12 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
         var ground = new Material( Color( 0,0,0,1 ), .8, .4, 0, 0, "Visuals/ground_texture.jpg" ), // Omit the final (string) parameter if you want no texture
               placeHolder = new Material( Color(0,0,0,0), 0,0,0,0, "Blank" );
-              wall = new Material( Color( 0,0,0,1 ), 0.3, 0.4, 0, 10, "Visuals/simple_outline.jpg");
+              wall = new Material( Color( 0,0,0,1 ), 0.3, 0.7, 0, 10, "Visuals/simple_outline.jpg");
               portal = new Material( Color( 0.3,0.3,0.3,1 ), 0.5, 0.4, 0, 10, "Visuals/portal.jpg");
 
         /**********************************
         Start coding down here!!!!
         **********************************/   
-	  
     for(var i = this.xMin-1; i < this.xMax+2; i++){
       if(i > -2 && i < 2)           //  opening for enemies to walk through
         continue;
@@ -359,8 +358,9 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           attempts_spawning++;
           randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
           randomY = Math.random()*(this.yMax-this.yMin)+this.yMin;
-        } while (attempts_spawning < 4 && (this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) != -1) ||
-            this.checkWallCollision(vec4(randomX,randomY,0,1),2) != -1 ||  
+        //  console.log("i get stuck here");
+        } while (attempts_spawning < 4 && (this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) != -1) &&
+            this.checkWallCollision(vec4(randomX,randomY,0,1),3) != -1 &&  
             (!this.canSpawnCrates(null, vec4(randomX, randomY, 0, 1), AMMO_SPAWN_RADIUS)) );
 
         var randomType = Math.floor(Math.random() * NUM_TYPES_OF_CRATES);
