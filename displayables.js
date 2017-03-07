@@ -13,7 +13,7 @@ const START_AMMO = 100;
 const ATTACK_TIMER = 1 / 5.4; // Three shots per second
 
 const MAP_TOTAL = 2;
-var map_selector = Math.floor(Math.random() * MAP_TOTAL);
+const MAP_SELECTOR = Math.floor(Math.random() * MAP_TOTAL);
 /********** CRATE CONSTANTS**********/
 
 const AMMO_PER_CRATE = 10;
@@ -331,7 +331,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       }
 
       // the following part of the map layout is added depending on the specified mapNum
-      if(map_selector == 0)
+      if(MAP_SELECTOR == 0)
       {
         console.log("we are making the first map");
         this.wallsArray =            // castle layout
@@ -366,7 +366,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         shapes_in_use.cube.draw(graphics_state, model_transform, portal);
         */
       }
-      else if(map_selector == 1)// mapNum would be some non-zero here
+      else if(MAP_SELECTOR == 1)// mapNum would be some non-zero here
       {
         console.log("we go into other map");
         this.wallsArray =
