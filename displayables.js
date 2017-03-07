@@ -364,8 +364,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
             !this.collidesWithWall(vec4(randomX,randomY,0,1),3) ||
              (!this.canSpawnCrates(null, vec4(randomX, randomY, 0, 1), AMMO_SPAWN_RADIUS))) );
 
-        // Makes sure that browser doesn't say script is too slow
-        if (timeout < 5)
+        // Makes sure that browser doesn't say
+        if (timeOut < 5)
         {
           var randomType = Math.floor(Math.random() * NUM_TYPES_OF_CRATES);
           this.ammoCrate.push(new AmmoCrate(this, randomType, translation(randomX,randomY,0)));
