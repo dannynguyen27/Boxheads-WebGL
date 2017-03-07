@@ -156,6 +156,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       	this.yMin=-16; this.yMax=16;
 
         this.gameStart = false;     
+        // Mute Option 
+        this.mute = false;
 
         this.wallsArray = [];
       	//TODO: set up geometry shared by all actors
@@ -212,6 +214,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           
 	  controls.add( "right", this, function() { this.keyBitMap["right"]=true; this.player.moveRight(true); } ); 
 	  controls.add( "right",this, function() {this.keyBitMap["right"]=false; this.player.moveRight(false); if(this.keyBitMap["left"]) this.player.moveLeft(true); }, {'type':'keyup'} );
+    controls.add( "m", this, function() { console.log("MUTING"); this.mute = !this.mute;}); 
+
 
 	  controls.add( "space", this, function() {this.player.attack()} ); 
       },
@@ -236,10 +240,10 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     'collidesWithWall': function(newPosition,tolerance){
         for(var i=0;i<this.wallsArray.length; i++){
           if(length(subtract(vec4(this.wallsArray[i][0], this.wallsArray[i][1],0,1),newPosition)) < tolerance){
-            return false;
+            return true;
           }
         }
-        return true;
+        return false;
     },
     'canSpawnCrates': function(self, newPosition, tolerance){
       for (var i = 0; i < this.ammoCrate.length; i++){
@@ -267,7 +271,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       }
     },
     'animateGame': function(time, mapNum){   
-      console.log("we got into the animate function");
       var graphics_state  = this.shared_scratchpad.graphics_state,
           model_transform = mat4(); 
 
@@ -434,7 +437,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
               case 3:
                 XCoord = 0; YCoord = -16; break;
             }
-          } while (timeOut++ < 5 || this.checkPlayerCollision(vec4(XCoord,YCoord,0,1),3) || this.checkEnemyCollision(null,vec4(XCoord,YCoord,0,1),3) != -1);
+          } while (timeOut++ < 5 && (this.checkPlayerCollision(vec4(XCoord,YCoord,0,1),3) || this.checkEnemyCollision(null,vec4(XCoord,YCoord,0,1),3) != -1));
           /*
           do{
           randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
@@ -469,7 +472,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
             randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
             randomY = Math.random()*(this.yMax-this.yMin)+this.yMin;
           } while (timeOut < 5 && (this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) ||
-              !this.collidesWithWall(vec4(randomX,randomY,0,1),3) ||
+              this.collidesWithWall(vec4(randomX,randomY,0,1),3) ||
                (!this.canSpawnCrates(null, vec4(randomX, randomY, 0, 1), AMMO_SPAWN_RADIUS))) );    
 
           // Makes sure that browser doesn't say
@@ -540,11 +543,9 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
             if(this.mouse.anchor){
               if(this.mouse.from_center[0] > -310 && this.mouse.from_center[0] < 320 && this.mouse.from_center[1] > -50 && this.mouse.from_center[1] < 70)
                 this.gameStart = true;
-              console.log("IS ANYTHING WORKING");
             }
         }                
         else if(this.player.alive){
-          console.log("we are attempting to call animateGame");
           var map = 1
           this.animateGame(time, map);
         }
@@ -622,7 +623,12 @@ Declare_Any_Class( "Player",
 	    this.world.projectiles.push(new Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
 	    this.autoAttackTimer = ATTACK_TIMER;
       this.ammo--;
-      audio.play();
+      if (!this.world.mute)
+      {
+        console.log("This mute is " + this.world.mute);
+        var audio = new Audio('Audio/gunshot.mp3');
+        audio.play();
+      }
       console.log("My # ammo has changed to: " + this.ammo);
 	}
     },
@@ -644,7 +650,7 @@ Declare_Any_Class( "Player",
 	  }
 	  //try going to a new position
 	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
-	  if(this.world.checkEnemyCollision(this,newPosition,0.7) != -1 || !this.world.collidesWithWall(newPosition,0.8)){
+	  if (this.world.checkEnemyCollision(this,newPosition,0.7) != -1 || this.world.collidesWithWall(newPosition,0.8)){
 	      //do nothing
 	  }
 
