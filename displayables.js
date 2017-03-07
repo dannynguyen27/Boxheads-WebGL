@@ -11,6 +11,9 @@ const MAX_AMMO = 1000;
 const START_AMMO = 100;
 
 const ATTACK_TIMER = 1 / 5.4; // Three shots per second
+
+const MAP_TOTAL = 2;
+var map_selector = Math.floor(Math.random() * MAP_TOTAL);
 /********** CRATE CONSTANTS**********/
 
 const AMMO_PER_CRATE = 10;
@@ -152,9 +155,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       	this.xMin=-16; this.xMax=16;
       	this.yMin=-16; this.yMax=16;
 
-        this.gameStart = false;
-        // Mute option
-        this.mute = false;     
+        this.gameStart = false;     
 
         this.wallsArray = [];
       	//TODO: set up geometry shared by all actors
@@ -213,7 +214,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	  controls.add( "right",this, function() {this.keyBitMap["right"]=false; this.player.moveRight(false); if(this.keyBitMap["left"]) this.player.moveLeft(true); }, {'type':'keyup'} );
 
 	  controls.add( "space", this, function() {this.player.attack()} ); 
-    controls.add( "m", this, function() { console.log("MUTING"); this.mute = !this.mute;}); 
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -236,10 +236,10 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     'collidesWithWall': function(newPosition,tolerance){
         for(var i=0;i<this.wallsArray.length; i++){
           if(length(subtract(vec4(this.wallsArray[i][0], this.wallsArray[i][1],0,1),newPosition)) < tolerance){
-            return true; 
+            return false;
           }
         }
-        return false;
+        return true;
     },
     'canSpawnCrates': function(self, newPosition, tolerance){
       for (var i = 0; i < this.ammoCrate.length; i++){
@@ -266,7 +266,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         shapes_in_use.cube.draw(this.shared_scratchpad.graphics_state, model_transform, wall);
       }
     },
-    'animateGame': function(time){   
+    'animateGame': function(time, mapNum){   
+      console.log("we got into the animate function");
       var graphics_state  = this.shared_scratchpad.graphics_state,
           model_transform = mat4(); 
 
@@ -277,6 +278,22 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           portal = new Material( Color( 0.3,0.3,0.3,1 ), 0.5, 0.4, 0, 10, "Visuals/portal.jpg");
           placeHolder = new Material( Color(0,0,0,0), 0,0,0,0, "Blank" );
 
+      // Map Indexing
+      /*
+
+           -15 <--0--> +15
+        -----------------------
+        |                     | 15
+        |                     | +
+        |                     | ^
+        |                     | |
+        |                     | 0
+        |                     | |
+        |                     | v
+        |                     | -15
+        -----------------------
+      */
+
       for(var i = this.xMin-1; i < this.xMax+2; i++){
         if(i > -2 && i < 2)           //  opening for enemies to walk through
           continue;
@@ -285,7 +302,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         model_transform = mult(model_transform, scale(0.8, 1, 5));
         shapes_in_use.cube.draw(graphics_state, model_transform, wall);
       }
-      for(var i = this.yMin-1; i < this.yMax+2; i++){                                          // front side
+      for(var i = this.yMin; i < this.yMax+2; i++){                                          // front side
         if(i > -2 && i < 2)
           continue;
         model_transform = mat4();
@@ -293,7 +310,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         model_transform = mult(model_transform, scale(1, 0.8, 5));
         shapes_in_use.cube.draw(graphics_state, model_transform, wall);
       }
-      for(var i = this.xMin-1; i < this.xMax+2; i++){                                          // right side
+      for(var i = this.xMin; i < this.xMax+1; i++){                                          // right side
         if(i > -2 && i < 2)
           continue;
         model_transform = mat4();
@@ -301,45 +318,103 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         model_transform = mult(model_transform, scale(0.8, 1, 5));
         shapes_in_use.cube.draw(graphics_state, model_transform, wall);
       }
-      for(var i = this.yMin-1; i < this.yMax+2; i++){                                          // back side
+      for(var i = this.yMin; i < this.yMax+2; i++){                                          // back side
         if(i > -2 && i < 2)
           continue;
         model_transform = mat4();
         model_transform = mult(model_transform, translation(i, this.yMax+1, 0));
         model_transform = mult(model_transform, scale(1, 0.8, 5));
         shapes_in_use.cube.draw(graphics_state, model_transform, wall);
-      }   
+      }
 
-      this.wallsArray =            // castle layout
-      [ [-10,12],[-9,12],[-8,12],[-7,12],[-6,12],[-5,12],[-4,12],[-3,12],[-2,12],       // start inner rim
-        [-10,11],[-10,10],[-10,9],[-10,8],[-10,7],[-10,6],[-10,5],[-10,4],[-10,3],[-10,2],
-        [10,12],[9,12],[8,12],[7,12],[6,12],[5,12],[4,12],[3,12],[2,12],
-        [10,11],[10,10],[10,9],[10,8],[10,7],[10,6],[10,5],[10,4],[10,3],[10,2],
-        [-10,-11],[-10,-10],[-10,-9],[-10,-8],[-10,-7],[-10,-6],[-10,-5],[-10,-4],[-10,-3],[-10,-2],
-        [-10,-12],[-9,-12],[-8,-12],[-7,-12],[-6,-12],[-5,-12],[-4,-12],[-3,-12],[-2,-12],
-        [10,-12],[9,-12],[8,-12],[7,-12],[6,-12],[5,-12],[4,-12],[3,-12],[2,-12],
-        [10,-11],[10,-10],[10,-9],[10,-8],[10,-7],[10,-6],[10,-5],[10,-4],[10,-3],[10,-2],    // end inner rim    
+      // the following part of the map layout is added depending on the specified mapNum
+      if(map_selector == 0)
+      {
+        console.log("we are making the first map");
+        this.wallsArray =            // castle layout
+        [ [-10,12],[-9,12],[-8,12],[-7,12],[-6,12],[-5,12],[-4,12],[-3,12],[-2,12],       // start inner rim
+          [-10,11],[-10,10],[-10,9],[-10,8],[-10,7],[-10,6],[-10,5],[-10,4],[-10,3],[-10,2],
+          [10,12],[9,12],[8,12],[7,12],[6,12],[5,12],[4,12],[3,12],[2,12],
+          [10,11],[10,10],[10,9],[10,8],[10,7],[10,6],[10,5],[10,4],[10,3],[10,2],
+          [-10,-11],[-10,-10],[-10,-9],[-10,-8],[-10,-7],[-10,-6],[-10,-5],[-10,-4],[-10,-3],[-10,-2],
+          [-10,-12],[-9,-12],[-8,-12],[-7,-12],[-6,-12],[-5,-12],[-4,-12],[-3,-12],[-2,-12],
+          [10,-12],[9,-12],[8,-12],[7,-12],[6,-12],[5,-12],[4,-12],[3,-12],[2,-12],
+          [10,-11],[10,-10],[10,-9],[10,-8],[10,-7],[10,-6],[10,-5],[10,-4],[10,-3],[10,-2],    // end inner rim    
 
-        [-4,8],[-4,7],[-4,6],[-5,6],[-6,6],
-        [-4,-8],[-4,-7],[-4,-6],[-5,-6],[-6,-6],
-        [4,8],[4,7],[4,6],[5,6],[6,6],
-        [4,-8],[4,-7],[4,-6],[5,-6],[6,-6],
-        
-        [-5,3],[-5,2],[-5,1],[-5,0],[-5,-1],[-5,-2],[-5,-3],
-        [5,3],[5,2],[5,1],[5,0],[5,-1],[5,-2],[5,-3],       
+          [-4,8],[-4,7],[-4,6],[-5,6],[-6,6],
+          [-4,-8],[-4,-7],[-4,-6],[-5,-6],[-6,-6],
+          [4,8],[4,7],[4,6],[5,6],[6,6],
+          [4,-8],[4,-7],[4,-6],[5,-6],[6,-6],
+          
+          [-5,3],[-5,2],[-5,1],[-5,0],[-5,-1],[-5,-2],[-5,-3],
+          [5,3],[5,2],[5,1],[5,0],[5,-1],[5,-2],[5,-3],       
 
-        [-2,3],[-1,3],[2,3],
-        [-2,2],[-2,1],[-2,0],[-2,-1],[-2,-2],[2,2],[2,1],[2,0],[2,-1],[2,-2],
-        [-2,-3],[-1,-3],[0,-3],[1,-3],[2,-3]
-        
-      ];    
+          [-2,3],[-1,3],[2,3],
+          [-2,2],[-2,1],[-2,0],[-2,-1],[-2,-2],[2,2],[2,1],[2,0],[2,-1],[2,-2],
+          [-2,-3],[-1,-3],[0,-3],[1,-3],[2,-3]
+          
+        ];    
+        /*
+        this.initializeWalls( this.wallsArray );    
+
+        model_transform = mat4();
+        model_transform = mult(model_transform, translation(0, 17, 1.5));
+        model_transform = mult(model_transform, scale(2, 1, 2));
+        shapes_in_use.cube.draw(graphics_state, model_transform, portal);
+        */
+      }
+      else if(map_selector == 1)// mapNum would be some non-zero here
+      {
+        console.log("we go into other map");
+        this.wallsArray =
+        [ [9,6],[9,7],[9,8],[9,9],[9,10],[9,11],[9,12],[9,13],[9,14], // Right hook long vertical
+          [8,6],[7,6],[6,6],[5,6],[5,6],[4,6],[3,6],                  // Right hook medium horizontal
+          [3,7],[3,8],[3,9],[3,10],                                   // Right hook short vertical
+          [4,10],[5,10],                                              // Right hook short horizontal
+
+          [-9,6],[-9,7],[-9,8],[-9,9],[-9,10],[-9,11],[-9,12],[-9,13],[-9,14], // Left hook long vertical
+          [-8,6],[-7,6],[-6,6],[-5,6],[-5,6],[-4,6],[-3,6],                    // Left hook medium horizontal
+          [-3,7],[-3,8],[-3,9],[-3,10],                                        // Left hook short vertical
+          [-4,10],[-5,10],                                                     // Left hook shrot horizontal
+
+          [12,-2],[11,-2],[10,-2],[9,-2],[8,-2],[7,-2],[6,-2],[5,-2],          // Right question mark long horizontal
+          [5,-3],[5,-4],[5,-5],[5,-6],[5,-7],                                  // Right question mark medium vertical
+          [6,-7],[7,-7],[8,-7],[9,-7],                                         // Right question mark short horizontal
+          [9,-8],[9,-9],[9,-10],[9,-11],                                       // Right question mark long vertical
+
+          [-12,-2],[-11,-2],[-10,-2],[-9,-2],[-8,-2],[-7,-2],[-6,-2],[-5,-2],  // Left question mark long horizontal
+          [-5,-3],[-5,-4],[-5,-5],[-5,-6],[-5,-7],                             // Left question mark medium vertical
+          [-6,-7],[-7,-7],[-8,-7],[-9,-7],                                     // Left question mark short horizontal
+          [-9,-8],[-9,-9],[-9,-10],[-9,-11],                                   // Left question mark long vertical
+
+          [-12, 12],[-12,11],[-12,8],[-12,7],[-12,4],[-12,3],                  // Top left dashes
+          [12, 12],[12,11],[12,8],[12,7],[12,4],[12,3],                        // Top right dashes
+
+          [-14,-3],[-14,-4],[-14,-7],[-14,-8],[-14,-11],[-14,-12],             // Bottom left dashes
+          [14,-3],[14,-4],[14,-7],[14,-8],[14,-11],[14,-12],             // Bottom right dashes
+
+          [-1,-7],[-1,-12],[0,-7],[0,-12],[1,-7],[1,-12],
+
+          [-6,1],[-5,1],[-4,1],[4,1],[5,1],[6,1]
+
+          ];
+
+        /*
+        this.initializeWalls( this.wallsArray );    
+
+        model_transform = mat4();
+        model_transform = mult(model_transform, translation(0, 17, 1.5));
+        model_transform = mult(model_transform, scale(2, 1, 2));
+        shapes_in_use.cube.draw(graphics_state, model_transform, portal);
+        */
+      }
 
       this.initializeWalls( this.wallsArray );    
 
-      model_transform = mat4();
-      model_transform = mult(model_transform, translation(0, 17, 1.5));
-      model_transform = mult(model_transform, scale(2, 1, 2));
-      shapes_in_use.cube.draw(graphics_state, model_transform, portal);   
+        model_transform = mat4();
+        model_transform = mult(model_transform, translation(0, 17, 1.5));
+        model_transform = mult(model_transform, scale(2, 1, 2));
+        shapes_in_use.cube.draw(graphics_state, model_transform, portal);
 
       //TODO: spawn new actors
       if(this.enemySpawnTimer < 0 && this.enemies.length < this.maxEnemies){
@@ -359,7 +434,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
               case 3:
                 XCoord = 0; YCoord = -16; break;
             }
-          } while (timeOut++ < 5 && (this.checkPlayerCollision(vec4(XCoord,YCoord,0,1),3) || this.checkEnemyCollision(null,vec4(XCoord,YCoord,0,1),3) != -1));
+          } while (timeOut++ < 5 || this.checkPlayerCollision(vec4(XCoord,YCoord,0,1),3) || this.checkEnemyCollision(null,vec4(XCoord,YCoord,0,1),3) != -1);
           /*
           do{
           randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
@@ -394,7 +469,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
             randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
             randomY = Math.random()*(this.yMax-this.yMin)+this.yMin;
           } while (timeOut < 5 && (this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) ||
-              this.collidesWithWall(vec4(randomX,randomY,0,1),3) ||
+              !this.collidesWithWall(vec4(randomX,randomY,0,1),3) ||
                (!this.canSpawnCrates(null, vec4(randomX, randomY, 0, 1), AMMO_SPAWN_RADIUS))) );    
 
           // Makes sure that browser doesn't say
@@ -465,10 +540,13 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
             if(this.mouse.anchor){
               if(this.mouse.from_center[0] > -310 && this.mouse.from_center[0] < 320 && this.mouse.from_center[1] > -50 && this.mouse.from_center[1] < 70)
                 this.gameStart = true;
+              console.log("IS ANYTHING WORKING");
             }
         }                
         else if(this.player.alive){
-          this.animateGame(time);
+          console.log("we are attempting to call animateGame");
+          var map = 1
+          this.animateGame(time, map);
         }
         else{
             this.renderScreen("screens/end.jpg");
@@ -535,20 +613,16 @@ Declare_Any_Class( "Player",
       this.buff_timer = 5.0;
       },
     'attack': function(){
-  // Cannot shoot if player has no ammo 
+  // Cannot shoot if player has no ammo
+  var audio = new Audio('Audio/gunshot.mp3');
+  
   if(this.ammo <= 0 || !this.alive )
     return;
 	if(this.autoAttackTimer <= 0){
 	    this.world.projectiles.push(new Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
 	    this.autoAttackTimer = ATTACK_TIMER;
       this.ammo--;
-      if (!this.world.mute)
-      {
-        console.log("This mute is " + this.world.mute);
-        var audio = new Audio('Audio/gunshot.mp3');
-        audio.play();
-      }
-
+      audio.play();
       console.log("My # ammo has changed to: " + this.ammo);
 	}
     },
@@ -570,7 +644,7 @@ Declare_Any_Class( "Player",
 	  }
 	  //try going to a new position
 	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
-	  if(this.world.checkEnemyCollision(this,newPosition,0.7) != -1 || this.world.collidesWithWall(newPosition,0.8)){
+	  if(this.world.checkEnemyCollision(this,newPosition,0.7) != -1 || !this.world.collidesWithWall(newPosition,0.8)){
 	      //do nothing
 	  }
 
