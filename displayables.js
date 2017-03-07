@@ -473,7 +473,7 @@ Declare_Any_Class( "Player",
   if(this.ammo <= 0 || !this.alive )
     return;
 	if(this.autoAttackTimer <= 0){
-	    this.world.projectiles.push(new Projectile(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
+	    this.world.projectiles.push(new Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
 	    this.autoAttackTimer = ATTACK_TIMER;
       this.ammo--;
       audio.play();

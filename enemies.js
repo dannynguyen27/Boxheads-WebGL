@@ -1,3 +1,6 @@
+const ENEMY_SHOOT_RANGE = 7;
+const ENEMY_MELEE_RANGE = 1.1;
+
 Declare_Any_Class( "Enemy", 
   { 
   	'construct': function( worldHandle, modelTransMat=mat4(), initHealth=3)
@@ -41,17 +44,11 @@ Declare_Any_Class( "Enemy",
 	    if(this.health <= 0)
 	       this.dying = true;
     },
-    'attack':function(delta_time) {
-    	console.log("Default attack");
-		this.velocity = vec4(0,0,0,0);
-		if (this.autoAttackTimer <= 0)
-		{
-	    	this.world.player.changeHealth(-1);
-    		this.autoAttackTimer = 1/1.2; //attack speed for bots 
-      	}
-      	else {
-	  		this.autoAttackTimer -= delta_time/1000;
-      	}
+    'canAttack': function(delta_time) {
+    	// This is empty as it will be overridden
+    },
+    'attack': function(delta_time) {
+    	// This is empty as it will be overridden
     },
     'display': function(delta_time)
     {
@@ -64,7 +61,7 @@ Declare_Any_Class( "Enemy",
 			this.restTimer -= delta_time/1000;
 	  	}
     	//TODO: attack if near player
-    	else if (this.world.checkPlayerCollision(this.position,1.1))
+    	else if (this.canAttack(delta_time))
     	{
     		this.attack(delta_time);
 	  	}
@@ -219,7 +216,14 @@ Declare_Any_Class( "Enemy",
 
 Declare_Any_Class( "Normal_Enemy",
 {
-    'attack':function(delta_time) {
+	'canAttack': function()
+	{
+		if (this.world.checkPlayerCollision(this.position, ENEMY_MELEE_RANGE))
+			return true;
+		return false;
+	},
+    'attack': function(delta_time) 
+    {
     	console.log("normal attack");
 		this.velocity = vec4(0,0,0,0);
 		if (this.autoAttackTimer <= 0)
@@ -245,13 +249,28 @@ Declare_Any_Class( "Normal_Enemy",
 
 Declare_Any_Class( "Devil_Enemy", 
   { 
-	'attack':function(delta_time) {
+  	'canAttack': function() 
+  	{
+  		if (this.world.checkPlayerCollision(this.position, ENEMY_SHOOT_RANGE))
+  			return true;
+  		return false;
+  	},
+	'attack': function(delta_time) 
+	{
     	console.log("Devil attack");
 		this.velocity = vec4(0,0,0,0);
 		if (this.autoAttackTimer <= 0)
 		{
-	    	this.world.player.changeHealth(-1);
-    		this.autoAttackTimer = 1/1.2; //attack speed for bots 
+			if (this.world.checkPlayerCollision(this.position, ENEMY_SHOOT_RANGE))
+			{
+				this.world.projectiles.push(new Enemy_Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
+				console.log("SHOOTING");
+			}
+			else
+			{
+		    	this.world.player.changeHealth(-1);
+			}
+			this.autoAttackTimer = 1/1.2; //attack speed for bots 				
       	}
       	else {
 	  		this.autoAttackTimer -= delta_time/1000;
