@@ -147,7 +147,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         this.ammoCrate = []; this.crateSpawnTimer = 0; this.maxCrates = MAX_AMMO_CRATES;
       	this.mapObjects = [];
       	//set up the (static!) world objects
-      	shapes_in_use.groundPlane = new Square();
+      	shapes_in_use.groundPlane = new Floor();
       	//setup boundary
       	this.xMin=-16; this.xMax=16;
       	this.yMin=-16; this.yMax=16;
@@ -401,7 +401,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       }   
 
       //draw the ground
-      shapes_in_use.groundPlane.draw(graphics_state, scale(1000,1000,1000), ground);    
+      shapes_in_use.groundPlane.draw(graphics_state, scale(100,100,100), ground);    
 
       //let player + each actor do their thing
       this.player.display(graphics_state.animation_delta_time);
@@ -440,12 +440,9 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         /**********************************
         Start coding down here!!!!
         **********************************/ 
-
-        //var saved_graphics_state = this.shared_scratchpad.graphics_state;
-
         // initialize start screen
         if(!this.gameStart){
-            var title = new Material( Color( 0,0,0,1 ), .8, .4, 0, 0, "screens/title.jpg" ), // Omit the final (string) parameter if you want no texture
+            var title = new Material( Color( 0,0,0,1 ), .8, .4, 0, 0, "screens/title.jpg" );
             model_transform = mat4();
             model_transform = mult(model_transform, rotation(180, 0, 0, 1));  // rotate square
             model_transform = mult(model_transform, rotation(130, 1, 0, 0));  // tilt square to align with camera
@@ -454,7 +451,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
             shapes_in_use.flat_square.draw(graphics_state, model_transform, title);       
     
             if(this.mouse.anchor){
-              console.log(this.mouse.from_center[0], this.mouse.from_center[1]);
               if(this.mouse.from_center[0] > -310 && this.mouse.from_center[0] < 320 && this.mouse.from_center[1] > -50 && this.mouse.from_center[1] < 70)
                 this.gameStart = true;
             }
@@ -530,7 +526,7 @@ Declare_Any_Class( "Player",
   if(this.ammo <= 0 || !this.alive )
     return;
 	if(this.autoAttackTimer <= 0){
-	    this.world.projectiles.push(new Projectile(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
+	    this.world.projectiles.push(new Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
 	    this.autoAttackTimer = ATTACK_TIMER;
       this.ammo--;
       audio.play();
