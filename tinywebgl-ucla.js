@@ -244,7 +244,7 @@ Declare_Any_Class( "Canvas_Manager",                      // This class performs
         if (  !gl && canvas.parentNode ) canvas.parentNode.innerHTML = "Canvas failed to make a WebGL context.";
 
         gl.clearColor.apply( gl, background_color );    // Tell the GPU which color to clear the canvas with each frame
-        gl.viewport( 0, 0, canvas.width, canvas.height );
+  
         gl.enable( gl.DEPTH_TEST );
         gl.enable( gl.BLEND );
         gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );

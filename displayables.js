@@ -110,7 +110,7 @@ Declare_Any_Class( "Camera",     // An example of a displayable object that our 
         user_interface_string_manager.string_map["facing" ] = "Facing: "       + ( ( z_axis[0] > 0 ? "West " : "East ") + ( z_axis[1] > 0 ? "Down " : "Up " ) + ( z_axis[2] > 0 ? "North" : "South" ) );
       },
     'display': function( time )
-      {/* var leeway = 70,  degrees_per_frame = .0004 * this.graphics_state.animation_delta_time,
+      { /* var leeway = 70,  degrees_per_frame = .0004 * this.graphics_state.animation_delta_time,
                           meters_per_frame  =   .01 * this.graphics_state.animation_delta_time;
         // Third-person camera mode: Is a mouse drag occurring?
         if( this.mouse.anchor )
@@ -138,25 +138,62 @@ Declare_Any_Class( "Camera",     // An example of a displayable object that our 
 Declare_Any_Class( "World",  // An example of a displayable object that our class Canvas_Manager can manage.  This one draws the scene's 3D shapes.
   { 'construct': function( context )
       { this.shared_scratchpad    = context.shared_scratchpad;
-	this.shared_scratchpad.animate = 1;
-	//TODO: initialize the actors contained in the world
-	this.level = 1;
-	this.player = new Player(this);
-	this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 30;
-	this.projectiles = [];
-  this.ammoCrate = []; this.crateSpawnTimer = 0; this.maxCrates = MAX_AMMO_CRATES;
-	this.mapObjects = [];
-	//set up the (static!) world objects
-	shapes_in_use.groundPlane = new Square();
-	//setup boundary
-	this.xMin=-16; this.xMax=16;
-	this.yMin=-16; this.yMax=16;
+      	this.shared_scratchpad.animate = 1;
+      	//TODO: initialize the actors contained in the world
+      	this.level = 1;
+      	this.player = new Player(this);
+      	this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 30;
+      	this.projectiles = [];
+        this.ammoCrate = []; this.crateSpawnTimer = 0; this.maxCrates = MAX_AMMO_CRATES;
+      	this.mapObjects = [];
+      	//set up the (static!) world objects
+      	shapes_in_use.groundPlane = new Square();
+      	//setup boundary
+      	this.xMin=-16; this.xMax=16;
+      	this.yMin=-16; this.yMax=16;
 
-  this.wallsArray = [];
-	//TODO: set up geometry shared by all actors
-	shapes_in_use.cube = new Cube();
-	shapes_in_use.sphere = new Subdivision_Sphere(3);
-  shapes_in_use.oriented_cube = new Oriented_Cube();
+        this.gameStart = false;     
+
+        this.wallsArray = [];
+      	//TODO: set up geometry shared by all actors
+      	shapes_in_use.cube = new Cube();
+      	shapes_in_use.sphere = new Subdivision_Sphere(3);
+        shapes_in_use.oriented_cube = new Oriented_Cube();      
+        shapes_in_use.square = new Square();
+        shapes_in_use.flat_square           = Square.prototype.auto_flat_shaded_version();
+
+        // *** Mouse controls: ***
+        this.mouse = { "from_center": vec2() };
+        var mouse_position = function( e ) { return vec2( e.clientX - canvas.width/2, e.clientY - canvas.height/2 ); };   // Measure mouse steering, for rotating the flyaround camera.
+        canvas.addEventListener( "mouseup",   ( function(self) { return function(e) { e = e || window.event;    self.mouse.anchor = undefined;              } } ) (this), false );
+        canvas.addEventListener( "mousedown", ( function(self) { return function(e) { e = e || window.event;    self.mouse.anchor = mouse_position(e);      } } ) (this), false );
+        canvas.addEventListener( "mousemove", ( function(self) { return function(e) { e = e || window.event;    self.mouse.from_center = mouse_position(e); } } ) (this), false );
+        canvas.addEventListener( "mouseout",  ( function(self) { return function(e) { self.mouse.from_center = vec2(); }; } ) (this), false );    // Stop steering if the mouse leaves the canvas.
+             
+        /*
+        pickBuffer = gl.createFramebuffer();
+        gl.bindFramebuffer( gl.FRAMEBUFFER, pickBuffer );
+        pickBuffer.width = canvas.width; // These should match your canvas
+        pickBuffer.height = canvas.height;
+        pickTexture = gl.createTexture();
+        gl.bindTexture( gl.TEXTURE_2D, pickTexture );
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
+        gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, pickBuffer.width, pickBuffer.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null );
+        depthBuffer = gl.createRenderbuffer();
+        gl.bindRenderbuffer( gl.RENDERBUFFER, depthBuffer );
+        gl.renderbufferStorage( gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, pickBuffer.width, pickBuffer.height );
+        gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, pickTexture, 0 );
+        gl.framebufferRenderbuffer( gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer );
+
+        gl.viewport( 0, 0, canvas.width, canvas.height );
+        gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+        // go back to default frame buffer
+        gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+        gl.viewport( 0, 0, canvas.width, canvas.height );
+        gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+        */
       },
     'init_keys': function( controls )   // init_keys():  Define any extra keyboard shortcuts here
       {
@@ -218,6 +255,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	     newPosition[1]>=this.yMin && newPosition[1]<=this.yMax
     },
     'initializeWalls': function(wallsArray){
+      wall = new Material( Color( 0,0,0,1 ), 0.3, 0.7, 0, 10, "Visuals/simple_outline.jpg");
       for(var i = 0; i < wallsArray.length; i++){
         model_transform = mat4();
         model_transform = mult(model_transform, translation(wallsArray[i][0], wallsArray[i][1], 0));
@@ -225,7 +263,167 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         shapes_in_use.cube.draw(this.shared_scratchpad.graphics_state, model_transform, wall);
       }
     },
+    'animateGame': function(time){   
+      var graphics_state  = this.shared_scratchpad.graphics_state,
+          model_transform = mat4(); 
 
+      // *** Materials: 
+      // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
+      var ground = new Material( Color( 0,0,0,1 ), .8, .4, 0, 0, "Visuals/ground_texture.jpg" ), // Omit the final (string) parameter if you want no texture
+          wall = new Material( Color( 0,0,0,1 ), 0.3, 0.7, 0, 10, "Visuals/simple_outline.jpg");
+          portal = new Material( Color( 0.3,0.3,0.3,1 ), 0.5, 0.4, 0, 10, "Visuals/portal.jpg");
+          placeHolder = new Material( Color(0,0,0,0), 0,0,0,0, "Blank" );
+
+      for(var i = this.xMin-1; i < this.xMax+2; i++){
+        if(i > -2 && i < 2)           //  opening for enemies to walk through
+          continue;
+        model_transform = mat4();
+        model_transform = mult(model_transform, translation(this.xMin-1, i, 0));      // initialize walls for left side
+        model_transform = mult(model_transform, scale(0.8, 1, 5));
+        shapes_in_use.cube.draw(graphics_state, model_transform, wall);
+      }
+      for(var i = this.yMin-1; i < this.yMax+2; i++){                                          // front side
+        if(i > -2 && i < 2)
+          continue;
+        model_transform = mat4();
+        model_transform = mult(model_transform, translation(i, this.yMin-1, 0));
+        model_transform = mult(model_transform, scale(1, 0.8, 5));
+        shapes_in_use.cube.draw(graphics_state, model_transform, wall);
+      }
+      for(var i = this.xMin-1; i < this.xMax+2; i++){                                          // right side
+        if(i > -2 && i < 2)
+          continue;
+        model_transform = mat4();
+        model_transform = mult(model_transform, translation(this.xMax+1, i, 0));
+        model_transform = mult(model_transform, scale(0.8, 1, 5));
+        shapes_in_use.cube.draw(graphics_state, model_transform, wall);
+      }
+      for(var i = this.yMin-1; i < this.yMax+2; i++){                                          // back side
+        if(i > -2 && i < 2)
+          continue;
+        model_transform = mat4();
+        model_transform = mult(model_transform, translation(i, this.yMax+1, 0));
+        model_transform = mult(model_transform, scale(1, 0.8, 5));
+        shapes_in_use.cube.draw(graphics_state, model_transform, wall);
+      }   
+
+      this.wallsArray =            // castle layout
+      [ [-10,12],[-9,12],[-8,12],[-7,12],[-6,12],[-5,12],[-4,12],[-3,12],[-2,12],       // start inner rim
+        [-10,11],[-10,10],[-10,9],[-10,8],[-10,7],[-10,6],[-10,5],[-10,4],[-10,3],[-10,2],
+        [10,12],[9,12],[8,12],[7,12],[6,12],[5,12],[4,12],[3,12],[2,12],
+        [10,11],[10,10],[10,9],[10,8],[10,7],[10,6],[10,5],[10,4],[10,3],[10,2],
+        [-10,-11],[-10,-10],[-10,-9],[-10,-8],[-10,-7],[-10,-6],[-10,-5],[-10,-4],[-10,-3],[-10,-2],
+        [-10,-12],[-9,-12],[-8,-12],[-7,-12],[-6,-12],[-5,-12],[-4,-12],[-3,-12],[-2,-12],
+        [10,-12],[9,-12],[8,-12],[7,-12],[6,-12],[5,-12],[4,-12],[3,-12],[2,-12],
+        [10,-11],[10,-10],[10,-9],[10,-8],[10,-7],[10,-6],[10,-5],[10,-4],[10,-3],[10,-2],    // end inner rim    
+
+        [-4,8],[-4,7],[-4,6],[-5,6],[-6,6],
+        [-4,-8],[-4,-7],[-4,-6],[-5,-6],[-6,-6],
+        [4,8],[4,7],[4,6],[5,6],[6,6],
+        [4,-8],[4,-7],[4,-6],[5,-6],[6,-6],
+        
+        [-5,3],[-5,2],[-5,1],[-5,0],[-5,-1],[-5,-2],[-5,-3],
+        [5,3],[5,2],[5,1],[5,0],[5,-1],[5,-2],[5,-3],       
+
+        [-2,3],[-1,3],[2,3],
+        [-2,2],[-2,1],[-2,0],[-2,-1],[-2,-2],[2,2],[2,1],[2,0],[2,-1],[2,-2],
+        [-2,-3],[-1,-3],[0,-3],[1,-3],[2,-3]
+        
+      ];    
+
+      this.initializeWalls( this.wallsArray );    
+
+      model_transform = mat4();
+      model_transform = mult(model_transform, translation(0, 17, 1.5));
+      model_transform = mult(model_transform, scale(2, 1, 2));
+      shapes_in_use.cube.draw(graphics_state, model_transform, portal);   
+
+      //TODO: spawn new actors
+      if(this.enemySpawnTimer < 0 && this.enemies.length < this.maxEnemies){
+          // This currently spawns enemies in the corners of the map
+          var XCoord, YCoord;
+          var timeOut = 0;
+      do 
+          {
+            var random = Math.floor(Math.random() * 4);
+              switch (random) {
+              case 0:
+                XCoord = 0; YCoord = 16; break;
+              case 1:
+                XCoord = -16; YCoord = 0; break;
+              case 2:
+                XCoord = 16; YCoord = 0; break;
+              case 3:
+                XCoord = 0; YCoord = -16; break;
+            }
+          } while (timeOut++ < 5 || this.checkPlayerCollision(vec4(XCoord,YCoord,0,1),3) || this.checkEnemyCollision(null,vec4(XCoord,YCoord,0,1),3) != -1);
+          /*
+          do{
+          randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
+          randomY = Math.random()*(this.yMax-this.yMin)+this.yMin;    
+          
+          }
+          while(this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) || 
+          this.checkEnemyCollision(null,vec4(randomX,randomY,0,1),3)!= -1); */
+          this.enemies.push(new Enemy(this, translation(XCoord,YCoord,0)));
+          //var audio = new Audio('init_dog.mp3');
+          //audio.play();
+          this.enemySpawnTimer = 4.0;//TODO: update this with a formula later
+      }
+      else{
+          this.enemySpawnTimer -= graphics_state.animation_delta_time/1000;
+      }   
+
+      // Spawn Ammo Crates
+      if(this.crateSpawnTimer < 0 && this.ammoCrate.length < this.maxCrates){
+          // Spawn at random locations, make sure that crates do not bunch together
+          var randomX;
+          var randomY;
+          var timeOut = 0;
+          do{
+            timeOut++;
+            randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
+            randomY = Math.random()*(this.yMax-this.yMin)+this.yMin;
+          } while (timeOut < 5 && (this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) ||
+              !this.collidesWithWall(vec4(randomX,randomY,0,1),3) ||
+               (!this.canSpawnCrates(null, vec4(randomX, randomY, 0, 1), AMMO_SPAWN_RADIUS))) );    
+
+          // Makes sure that browser doesn't say
+          if (timeOut < 5)
+          {
+            var randomType = Math.floor(Math.random() * NUM_TYPES_OF_CRATES);
+            this.ammoCrate.push(new AmmoCrate(this, randomType, translation(randomX,randomY,0)));
+            this.crateSpawnTimer = 2.0; //TODO: update this with a formula later
+          }
+      }
+      else{
+          this.crateSpawnTimer -= graphics_state.animation_delta_time/1000;
+      }   
+
+      //draw the ground
+      shapes_in_use.groundPlane.draw(graphics_state, scale(1000,1000,1000), ground);    
+
+      //let player + each actor do their thing
+      this.player.display(graphics_state.animation_delta_time);
+      for (var i=0;i<this.enemies.length;i++){
+          if(this.enemies[i].alive){
+          this.enemies[i].display(graphics_state.animation_delta_time);
+          }
+          else this.enemies.splice(i,1);
+      }
+      for (var i=0;i<this.projectiles.length;i++){
+          if(this.projectiles[i].alive){
+          this.projectiles[i].display(graphics_state.animation_delta_time);
+          }
+          else this.projectiles.splice(i,1);
+      }
+      for (var i = 0; i < this.ammoCrate.length; i++){
+        if(this.ammoCrate[i].alive){
+          this.ammoCrate[i].display(graphics_state.animation_delta_time);
+        }
+        else this.ammoCrate.splice(i,1);
+      }
+    },
     'display': function(time)
       {
         var graphics_state  = this.shared_scratchpad.graphics_state,
@@ -239,166 +437,32 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	      //One light to illuminate them all
         graphics_state.lights.push( new Light( vec4(  0,  0,  10, 1 ), Color(1, 1, 1, 1 ), 1000 ) );
 
-        // *** Materials: 
-        // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
-        var ground = new Material( Color( 0,0,0,1 ), .8, .4, 0, 0, "Visuals/ground_texture.jpg" ), // Omit the final (string) parameter if you want no texture
-              placeHolder = new Material( Color(0,0,0,0), 0,0,0,0, "Blank" );
-              wall = new Material( Color( 0,0,0,1 ), 0.3, 0.7, 0, 10, "Visuals/simple_outline.jpg");
-              portal = new Material( Color( 0.3,0.3,0.3,1 ), 0.5, 0.4, 0, 10, "Visuals/portal.jpg");
-
         /**********************************
         Start coding down here!!!!
         **********************************/ 
 
-    for(var i = this.xMin-1; i < this.xMax+2; i++){
-      if(i > -2 && i < 2)           //  opening for enemies to walk through
-        continue;
-      model_transform = mat4();
-      model_transform = mult(model_transform, translation(this.xMin-1, i, 0));      // initialize walls for left side
-      model_transform = mult(model_transform, scale(0.8, 1, 5));
-      shapes_in_use.cube.draw(graphics_state, model_transform, wall);
-    }
-    for(var i = this.yMin-1; i < this.yMax+2; i++){                                          // front side
-      if(i > -2 && i < 2)
-        continue;
-      model_transform = mat4();
-      model_transform = mult(model_transform, translation(i, this.yMin-1, 0));
-      model_transform = mult(model_transform, scale(1, 0.8, 5));
-      shapes_in_use.cube.draw(graphics_state, model_transform, wall);
-    }
-    for(var i = this.xMin-1; i < this.xMax+2; i++){                                          // right side
-      if(i > -2 && i < 2)
-        continue;
-      model_transform = mat4();
-      model_transform = mult(model_transform, translation(this.xMax+1, i, 0));
-      model_transform = mult(model_transform, scale(0.8, 1, 5));
-      shapes_in_use.cube.draw(graphics_state, model_transform, wall);
-    }
-    for(var i = this.yMin-1; i < this.yMax+2; i++){                                          // back side
-      if(i > -2 && i < 2)
-        continue;
-      model_transform = mat4();
-      model_transform = mult(model_transform, translation(i, this.yMax+1, 0));
-      model_transform = mult(model_transform, scale(1, 0.8, 5));
-      shapes_in_use.cube.draw(graphics_state, model_transform, wall);
-    }
+        //var saved_graphics_state = this.shared_scratchpad.graphics_state;
 
-    this.wallsArray =            // castle layout
-    [ [-10,12],[-9,12],[-8,12],[-7,12],[-6,12],[-5,12],[-4,12],[-3,12],[-2,12],       // start inner rim
-      [-10,11],[-10,10],[-10,9],[-10,8],[-10,7],[-10,6],[-10,5],[-10,4],[-10,3],[-10,2],
-      [10,12],[9,12],[8,12],[7,12],[6,12],[5,12],[4,12],[3,12],[2,12],
-      [10,11],[10,10],[10,9],[10,8],[10,7],[10,6],[10,5],[10,4],[10,3],[10,2],
-      [-10,-11],[-10,-10],[-10,-9],[-10,-8],[-10,-7],[-10,-6],[-10,-5],[-10,-4],[-10,-3],[-10,-2],
-      [-10,-12],[-9,-12],[-8,-12],[-7,-12],[-6,-12],[-5,-12],[-4,-12],[-3,-12],[-2,-12],
-      [10,-12],[9,-12],[8,-12],[7,-12],[6,-12],[5,-12],[4,-12],[3,-12],[2,-12],
-      [10,-11],[10,-10],[10,-9],[10,-8],[10,-7],[10,-6],[10,-5],[10,-4],[10,-3],[10,-2],    // end inner rim
-
-      [-4,8],[-4,7],[-4,6],[-5,6],[-6,6],
-      [-4,-8],[-4,-7],[-4,-6],[-5,-6],[-6,-6],
-      [4,8],[4,7],[4,6],[5,6],[6,6],
-      [4,-8],[4,-7],[4,-6],[5,-6],[6,-6],
-      
-      [-5,3],[-5,2],[-5,1],[-5,0],[-5,-1],[-5,-2],[-5,-3],
-      [5,3],[5,2],[5,1],[5,0],[5,-1],[5,-2],[5,-3],   
-
-      [-2,3],[-1,3],[2,3],
-      [-2,2],[-2,1],[-2,0],[-2,-1],[-2,-2],[2,2],[2,1],[2,0],[2,-1],[2,-2],
-      [-2,-3],[-1,-3],[0,-3],[1,-3],[2,-3]
-      
-    ];
-
-    this.initializeWalls( this.wallsArray );
-
-    model_transform = mat4();
-    model_transform = mult(model_transform, translation(0, 17, 1.5));
-    model_transform = mult(model_transform, scale(2, 1, 2));
-    shapes_in_use.cube.draw(graphics_state, model_transform, portal);
-
-	  //TODO: spawn new actors
-	  if(this.enemySpawnTimer < 0 && this.enemies.length < this.maxEnemies){
-	      // This currently spawns enemies in the corners of the map
-        var XCoord, YCoord;
-        var timeOut = 0;
-	do 
-        {
-          var random = Math.floor(Math.random() * 4);
-            switch (random) {
-            case 0:
-              XCoord = 0; YCoord = 16; break;
-            case 1:
-              XCoord = -16; YCoord = 0; break;
-            case 2:
-              XCoord = 16; YCoord = 0; break;
-            case 3:
-              XCoord = 0; YCoord = -16; break;
-          }
-        } while (timeOut++ < 5 || this.checkPlayerCollision(vec4(XCoord,YCoord,0,1),3) || this.checkEnemyCollision(null,vec4(XCoord,YCoord,0,1),3) != -1);
-	      /*
-        do{
-		    randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
-		    randomY = Math.random()*(this.yMax-this.yMin)+this.yMin;
-
-	      }
-	      while(this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) || 
-		    this.checkEnemyCollision(null,vec4(randomX,randomY,0,1),3)!= -1); */
-	      this.enemies.push(new Enemy(this, translation(XCoord,YCoord,0)));
-        //var audio = new Audio('init_dog.mp3');
-        //audio.play();
-	      this.enemySpawnTimer = 4.0;//TODO: update this with a formula later
-	  }
-	  else{
-	      this.enemySpawnTimer -= graphics_state.animation_delta_time/1000;
-	  }
-
-    // Spawn Ammo Crates
-    if(this.crateSpawnTimer < 0 && this.ammoCrate.length < this.maxCrates){
-        // Spawn at random locations, make sure that crates do not bunch together
-        var randomX;
-        var randomY;
-        var timeOut = 0;
-        do{
-          timeOut++;
-          randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
-          randomY = Math.random()*(this.yMax-this.yMin)+this.yMin;
-        } while (timeOut < 5 && (this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) ||
-            !this.collidesWithWall(vec4(randomX,randomY,0,1),3) ||
-             (!this.canSpawnCrates(null, vec4(randomX, randomY, 0, 1), AMMO_SPAWN_RADIUS))) );
-
-        // Makes sure that browser doesn't say
-        if (timeOut < 5)
-        {
-          var randomType = Math.floor(Math.random() * NUM_TYPES_OF_CRATES);
-          this.ammoCrate.push(new AmmoCrate(this, randomType, translation(randomX,randomY,0)));
-          this.crateSpawnTimer = 2.0; //TODO: update this with a formula later
+        // initialize start screen
+        if(!this.gameStart){
+            var title = new Material( Color( 0,0,0,1 ), .8, .4, 0, 0, "screens/title.jpg" ), // Omit the final (string) parameter if you want no texture
+            model_transform = mat4();
+            model_transform = mult(model_transform, rotation(180, 0, 0, 1));  // rotate square
+            model_transform = mult(model_transform, rotation(130, 1, 0, 0));  // tilt square to align with camera
+            model_transform = mult(model_transform, scale(1.875, 1.055, 1));  // fix aspect ratio
+            model_transform = mult(model_transform, scale(4.8, 4.8, 4.8));    // scale to camera                         THIS IS REALLY JANK lOl
+            shapes_in_use.flat_square.draw(graphics_state, model_transform, title);       
+    
+            if(this.mouse.anchor){
+              console.log(this.mouse.from_center[0], this.mouse.from_center[1]);
+              if(this.mouse.from_center[0] > -310 && this.mouse.from_center[0] < 320 && this.mouse.from_center[1] > -50 && this.mouse.from_center[1] < 70)
+                this.gameStart = true;
+            }
+        }                
+        else {
+          this.animateGame(time);
         }
-    }
-    else{
-        this.crateSpawnTimer -= graphics_state.animation_delta_time/1000;
-    }
-
-	  //draw the ground
-	  shapes_in_use.groundPlane.draw(graphics_state, scale(1000,1000,1000), ground);
-
-	  //let player + each actor do their thing
-	  this.player.display(graphics_state.animation_delta_time);
-	  for (var i=0;i<this.enemies.length;i++){
-	      if(this.enemies[i].alive){
-	      this.enemies[i].display(graphics_state.animation_delta_time);
-	      }
-	      else this.enemies.splice(i,1);
-	  }
-    for (var i=0;i<this.projectiles.length;i++){
-        if(this.projectiles[i].alive){
-        this.projectiles[i].display(graphics_state.animation_delta_time);
-        }
-        else this.projectiles.splice(i,1);
-    }
-    for (var i = 0; i < this.ammoCrate.length; i++){
-      if(this.ammoCrate[i].alive){
-        this.ammoCrate[i].display(graphics_state.animation_delta_time);
-      }
-      else this.ammoCrate.splice(i,1);
-    }
+        
       }
   }, Animation );
 

@@ -42,6 +42,8 @@ index.html - The web page document containing the canvas (drawing surface), that
       texture_filenames_to_load.push( "Visuals/Crates/ammo.jpg");
       texture_filenames_to_load.push( "Visuals/Crates/health.jpg");
 
+      texture_filenames_to_load.push( "screens/title.jpg");
+
       for( var i = 0; i < texture_filenames_to_load.length; i++ ) textures_in_use[ texture_filenames_to_load[i] ] = ( new Texture( texture_filenames_to_load[i], true ) );
       
       main_canvas.register_display_object( new Debug_Screen     ( main_canvas ) );  // We instantiate some of our custom "Animation" subclasses and register these displayable
