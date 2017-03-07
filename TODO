@@ -2,4 +2,8 @@
 2) Bots can get clumped together and won't move
 3) If devil is shooting, and you're within radius, he won't check to see if you're in line of sight
 4) Levels
-5) Mute
+5) Enemies can still shoot once after they're dead
+6) Devils shoot in same direction even if player is in opposite direction. Fix where devils are pointing to.
+
+DONE
+1) Mute

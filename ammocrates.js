@@ -42,20 +42,29 @@ Declare_Any_Class( "AmmoCrate",
       {
         case AMMO_BOX:
           this.world.player.changeAmmo(AMMO_PER_CRATE);
-          audio = new Audio('Audio/reload.mp3');
-          audio.play();
+          if (!this.world.mute)
+          {
+            audio = new Audio('Audio/reload.mp3');
+            audio.play();
+          }
           this.alive = false;
           return;
         case HEALTH_BOX:
           this.world.player.changeHealth(20);
-          audio = new Audio('Audio/health.mp3');
-          audio.play();
+          if (!this.world.mute)
+          {
+            audio = new Audio('Audio/health.mp3');
+            audio.play();
+          }
           this.alive = false;
           return;
         case SPEED_BOX:
           this.world.player.boostSpeed(2);
-          audio = new Audio('Audio/thunder.mp3');
-          audio.play();
+          if (!this.world.mute)
+          {
+            audio = new Audio('Audio/thunder.mp3');
+            audio.play();
+          } 
           this.alive = false;
           return;
         case TROLL_BOX:

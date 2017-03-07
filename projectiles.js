@@ -51,6 +51,10 @@ Declare_Any_Class( "Projectile",
 		{
 			this.alive = false;
 		}
+		else if (this.world.collidesWithWall(newPosition, 0.5))
+		{
+			this.alive = false;
+		}
 		else if (this.world.checkBounds(newPosition))
 		{
 			this.position=newPosition;
@@ -77,8 +81,11 @@ Declare_Any_Class( "Bullet",
 		{
 			this.world.enemies[enemyID].changeHealth(-1);
 			this.world.enemies[enemyID].recoil();
-			var audio = new Audio('Audio/dog_hurt.mp3');
-			audio.play();
+			if (!this.world.mute)
+			{
+				var audio = new Audio('Audio/dog_hurt.mp3');
+				audio.play();
+			}
 			return true;
 		}
 		return false;

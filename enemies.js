@@ -62,7 +62,6 @@ Declare_Any_Class( "Enemy",
     	//TODO: attack if near player
     	else if (this.canAttack(delta_time))
     	{
- 			console.log("i get here though");
     		this.attack(delta_time);
 	  	}
 	  	else { //get vector to player
@@ -90,7 +89,7 @@ Declare_Any_Class( "Enemy",
 			//displacement = scale_vec(delta_time/1000, this.velocity);
 			//newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
 		}
-	    else if (!this.world.collidesWithWall(newPosition,1.1)) { 
+	    else if (this.world.collidesWithWall(newPosition,1.1)) { 
 	    }
 		else {
 			this.position=newPosition;
