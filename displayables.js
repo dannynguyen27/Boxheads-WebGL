@@ -365,7 +365,13 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           }
           while(this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) || 
           this.checkEnemyCollision(null,vec4(randomX,randomY,0,1),3)!= -1); */
-          this.enemies.push(new Enemy(this, translation(XCoord,YCoord,0)));
+           // TODO: UPDATE THIS WITH FORMULA TO GENERATE NORMAL/DEVIL
+          var random = Math.floor(Math.random() * 10);
+          if (random < 2)
+            this.enemies.push(new Devil_Enemy(this, translation(XCoord, YCoord, 0)));
+          else 
+            this.enemies.push(new Normal_Enemy(this, translation(XCoord, YCoord, 0)));
+          //this.enemies.push(new Enemy(this, translation(XCoord,YCoord,0)));
           //var audio = new Audio('init_dog.mp3');
           //audio.play();
           this.enemySpawnTimer = 4.0;//TODO: update this with a formula later
@@ -424,6 +430,16 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         else this.ammoCrate.splice(i,1);
       }
     },
+    'renderScreen': function(title)
+      {
+        var title = new Material( Color( 0,0,0,1 ), .8, .4, 0, 0, title );
+        model_transform = mat4();
+        model_transform = mult(model_transform, rotation(180, 0, 0, 1));  // rotate square
+        model_transform = mult(model_transform, rotation(130, 1, 0, 0));  // tilt square to align with camera
+        model_transform = mult(model_transform, scale(1.875, 1.055, 1));  // fix aspect ratio
+        model_transform = mult(model_transform, scale(4.8, 4.8, 4.8));    // scale to camera                         THIS IS REALLY JANK lOl
+        shapes_in_use.flat_square.draw(this.shared_scratchpad.graphics_state, model_transform, title); 
+    },
     'display': function(time)
       {
         var graphics_state  = this.shared_scratchpad.graphics_state,
@@ -442,21 +458,17 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         **********************************/ 
         // initialize start screen
         if(!this.gameStart){
-            var title = new Material( Color( 0,0,0,1 ), .8, .4, 0, 0, "screens/title.jpg" );
-            model_transform = mat4();
-            model_transform = mult(model_transform, rotation(180, 0, 0, 1));  // rotate square
-            model_transform = mult(model_transform, rotation(130, 1, 0, 0));  // tilt square to align with camera
-            model_transform = mult(model_transform, scale(1.875, 1.055, 1));  // fix aspect ratio
-            model_transform = mult(model_transform, scale(4.8, 4.8, 4.8));    // scale to camera                         THIS IS REALLY JANK lOl
-            shapes_in_use.flat_square.draw(graphics_state, model_transform, title);       
-    
+            this.renderScreen("screens/end.jpg");    
             if(this.mouse.anchor){
               if(this.mouse.from_center[0] > -310 && this.mouse.from_center[0] < 320 && this.mouse.from_center[1] > -50 && this.mouse.from_center[1] < 70)
                 this.gameStart = true;
             }
         }                
-        else {
+        else if(this.player.alive){
           this.animateGame(time);
+        }
+        else{
+            this.renderScreen("screens/end.jpg");
         }
         
       }

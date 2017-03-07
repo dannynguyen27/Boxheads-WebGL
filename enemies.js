@@ -7,19 +7,11 @@ Declare_Any_Class( "Enemy",
     {  
     	this.define_data_members(
     		{ world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
-			  velocity: vec4(0,0,0,0), heading:vec4(0,0,0,0), bool_reverseAnimate:false, limbAngle:0,moveSpeed: 1.5, 
+			  velocity: vec4(0,0,0,0), heading:vec4(0,0,0,0), bool_reverseAnimate:false, limbAngle:0, moveSpeed: 1.5, 
 			  alive: true, dying: false, health:initHealth, maxHealth: initHealth, autoAttackTimer:0.0, restTimer:0.0, 
 			  lowHPThres: 0.35, midHPThres: 0.67, fallAngle: 0, fadeTimer: 1, fadeRate: 0, materials:{}
 			});
-
-    	this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/enemy_head.jpg");
-    	this.materials.body = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/enemy_body.jpg");
-    	this.materials.fullBar = new Material(Color(0,0.7,0,1),1,0,0,10);
-    	this.materials.midBar = new Material(Color(1,0.6,0,1),1,0,0,10);
-    	this.materials.lowBar = new Material(Color(0.6,0,0,1),1,0,0,10);
-    	this.materials.default = new Material(Color(0.1,0.1,0.1,1),0.1,0.6,0,20);
-
-    	//this.populate.apply( this, arguments );
+    	this.populate.apply( this, arguments );
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -70,6 +62,7 @@ Declare_Any_Class( "Enemy",
     	//TODO: attack if near player
     	else if (this.canAttack(delta_time))
     	{
+ 			console.log("i get here though");
     		this.attack(delta_time);
 	  	}
 	  	else { //get vector to player
@@ -225,8 +218,10 @@ Declare_Any_Class( "Normal_Enemy",
 {
 	'canAttack': function()
 	{
-		if (this.world.checkPlayerCollision(this.position, ENEMY_MELEE_RANGE))
+		if (this.world.checkPlayerCollision(this.position, ENEMY_MELEE_RANGE)){
+			console.log("am i checking");
 			return true;
+		}
 		return false;
 	},
     'attack': function(delta_time) 
@@ -286,7 +281,7 @@ Declare_Any_Class( "Devil_Enemy",
 	'populate': function()
 	{
 		console.log("Devil Enemy");
-	  	this.materials.head = new Material(Color(1,1,0,1),1,.4,0,10, "Visuals/enemy_head.jpg");
+	  	this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/demon_head2.jpg");
     	this.materials.body = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/enemy_body.jpg");
     	this.materials.fullBar = new Material(Color(0,0.7,0,1),1,0,0,10);
     	this.materials.midBar = new Material(Color(1,0.6,0,1),1,0,0,10);

@@ -34,6 +34,8 @@ index.html - The web page document containing the canvas (drawing surface), that
       texture_filenames_to_load.push( "Visuals/player_body.jpg");
       texture_filenames_to_load.push( "Visuals/enemy_head.jpg");
       texture_filenames_to_load.push( "Visuals/enemy_body.jpg");
+      texture_filenames_to_load.push( "Visuals/demon_head2.jpg");
+      
       texture_filenames_to_load.push( "Visuals/simple_outline.jpg");
       texture_filenames_to_load.push( "Visuals/portal.jpg");
 
@@ -43,8 +45,14 @@ index.html - The web page document containing the canvas (drawing surface), that
       texture_filenames_to_load.push( "Visuals/Crates/health.jpg");
 
       texture_filenames_to_load.push( "screens/title.jpg");
+      texture_filenames_to_load.push( "screens/end.jpg");
 
-      for( var i = 0; i < texture_filenames_to_load.length; i++ ) textures_in_use[ texture_filenames_to_load[i] ] = ( new Texture( texture_filenames_to_load[i], true ) );
+      console.log(texture_filenames_to_load[13]);
+
+      for( var i = 0; i < texture_filenames_to_load.length-2; i++ ) textures_in_use[ texture_filenames_to_load[i] ] = ( new Texture( texture_filenames_to_load[i], true ) );
+
+      textures_in_use[ texture_filenames_to_load[13] ] = ( new Texture( texture_filenames_to_load[13], false ) );
+      textures_in_use[ texture_filenames_to_load[14] ] = ( new Texture( texture_filenames_to_load[14], false ) );
       
       main_canvas.register_display_object( new Debug_Screen     ( main_canvas ) );  // We instantiate some of our custom "Animation" subclasses and register these displayable
       main_canvas.register_display_object( new World( main_canvas ) );  // objects to their master "Canvas_Manager" object -- which OpenGL calls upon every time a
