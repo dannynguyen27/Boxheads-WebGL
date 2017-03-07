@@ -319,7 +319,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	      // This currently spawns enemies in the corners of the map
         var XCoord, YCoord;
         var timeOut = 0;
-	do 
+	      do 
         {
           var random = Math.floor(Math.random() * 4);
             switch (random) {
@@ -332,7 +332,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
             case 3:
               XCoord = 0; YCoord = -16; break;
           }
-        } while (timeOut++ < 5 || this.checkPlayerCollision(vec4(XCoord,YCoord,0,1),3) || this.checkEnemyCollision(null,vec4(XCoord,YCoord,0,1),3) != -1);
+        } while (timeOut++ < 5 && (this.checkPlayerCollision(vec4(XCoord,YCoord,0,1),3) || this.checkEnemyCollision(null,vec4(XCoord,YCoord,0,1),3) != -1));
 	      /*
         do{
 		    randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
@@ -341,7 +341,14 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	      }
 	      while(this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) || 
 		    this.checkEnemyCollision(null,vec4(randomX,randomY,0,1),3)!= -1); */
-	      this.enemies.push(new Enemy(this, translation(XCoord,YCoord,0)));
+
+        // TODO: UPDATE THIS WITH FORMULA TO GENERATE NORMAL/DEVIL
+        var random = Math.floor(Math.random() * 10);
+        if (random < 2)
+          this.enemies.push(new Devil_Enemy(this, translation(XCoord, YCoord, 0)));
+        else 
+          this.enemies.push(new Normal_Enemy(this, translation(XCoord, YCoord, 0)));
+	      //this.enemies.push(new Enemy(this, translation(XCoord,YCoord,0)));
         //var audio = new Audio('init_dog.mp3');
         //audio.play();
 	      this.enemySpawnTimer = 4.0;//TODO: update this with a formula later
