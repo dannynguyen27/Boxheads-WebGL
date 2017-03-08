@@ -1,6 +1,15 @@
 const ENEMY_SHOOT_RANGE = 7;
 const ENEMY_MELEE_RANGE = 1.1;
 
+Declare_Any_Class( "Point", 
+{
+	'construct': function(xVal, yVal)
+	{
+		this.x = xVal;
+		this.y = yVal;
+	}
+});
+
 Declare_Any_Class( "Enemy", 
   { 
   	'construct': function( worldHandle, modelTransMat=mat4(), initHealth=3)
@@ -12,6 +21,95 @@ Declare_Any_Class( "Enemy",
 			  lowHPThres: 0.35, midHPThres: 0.67, fallAngle: 0, fadeTimer: 1, fadeRate: 0, materials:{}
 			});
     	this.populate.apply( this, arguments );
+    },
+    'findRightPath': function()
+    {
+    	var board = [];
+    	for (var j = this.world.yMin; j <= this.world.yMax; j++)
+    	{
+    		var list = [];
+	    	for (var i = this.world.xMin; i <= this.world.xMax; i++)
+	    	{
+	    		list.push("x");
+	    	}
+	    	board.push(list);
+    	}
+
+    	var currentPos = vec4(Math.floor(this.position[0]), Math.floor(this.position[1]), 0, 1);
+    	var playerPos = this.world.player.position;
+
+    	var queue = [];
+    	queue.push(currentPos);
+
+    	var map = new Map();
+    	var x = new Point(10, 10);
+    	var y = new Point(1, 5);
+    	var z = new Point(10,1);
+    	map[x] = y;
+
+    	// Note: At any time, queue must have only valid points
+    	while (queue.length != 0)
+    	{
+    		var temp = queue.shift();
+
+    		if (this.world.checkPlayerCollision(vec4(temp[0], temp[1], 0, 1), 1))
+    		{
+    			return true;
+    		}
+
+    		else
+    		{
+    			// Check to see if north coordinate fits within array
+    			if ( (0 <= temp[0] + 16 && temp[0] + 16 <= 32) && (0 <= temp[1] + 1 + 16 && temp[1] + 1 + 16 <= 32) )
+    			{
+    				if (board[temp[0] + 16][temp[1] + 1 + 16] == "x")
+    				{
+    					var north = vec4(temp[0], temp[1] + 1, 0, 1);
+						if (this.world.checkBounds(north) && !this.world.collidesWithWall(north))
+							queue.push(north);
+						board[temp[0] + 16][temp[1] + 1 + 16] = "0";
+    				}
+    			}
+
+    			// Check to see if south coordinate fits within array
+    			if ( (0 <= temp[0] + 16 && temp[0] + 16 <= 32) && (0 <= temp[1] - 1 + 16 && temp[1] - 1 + 16 <= 32) )
+    			{
+    				if (board[temp[0] + 16][temp[1] - 1 + 16] == "x")
+    				{
+						var south = vec4(temp[0], temp[1] - 1, 0, 1);
+						if (this.world.checkBounds(south) && !this.world.collidesWithWall(south))
+							queue.push(south);
+						board[temp[0] + 16][temp[1] - 1 + 16] = "0";
+    				}
+    			}
+
+				// Check to see if east coordinate fits within array
+    			if ( (0 <= temp[0] - 1 + 16 && temp[0] - 1 + 16 <= 32) && (0 <= temp[1] + 16 && temp[1] + 16 <= 32) )
+    			{
+    				if (board[temp[0] - 1 + 16][temp[1] + 16] == "x")
+    				{
+						var east = vec4(temp[0] + 1, temp[1], 0, 1);
+						if (this.world.checkBounds(east) && !this.world.collidesWithWall(east))
+							queue.push(east);
+						board[temp[0] - 1 + 16][temp[1] + 16] = "0";
+    				}
+    			}
+
+    			// Check to see if west coordinate fits within array
+    			if ( (0 <= temp[0] + 1 + 16 && temp[0] + 1 + 16 <= 32) && (0 <= temp[1] + 16 && temp[1] + 16 <= 32) )
+    			{
+    				if (board[temp[0] + 1 + 16][temp[1] + 16] == "x")
+    				{
+						var west = vec4(temp[0] - 1, temp[1], 0, 1);
+						if (this.world.checkBounds(west) && !this.world.collidesWithWall(west))
+							queue.push(west);
+						board[temp[0] + 1 + 16][temp[1] + 16] = "0";
+    				}
+    			}
+    		}
+    	}
+
+    	return false;
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -55,6 +153,11 @@ Declare_Any_Class( "Enemy",
 
 		var graphics_state = this.world.shared_scratchpad.graphics_state;
 		var displacement = scale_vec(delta_time/1000, this.velocity);
+
+		if (this.findRightPath())
+		{
+			// TODO FIX
+		}
 
 		if(this.restTimer > 0) {
 			this.restTimer -= delta_time/1000;
@@ -218,14 +321,12 @@ Declare_Any_Class( "Normal_Enemy",
 	'canAttack': function()
 	{
 		if (this.world.checkPlayerCollision(this.position, ENEMY_MELEE_RANGE)){
-			console.log("am i checking");
 			return true;
 		}
 		return false;
 	},
     'attack': function(delta_time) 
     {
-    	console.log("normal attack");
 		this.velocity = vec4(0,0,0,0);
 		if (this.autoAttackTimer <= 0)
 		{
@@ -238,7 +339,6 @@ Declare_Any_Class( "Normal_Enemy",
     },
 	'populate': function()
 	{
-		console.log("Normal Enemy");
 	  	this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/enemy_head.jpg");
     	this.materials.body = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/enemy_body.jpg");
     	this.materials.fullBar = new Material(Color(0,0.7,0,1),1,0,0,10);
@@ -258,14 +358,12 @@ Declare_Any_Class( "Devil_Enemy",
   	},
 	'attack': function(delta_time) 
 	{
-    	console.log("Devil attack");
 		this.velocity = vec4(0,0,0,0);
 		if (this.autoAttackTimer <= 0)
 		{
 			if (this.world.checkPlayerCollision(this.position, ENEMY_SHOOT_RANGE))
 			{
 				this.world.projectiles.push(new Enemy_Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
-				console.log("SHOOTING");
 			}
 			else
 			{
@@ -279,7 +377,6 @@ Declare_Any_Class( "Devil_Enemy",
     },
 	'populate': function()
 	{
-		console.log("Devil Enemy");
 	  	this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/demon_head2.jpg");
     	this.materials.body = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/enemy_body.jpg");
     	this.materials.fullBar = new Material(Color(0,0.7,0,1),1,0,0,10);

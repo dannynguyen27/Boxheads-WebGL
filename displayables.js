@@ -158,6 +158,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         this.gameStart = false;     
         // Mute Option 
         this.mute = false;
+        // Pause Option
+        this.pause = false;
 
         this.wallsArray = [];
       	//TODO: set up geometry shared by all actors
@@ -214,7 +216,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           
 	  controls.add( "right", this, function() { this.keyBitMap["right"]=true; this.player.moveRight(true); } ); 
 	  controls.add( "right",this, function() {this.keyBitMap["right"]=false; this.player.moveRight(false); if(this.keyBitMap["left"]) this.player.moveLeft(true); }, {'type':'keyup'} );
-    controls.add( "m", this, function() { console.log("MUTING"); this.mute = !this.mute;}); 
+    controls.add( "m", this, function() { this.mute = !this.mute;}); 
+    controls.add( "p", this, function() { this.pause = !this.pause;}); 
 
 
 	  controls.add( "space", this, function() {this.player.attack()} ); 
@@ -333,7 +336,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       // the following part of the map layout is added depending on the specified mapNum
       if(MAP_SELECTOR == 0)
       {
-        console.log("we are making the first map");
         this.wallsArray =            // castle layout
         [ [-10,12],[-9,12],[-8,12],[-7,12],[-6,12],[-5,12],[-4,12],[-3,12],[-2,12],       // start inner rim
           [-10,11],[-10,10],[-10,9],[-10,8],[-10,7],[-10,6],[-10,5],[-10,4],[-10,3],[-10,2],
@@ -368,7 +370,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       }
       else if(MAP_SELECTOR == 1)// mapNum would be some non-zero here
       {
-        console.log("we go into other map");
         this.wallsArray =
         [ [9,6],[9,7],[9,8],[9,9],[9,10],[9,11],[9,12],[9,13],[9,14], // Right hook long vertical
           [8,6],[7,6],[6,6],[5,6],[5,6],[4,6],[3,6],                  // Right hook medium horizontal
@@ -419,6 +420,9 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         model_transform = mult(model_transform, scale(2, 1, 2));
         shapes_in_use.cube.draw(graphics_state, model_transform, portal);
 
+      if (this.pause)
+        return;
+      
       //TODO: spawn new actors
       if(this.enemySpawnTimer < 0 && this.enemies.length < this.maxEnemies){
           // This currently spawns enemies in the corners of the map
@@ -546,7 +550,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
             }
         }                
         else if(this.player.alive){
-          var map = 1
+          var map = 1;
           this.animateGame(time, map);
         }
         else{
@@ -625,7 +629,6 @@ Declare_Any_Class( "Player",
       this.ammo--;
       if (!this.world.mute)
       {
-        console.log("This mute is " + this.world.mute);
         var audio = new Audio('Audio/gunshot.mp3');
         audio.play();
       }
