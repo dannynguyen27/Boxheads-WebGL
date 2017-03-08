@@ -13,7 +13,7 @@ const START_AMMO = 100;
 const ATTACK_TIMER = 1 / 5.4; // Three shots per second
 
 const MAP_TOTAL = 2;
-const MAP_SELECTOR = Math.floor(Math.random() * MAP_TOTAL);
+const MAP_SELECTOR =  Math.floor(Math.random() * MAP_TOTAL);
 /********** CRATE CONSTANTS**********/
 
 const AMMO_PER_CRATE = 10;
@@ -161,7 +161,79 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         // Pause Option
         this.pause = false;
 
-        this.wallsArray = [];
+	// the following part of the map layout is added depending on the specified mapNum
+	if(MAP_SELECTOR == 0)
+	{
+        this.wallsArray =            // castle layout
+            [ [-10,12],[-9,12],[-8,12],[-7,12],[-6,12],[-5,12],[-4,12],[-3,12],[-2,12],       // start inner rim
+              [-10,11],[-10,10],[-10,9],[-10,8],[-10,7],[-10,6],[-10,5],[-10,4],[-10,3],[-10,2],
+              [10,12],[9,12],[8,12],[7,12],[6,12],[5,12],[4,12],[3,12],[2,12],
+              [10,11],[10,10],[10,9],[10,8],[10,7],[10,6],[10,5],[10,4],[10,3],[10,2],
+              [-10,-11],[-10,-10],[-10,-9],[-10,-8],[-10,-7],[-10,-6],[-10,-5],[-10,-4],[-10,-3],[-10,-2],
+              [-10,-12],[-9,-12],[-8,-12],[-7,-12],[-6,-12],[-5,-12],[-4,-12],[-3,-12],[-2,-12],
+              [10,-12],[9,-12],[8,-12],[7,-12],[6,-12],[5,-12],[4,-12],[3,-12],[2,-12],
+              [10,-11],[10,-10],[10,-9],[10,-8],[10,-7],[10,-6],[10,-5],[10,-4],[10,-3],[10,-2],    // end inner rim    
+	      
+              [-4,8],[-4,7],[-4,6],[-5,6],[-6,6],
+              [-4,-8],[-4,-7],[-4,-6],[-5,-6],[-6,-6],
+              [4,8],[4,7],[4,6],[5,6],[6,6],
+              [4,-8],[4,-7],[4,-6],[5,-6],[6,-6],
+              
+              [-5,3],[-5,2],[-5,1],[-5,0],[-5,-1],[-5,-2],[-5,-3],
+              [5,3],[5,2],[5,1],[5,0],[5,-1],[5,-2],[5,-3],       
+	      
+              [-2,3],[-1,3],[2,3],
+              [-2,2],[-2,1],[-2,0],[-2,-1],[-2,-2],[2,2],[2,1],[2,0],[2,-1],[2,-2],
+              [-2,-3],[-1,-3],[0,-3],[1,-3],[2,-3]
+              
+            ];    
+	}
+	else if(MAP_SELECTOR == 1)// mapNum would be some non-zero here
+	{
+            this.wallsArray =
+		[ [9,6],[9,7],[9,8],[9,9],[9,10],[9,11],[9,12],[9,13],[9,14], // Right hook long vertical
+		  [8,6],[7,6],[6,6],[5,6],[5,6],[4,6],[3,6],                  // Right hook medium horizontal
+		  [3,7],[3,8],[3,9],[3,10],                                   // Right hook short vertical
+		  [4,10],[5,10],                                              // Right hook short horizontal
+		  
+		  [-9,6],[-9,7],[-9,8],[-9,9],[-9,10],[-9,11],[-9,12],[-9,13],[-9,14], // Left hook long vertical
+		  [-8,6],[-7,6],[-6,6],[-5,6],[-5,6],[-4,6],[-3,6],                    // Left hook medium horizontal
+		  [-3,7],[-3,8],[-3,9],[-3,10],                                        // Left hook short vertical
+		  [-4,10],[-5,10],                                                     // Left hook shrot horizontal
+		  
+		  [12,-2],[11,-2],[10,-2],[9,-2],[8,-2],[7,-2],[6,-2],[5,-2],          // Right question mark long horizontal
+		  [5,-3],[5,-4],[5,-5],[5,-6],[5,-7],                                  // Right question mark medium vertical
+		  [6,-7],[7,-7],[8,-7],[9,-7],                                         // Right question mark short horizontal
+		  [9,-8],[9,-9],[9,-10],[9,-11],                                       // Right question mark long vertical
+		  
+		  [-12,-2],[-11,-2],[-10,-2],[-9,-2],[-8,-2],[-7,-2],[-6,-2],[-5,-2],  // Left question mark long horizontal
+		  [-5,-3],[-5,-4],[-5,-5],[-5,-6],[-5,-7],                             // Left question mark medium vertical
+		  [-6,-7],[-7,-7],[-8,-7],[-9,-7],                                     // Left question mark short horizontal
+		  [-9,-8],[-9,-9],[-9,-10],[-9,-11],                                   // Left question mark long vertical
+		  
+		  [-12, 12],[-12,11],[-12,8],[-12,7],[-12,4],[-12,3],                  // Top left dashes
+		  [12, 12],[12,11],[12,8],[12,7],[12,4],[12,3],                        // Top right dashes
+		  
+		  [-14,-3],[-14,-4],[-14,-7],[-14,-8],[-14,-11],[-14,-12],             // Bottom left dashes
+		  [14,-3],[14,-4],[14,-7],[14,-8],[14,-11],[14,-12],             // Bottom right dashes
+		  
+		  [-1,-7],[-1,-12],[0,-7],[0,-12],[1,-7],[1,-12],
+		  
+		  [-6,1],[-5,1],[-4,1],[4,1],[5,1],[6,1]
+		  
+		];
+	    
+      }
+	
+	this.wallBoolean = [];
+	for(var i=this.xMin;i<=this.xMax;i++){
+	    for(var j= this.yMin; j<=this.yMax;j++){
+		this.wallBoolean.push(false);
+	    }
+	}
+	for(var i=0;i<this.wallsArray.length;i++){
+	    this.wallBoolean[this.wallsArray[i][0]*(this.yMax-this.yMin)+this.wallsArray[i][1]] = true;
+	}
       	//TODO: set up geometry shared by all actors
       	shapes_in_use.cube = new Cube();
       	shapes_in_use.sphere = new Subdivision_Sphere(3);
@@ -177,30 +249,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         canvas.addEventListener( "mousemove", ( function(self) { return function(e) { e = e || window.event;    self.mouse.from_center = mouse_position(e); } } ) (this), false );
         canvas.addEventListener( "mouseout",  ( function(self) { return function(e) { self.mouse.from_center = vec2(); }; } ) (this), false );    // Stop steering if the mouse leaves the canvas.
              
-        /*
-        pickBuffer = gl.createFramebuffer();
-        gl.bindFramebuffer( gl.FRAMEBUFFER, pickBuffer );
-        pickBuffer.width = canvas.width; // These should match your canvas
-        pickBuffer.height = canvas.height;
-        pickTexture = gl.createTexture();
-        gl.bindTexture( gl.TEXTURE_2D, pickTexture );
-        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
-        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
-        gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, pickBuffer.width, pickBuffer.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null );
-        depthBuffer = gl.createRenderbuffer();
-        gl.bindRenderbuffer( gl.RENDERBUFFER, depthBuffer );
-        gl.renderbufferStorage( gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, pickBuffer.width, pickBuffer.height );
-        gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, pickTexture, 0 );
-        gl.framebufferRenderbuffer( gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer );
-
-        gl.viewport( 0, 0, canvas.width, canvas.height );
-        gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-
-        // go back to default frame buffer
-        gl.bindFramebuffer( gl.FRAMEBUFFER, null );
-        gl.viewport( 0, 0, canvas.width, canvas.height );
-        gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-        */
       },
     'init_keys': function( controls )   // init_keys():  Define any extra keyboard shortcuts here
       {
@@ -228,12 +276,14 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         user_interface_string_manager.string_map["animate"] = "Animation " + (this.shared_scratchpad.animate ? "on" : "off") ;
       },
     'checkPlayerCollision': function(newPosition, tolerance){
-	     return length(subtract(this.player.position,newPosition)) < tolerance;
+	var vec = subtract(this.player.position,newPosition);
+	     return dot(vec,vec) < tolerance*tolerance;
     },
     'checkEnemyCollision': function(self,newPosition,tolerance){
 	      for(var i=0;i<this.enemies.length;i++){
+		  var vec = subtract(this.enemies[i].position,newPosition);
 	       if(this.enemies[i] != self && this.enemies[i].dying == false &&
-	           length(subtract(this.enemies[i].position,newPosition)) < tolerance){
+	           dot(vec,vec) < tolerance*tolerance){
 		         return i;
 	           }
 	       }
@@ -241,11 +291,23 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     },
     // returns true if it collides with wall, false otherwise
     'collidesWithWall': function(newPosition,tolerance){
-        for(var i=0;i<this.wallsArray.length; i++){
-          if(length(subtract(vec4(this.wallsArray[i][0], this.wallsArray[i][1],0,1),newPosition)) < tolerance){
-            return true;
-          }
-        }
+	var intPositions = [vec4(Math.floor(newPosition[0]+0.5),Math.floor(newPosition[1]+0.5),0,1),
+			    vec4(Math.floor(newPosition[0]+0.5)+1,Math.floor(newPosition[1]+0.5),0,1),
+			    vec4(Math.floor(newPosition[0]+0.5)-1,Math.floor(newPosition[1]+0.5),0,1),
+			    vec4(Math.floor(newPosition[0]+0.5),Math.floor(newPosition[1]+0.5)+1,0,1),
+			    vec4(Math.floor(newPosition[0]+0.5),Math.floor(newPosition[1]+0.5)-1,0,1),
+			    vec4(Math.floor(newPosition[0]+0.5)+1,Math.floor(newPosition[1]+0.5)+1,0,1),
+			    vec4(Math.floor(newPosition[0]+0.5)-1,Math.floor(newPosition[1]+0.5)-1,0,1),
+			    vec4(Math.floor(newPosition[0]+0.5)-1,Math.floor(newPosition[1]+0.5)+1,0,1),
+			    vec4(Math.floor(newPosition[0]+0.5)+1,Math.floor(newPosition[1]+0.5)-1,0,1),
+			   ]
+	for(var i=0;i<intPositions.length;i++){
+	    if(this.wallBoolean[intPositions[i][0]*(this.yMax-this.yMin)+intPositions[i][1]]){
+		var vec = subtract(vec4(newPosition[0], newPosition[1],0,1),intPositions[i]);
+		if(dot(vec,vec) < tolerance*tolerance)
+		    return true;
+	    }
+	}
         return false;
     },
     'canSpawnCrates': function(self, newPosition, tolerance){
@@ -264,11 +326,11 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	return newPosition[0]>=this.xMin && newPosition[0]<=this.xMax &&
 	     newPosition[1]>=this.yMin && newPosition[1]<=this.yMax
     },
-    'initializeWalls': function(wallsArray){
+    'drawWalls': function(){
       wall = new Material( Color( 0,0,0,1 ), 0.3, 0.7, 0, 10, "Visuals/simple_outline.jpg");
-      for(var i = 0; i < wallsArray.length; i++){
+      for(var i = 0; i < this.wallsArray.length; i++){
         model_transform = mat4();
-        model_transform = mult(model_transform, translation(wallsArray[i][0], wallsArray[i][1], 0));
+        model_transform = mult(model_transform, translation(this.wallsArray[i][0], this.wallsArray[i][1], 0));
         model_transform = mult(model_transform, scale(1, 1, 5));
         shapes_in_use.cube.draw(this.shared_scratchpad.graphics_state, model_transform, wall);
       }
@@ -333,87 +395,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         shapes_in_use.cube.draw(graphics_state, model_transform, wall);
       }
 
-      // the following part of the map layout is added depending on the specified mapNum
-      if(MAP_SELECTOR == 0)
-      {
-        this.wallsArray =            // castle layout
-        [ [-10,12],[-9,12],[-8,12],[-7,12],[-6,12],[-5,12],[-4,12],[-3,12],[-2,12],       // start inner rim
-          [-10,11],[-10,10],[-10,9],[-10,8],[-10,7],[-10,6],[-10,5],[-10,4],[-10,3],[-10,2],
-          [10,12],[9,12],[8,12],[7,12],[6,12],[5,12],[4,12],[3,12],[2,12],
-          [10,11],[10,10],[10,9],[10,8],[10,7],[10,6],[10,5],[10,4],[10,3],[10,2],
-          [-10,-11],[-10,-10],[-10,-9],[-10,-8],[-10,-7],[-10,-6],[-10,-5],[-10,-4],[-10,-3],[-10,-2],
-          [-10,-12],[-9,-12],[-8,-12],[-7,-12],[-6,-12],[-5,-12],[-4,-12],[-3,-12],[-2,-12],
-          [10,-12],[9,-12],[8,-12],[7,-12],[6,-12],[5,-12],[4,-12],[3,-12],[2,-12],
-          [10,-11],[10,-10],[10,-9],[10,-8],[10,-7],[10,-6],[10,-5],[10,-4],[10,-3],[10,-2],    // end inner rim    
 
-          [-4,8],[-4,7],[-4,6],[-5,6],[-6,6],
-          [-4,-8],[-4,-7],[-4,-6],[-5,-6],[-6,-6],
-          [4,8],[4,7],[4,6],[5,6],[6,6],
-          [4,-8],[4,-7],[4,-6],[5,-6],[6,-6],
-          
-          [-5,3],[-5,2],[-5,1],[-5,0],[-5,-1],[-5,-2],[-5,-3],
-          [5,3],[5,2],[5,1],[5,0],[5,-1],[5,-2],[5,-3],       
-
-          [-2,3],[-1,3],[2,3],
-          [-2,2],[-2,1],[-2,0],[-2,-1],[-2,-2],[2,2],[2,1],[2,0],[2,-1],[2,-2],
-          [-2,-3],[-1,-3],[0,-3],[1,-3],[2,-3]
-          
-        ];    
-        /*
-        this.initializeWalls( this.wallsArray );    
-
-        model_transform = mat4();
-        model_transform = mult(model_transform, translation(0, 17, 1.5));
-        model_transform = mult(model_transform, scale(2, 1, 2));
-        shapes_in_use.cube.draw(graphics_state, model_transform, portal);
-        */
-      }
-      else if(MAP_SELECTOR == 1)// mapNum would be some non-zero here
-      {
-        this.wallsArray =
-        [ [9,6],[9,7],[9,8],[9,9],[9,10],[9,11],[9,12],[9,13],[9,14], // Right hook long vertical
-          [8,6],[7,6],[6,6],[5,6],[5,6],[4,6],[3,6],                  // Right hook medium horizontal
-          [3,7],[3,8],[3,9],[3,10],                                   // Right hook short vertical
-          [4,10],[5,10],                                              // Right hook short horizontal
-
-          [-9,6],[-9,7],[-9,8],[-9,9],[-9,10],[-9,11],[-9,12],[-9,13],[-9,14], // Left hook long vertical
-          [-8,6],[-7,6],[-6,6],[-5,6],[-5,6],[-4,6],[-3,6],                    // Left hook medium horizontal
-          [-3,7],[-3,8],[-3,9],[-3,10],                                        // Left hook short vertical
-          [-4,10],[-5,10],                                                     // Left hook shrot horizontal
-
-          [12,-2],[11,-2],[10,-2],[9,-2],[8,-2],[7,-2],[6,-2],[5,-2],          // Right question mark long horizontal
-          [5,-3],[5,-4],[5,-5],[5,-6],[5,-7],                                  // Right question mark medium vertical
-          [6,-7],[7,-7],[8,-7],[9,-7],                                         // Right question mark short horizontal
-          [9,-8],[9,-9],[9,-10],[9,-11],                                       // Right question mark long vertical
-
-          [-12,-2],[-11,-2],[-10,-2],[-9,-2],[-8,-2],[-7,-2],[-6,-2],[-5,-2],  // Left question mark long horizontal
-          [-5,-3],[-5,-4],[-5,-5],[-5,-6],[-5,-7],                             // Left question mark medium vertical
-          [-6,-7],[-7,-7],[-8,-7],[-9,-7],                                     // Left question mark short horizontal
-          [-9,-8],[-9,-9],[-9,-10],[-9,-11],                                   // Left question mark long vertical
-
-          [-12, 12],[-12,11],[-12,8],[-12,7],[-12,4],[-12,3],                  // Top left dashes
-          [12, 12],[12,11],[12,8],[12,7],[12,4],[12,3],                        // Top right dashes
-
-          [-14,-3],[-14,-4],[-14,-7],[-14,-8],[-14,-11],[-14,-12],             // Bottom left dashes
-          [14,-3],[14,-4],[14,-7],[14,-8],[14,-11],[14,-12],             // Bottom right dashes
-
-          [-1,-7],[-1,-12],[0,-7],[0,-12],[1,-7],[1,-12],
-
-          [-6,1],[-5,1],[-4,1],[4,1],[5,1],[6,1]
-
-          ];
-
-        /*
-        this.initializeWalls( this.wallsArray );    
-
-        model_transform = mat4();
-        model_transform = mult(model_transform, translation(0, 17, 1.5));
-        model_transform = mult(model_transform, scale(2, 1, 2));
-        shapes_in_use.cube.draw(graphics_state, model_transform, portal);
-        */
-      }
-
-      this.initializeWalls( this.wallsArray );    
+      this.drawWalls();    
 
         model_transform = mat4();
         model_transform = mult(model_transform, translation(0, 17, 1.5));
@@ -648,12 +631,12 @@ Declare_Any_Class( "Player",
 	  this.autoAttackTimer -= delta_time/1000;
  	  
 	  //change heading of player
-	  if(length(displacement) != 0){
+	  if(dot(displacement,displacement) != 0){
 	      this.heading = normalize(displacement.slice(0));
 	  }
 	  //try going to a new position
 	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
-	  if (this.world.checkEnemyCollision(this,newPosition,0.7) != -1 || this.world.collidesWithWall(newPosition,0.8)){
+	  if (this.world.checkEnemyCollision(this,newPosition,0.7) != -1 || this.world.collidesWithWall(newPosition,1.1)){
 	      //do nothing
 	  }
 
@@ -694,7 +677,7 @@ Declare_Any_Class( "Player",
 
 	  //get angle offsets for leg animation
 	  var maxLimbAngle=30;
-	  if(length(displacement) > 0){
+	  if(dot(displacement,displacement) > 0){
 	      if(this.bool_reverseAnimate){
 		  //angle rate of change calculated based on movement speed
 		  this.limbAngle += this.moveSpeed/0.7*180/Math.PI*delta_time/1000

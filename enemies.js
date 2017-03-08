@@ -1,5 +1,5 @@
 const ENEMY_SHOOT_RANGE = 7;
-const ENEMY_MELEE_RANGE = 1.1;
+const ENEMY_MELEE_RANGE = 1.3;
 
 Declare_Any_Class( "Point", 
 {
@@ -18,98 +18,64 @@ Declare_Any_Class( "Enemy",
     		{ world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
 			  velocity: vec4(0,0,0,0), heading:vec4(0,0,0,0), bool_reverseAnimate:false, limbAngle:0, moveSpeed: 1.5, 
 			  alive: true, dying: false, health:initHealth, maxHealth: initHealth, autoAttackTimer:0.0, restTimer:0.0, 
-			  lowHPThres: 0.35, midHPThres: 0.67, fallAngle: 0, fadeTimer: 1, fadeRate: 0, materials:{}
+			  lowHPThres: 0.35, midHPThres: 0.67, fallAngle: 0, fadeTimer: 1, fadeRate: 0, materials:{}, bfsTimer: 0.0
 			});
     	this.populate.apply( this, arguments );
     },
-    'findRightPath': function()
-    {
-    	var board = [];
-    	for (var j = this.world.yMin; j <= this.world.yMax; j++)
-    	{
-    		var list = [];
-	    	for (var i = this.world.xMin; i <= this.world.xMax; i++)
-	    	{
-	    		list.push("x");
-	    	}
-	    	board.push(list);
-    	}
+    'getVecToPlayer': function(){
+	var discovered = []
+	for(var i=this.world.xMin; i<=this.world.xMax;i++){
+	    for(var j =this.world.yMin; j<this.world.yMax;j++){
+		discovered.push(false);
+	    }
+	}
 
-    	var currentPos = vec4(Math.floor(this.position[0]), Math.floor(this.position[1]), 0, 1);
-    	var playerPos = this.world.player.position;
 
-    	var queue = [];
-    	queue.push(currentPos);
+	var currentPos = {'position':vec4(this.position[0], this.position[1], 0, 1),'originVec':vec4(0,0,0,0)};
+	if(this.world.checkPlayerCollision(currentPos.position,1.3)){
+	    return vec4(0,0,0,0);
+	}
 
-    	var map = new Map();
-    	var x = new Point(10, 10);
-    	var y = new Point(1, 5);
-    	var z = new Point(10,1);
-    	map[x] = y;
-
-    	// Note: At any time, queue must have only valid points
-    	while (queue.length != 0)
-    	{
-    		var temp = queue.shift();
-
-    		if (this.world.checkPlayerCollision(vec4(temp[0], temp[1], 0, 1), 1))
-    		{
-    			return true;
-    		}
-
-    		else
-    		{
-    			// Check to see if north coordinate fits within array
-    			if ( (0 <= temp[0] + 16 && temp[0] + 16 <= 32) && (0 <= temp[1] + 1 + 16 && temp[1] + 1 + 16 <= 32) )
-    			{
-    				if (board[temp[0] + 16][temp[1] + 1 + 16] == "x")
-    				{
-    					var north = vec4(temp[0], temp[1] + 1, 0, 1);
-						if (this.world.checkBounds(north) && !this.world.collidesWithWall(north))
-							queue.push(north);
-						board[temp[0] + 16][temp[1] + 1 + 16] = "0";
-    				}
-    			}
-
-    			// Check to see if south coordinate fits within array
-    			if ( (0 <= temp[0] + 16 && temp[0] + 16 <= 32) && (0 <= temp[1] - 1 + 16 && temp[1] - 1 + 16 <= 32) )
-    			{
-    				if (board[temp[0] + 16][temp[1] - 1 + 16] == "x")
-    				{
-						var south = vec4(temp[0], temp[1] - 1, 0, 1);
-						if (this.world.checkBounds(south) && !this.world.collidesWithWall(south))
-							queue.push(south);
-						board[temp[0] + 16][temp[1] - 1 + 16] = "0";
-    				}
-    			}
-
-				// Check to see if east coordinate fits within array
-    			if ( (0 <= temp[0] - 1 + 16 && temp[0] - 1 + 16 <= 32) && (0 <= temp[1] + 16 && temp[1] + 16 <= 32) )
-    			{
-    				if (board[temp[0] - 1 + 16][temp[1] + 16] == "x")
-    				{
-						var east = vec4(temp[0] + 1, temp[1], 0, 1);
-						if (this.world.checkBounds(east) && !this.world.collidesWithWall(east))
-							queue.push(east);
-						board[temp[0] - 1 + 16][temp[1] + 16] = "0";
-    				}
-    			}
-
-    			// Check to see if west coordinate fits within array
-    			if ( (0 <= temp[0] + 1 + 16 && temp[0] + 1 + 16 <= 32) && (0 <= temp[1] + 16 && temp[1] + 16 <= 32) )
-    			{
-    				if (board[temp[0] + 1 + 16][temp[1] + 16] == "x")
-    				{
-						var west = vec4(temp[0] - 1, temp[1], 0, 1);
-						if (this.world.checkBounds(west) && !this.world.collidesWithWall(west))
-							queue.push(west);
-						board[temp[0] + 1 + 16][temp[1] + 16] = "0";
-    				}
-    			}
-    		}
-    	}
-
-    	return false;
+	var queue = new Queue();
+	var stepSize = 0.8;
+	var immediateNeighbors = [{'position':vec4(currentPos.position[0],currentPos.position[1]+stepSize,0,1),'originVec':vec4(0,1,0,0)},
+				  {'position':vec4(currentPos.position[0],currentPos.position[1]-stepSize,0,1),'originVec':vec4(0,-1,0,0)},
+				  {'position':vec4(currentPos.position[0]-stepSize,currentPos.position[1],0,1),'originVec':vec4(-1,0,0,0)},
+				  {'position':vec4(currentPos.position[0]+stepSize,currentPos.position[1],0,1),'originVec':vec4(1,0,0,0)}]/*,
+				  {'position':vec4(currentPos.position[0]+stepSize,currentPos.position[1]+stepSize,0,1),'originVec':vec4(1,1,0,0)},
+				  {'position':vec4(currentPos.position[0]+stepSize,currentPos.position[1]-stepSize,0,1),'originVec':vec4(1,-1,0,0)},
+				  {'position':vec4(currentPos.position[0]-stepSize,currentPos.position[1]+stepSize,0,1),'originVec':vec4(-1,1,0,0)},
+				  {'position':vec4(currentPos.position[0]-stepSize,currentPos.position[1]-stepSize,0,1),'originVec':vec4(-1,-1,0,0)}];*/
+	for(var i=0;i<immediateNeighbors.length;i++){
+	    if(this.world.checkBounds(immediateNeighbors[i].position) && !this.world.collidesWithWall(immediateNeighbors[i].position,1.2)){
+		queue.enqueue(immediateNeighbors[i]);
+	    }
+	    discovered[immediateNeighbors[i].position[0]*(this.world.yMax-this.world.yMin)+immediateNeighbors[i].position[1]]=true;
+	}
+	while(!queue.isEmpty()){
+	    var searchLeaf = queue.dequeue();
+	    if(this.world.checkPlayerCollision(searchLeaf.position,1.5)){
+		return searchLeaf.originVec;
+	    }
+	    var toDiscover = [{'position':vec4(searchLeaf.position[0],searchLeaf.position[1]+stepSize,0,1),'originVec':searchLeaf.originVec},
+			      {'position':vec4(searchLeaf.position[0],searchLeaf.position[1]-stepSize,0,1),'originVec':searchLeaf.originVec},
+			      {'position':vec4(searchLeaf.position[0]-stepSize,searchLeaf.position[1],0,1),'originVec':searchLeaf.originVec},
+			      {'position':vec4(searchLeaf.position[0]+stepSize,searchLeaf.position[1],0,1),'originVec':searchLeaf.originVec}]/*,
+			      {'position':vec4(searchLeaf.position[0]+stepSize,searchLeaf.position[1]+stepSize,0,1),'originVec':searchLeaf.originVec},
+			      {'position':vec4(searchLeaf.position[0]+stepSize,searchLeaf.position[1]-stepSize,0,1),'originVec':searchLeaf.originVec},
+			      {'position':vec4(searchLeaf.position[0]-stepSize,searchLeaf.position[1]+stepSize,0,1),'originVec':searchLeaf.originVec},
+			      {'position':vec4(searchLeaf.position[0]-stepSize,searchLeaf.position[1]-stepSize,0,1),'originVec':searchLeaf.originVec}];*/
+	    for(var i=0;i<toDiscover.length;i++){
+		if(//!discovered[toDiscover[i].position[0]+','+toDiscover[i].position[1]] &&
+		    !discovered[toDiscover[i].position[0]*(this.world.yMax-this.world.yMin)+toDiscover[i].position[1]] && 
+		   this.world.checkBounds(toDiscover[i].position) && !this.world.collidesWithWall(toDiscover[i].position,1.2)){
+		    queue.enqueue(toDiscover[i]);
+		}
+		//discovered[toDiscover[i].position[0]+','+toDiscover[i].position[1]]=true;
+		discovered[toDiscover[i].position[0]*(this.world.yMax-this.world.yMin)+toDiscover[i].position[1]]=true; 
+	    }
+	}
+	return vec4(0,0,0,0);
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -152,12 +118,6 @@ Declare_Any_Class( "Enemy",
 		if(!this.alive) return;
 
 		var graphics_state = this.world.shared_scratchpad.graphics_state;
-		var displacement = scale_vec(delta_time/1000, this.velocity);
-
-		if (this.findRightPath())
-		{
-			// TODO FIX
-		}
 
 		if(this.restTimer > 0) {
 			this.restTimer -= delta_time/1000;
@@ -165,12 +125,27 @@ Declare_Any_Class( "Enemy",
     	//TODO: attack if near player
     	else if (this.canAttack(delta_time))
     	{
+	    this.heading = normalize(subtract(this.world.player.position,this.position));
     		this.attack(delta_time);
 	  	}
 	  	else { //get vector to player
-	    	this.velocity = scale_vec(this.moveSpeed,normalize(subtract(this.world.player.position,this.position)));
+		    if(this.bfsTimer <= 0){
+			var vec2Player = this.getVecToPlayer();
+			this.bfsTimer = .5;
+			if(length(vec2Player) != 0){
+			    this.velocity = scale_vec(this.moveSpeed,normalize(vec2Player));
+			}
+			else{
+			    this.velocity = vec4(-1,-1,0,0);
+			}
+		    }
+		    else{
+			this.bfsTimer -= delta_time/1000;
+		    }
+	    	//this.velocity = scale_vec(this.moveSpeed,normalize(subtract(this.world.player.position,this.position)));
 	  	}
 
+		var displacement = scale_vec(delta_time/1000, this.velocity);
 		if(this.dying) {
 			displacement[0]=0; displacement[1]=0;
 		}
@@ -187,13 +162,13 @@ Declare_Any_Class( "Enemy",
 		if(this.world.checkEnemyCollision(this,newPosition,1.2)!= -1)
 		{
 			restTimer = 0.5;
-			this.displacement=vec4(0,0,0,0);
+			displacement=vec4(0,0,0,0);
 			//this.velocity=mult_vec(rotation(45,0,0,1), this.velocity);
 			//displacement = scale_vec(delta_time/1000, this.velocity);
 			//newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
 		}
-	    else if (this.world.collidesWithWall(newPosition,1.1)) { 
-	    }
+   	        else if (this.world.collidesWithWall(newPosition,1.1) || !this.world.checkBounds(newPosition)) { 
+	        }
 		else {
 			this.position=newPosition;
 			this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
