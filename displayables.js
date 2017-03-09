@@ -12,8 +12,8 @@ const START_AMMO = 100;
 
 const ATTACK_TIMER = 1 / 5.4; // Three shots per second
 
-const MAP_TOTAL = 2;
-const MAP_SELECTOR =  2/*Math.floor(Math.random() * MAP_TOTAL)*/;
+const MAP_TOTAL = 3;
+const MAP_SELECTOR = Math.floor(Math.random() * MAP_TOTAL);
 /********** CRATE CONSTANTS**********/
 
 const AMMO_PER_CRATE = 10;
