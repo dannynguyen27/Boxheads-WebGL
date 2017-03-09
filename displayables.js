@@ -29,7 +29,7 @@ const TROLL_BOX = 3;
 
 
 var angle = 0;
-
+var enemies_dead = 0;
 /********** DECLARE ALL CONSTANTS HERE **********/
 
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
@@ -301,7 +301,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	  controls.add( "right", this, function() { this.keyBitMap["right"]=true; this.player.moveRight(true); } ); 
 	  controls.add( "right",this, function() {this.keyBitMap["right"]=false; this.player.moveRight(false); if(this.keyBitMap["left"]) this.player.moveLeft(true); }, {'type':'keyup'} );
     controls.add( "m", this, function() { this.mute = !this.mute;}); 
-    controls.add( "p", this, function() { this.pause = !this.pause;}); 
+    controls.add( "p", this, function() { this.pause = !this.pause;});
 
 
 	  controls.add( "space", this, function() {this.player.attack()} ); 
@@ -519,7 +519,10 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           if(this.enemies[i].alive){
           this.enemies[i].display(graphics_state.animation_delta_time);
           }
-          else this.enemies.splice(i,1);
+          else{
+            this.enemies.splice(i,1);
+            enemies_dead++;
+          }
       }
       for (var i=0;i<this.projectiles.length;i++){
           if(this.projectiles[i].alive){
@@ -569,8 +572,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
             }
         }                
         else if(this.player.alive){
-          var map = 1;
-          this.animateGame(time, map);
+          this.animateGame(time, MAP_SELECTOR);
         }
         else{
             this.renderScreen("screens/end.jpg");
@@ -651,13 +653,13 @@ Declare_Any_Class( "Player",
         var audio = new Audio('Audio/gunshot.mp3');
         audio.play();
       }
-      console.log("My # ammo has changed to: " + this.ammo);
+      console.log("My # ammo changed to: " + this.ammo);
 	}
     },
     'display': function(delta_time)
       {
 	  if(!this.alive){ 
-      // rotate, fall to the ground, disappear, prompt end screen
+      // TODO: rotate, fall to the ground, disappear, prompt end screen
       return;
     }
 
@@ -666,6 +668,13 @@ Declare_Any_Class( "Player",
 	 
 	  this.autoAttackTimer -= delta_time/1000;
  	  
+    //change game level
+    if(enemies_dead == 2)
+    {
+      this.world.level++;
+      enemies_dead = 0;
+    }
+
 	  //change heading of player
 	  if(dot(displacement,displacement) != 0){
 	      this.heading = normalize(displacement.slice(0));

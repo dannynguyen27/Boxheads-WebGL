@@ -20,6 +20,11 @@ Declare_Any_Class( "Enemy",
 			  alive: true, dying: false, health:initHealth, maxHealth: initHealth, autoAttackTimer:0.0, restTimer:0.0, 
 			  lowHPThres: 0.35, midHPThres: 0.67, fallAngle: 0, fadeTimer: 1, fadeRate: 0, materials:{}, bfsTimer: 0.0
 			});
+    	// update speed for level 2
+    	if(worldHandle.level == 2){
+			// TODO: fit to accomodate multiple levels with formula
+    		this.moveSpeed = 2.2;
+    	}
     	this.populate.apply( this, arguments );
     },
     'getVecToPlayer': function(){
@@ -106,6 +111,9 @@ Declare_Any_Class( "Enemy",
 	    this.health += deltaHealth;
 	    if(this.health <= 0)
 	       this.dying = true;
+    },
+    'isDead': function(){
+    	return this.dying;
     },
     'canAttack': function(delta_time) {
     	// This is empty as it will be overridden
