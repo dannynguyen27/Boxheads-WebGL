@@ -13,7 +13,7 @@ const START_AMMO = 100;
 const ATTACK_TIMER = 1 / 5.4; // Three shots per second
 
 const MAP_TOTAL = 2;
-const MAP_SELECTOR =  Math.floor(Math.random() * MAP_TOTAL);
+const MAP_SELECTOR =  2/*Math.floor(Math.random() * MAP_TOTAL)*/;
 /********** CRATE CONSTANTS**********/
 
 const AMMO_PER_CRATE = 10;
@@ -191,7 +191,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	else if(MAP_SELECTOR == 1)// mapNum would be some non-zero here
 	{
             this.wallsArray =
-		[ [9,6],[9,7],[9,8],[9,9],[9,10],[9,11],[9,12],[9,13],[9,14], // Right hook long vertical
+		[ 
+      [9,6],[9,7],[9,8],[9,9],[9,10],[9,11],[9,12],[9,13],[9,14], // Right hook long vertical
 		  [8,6],[7,6],[6,6],[5,6],[5,6],[4,6],[3,6],                  // Right hook medium horizontal
 		  [3,7],[3,8],[3,9],[3,10],                                   // Right hook short vertical
 		  [4,10],[5,10],                                              // Right hook short horizontal
@@ -199,7 +200,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 		  [-9,6],[-9,7],[-9,8],[-9,9],[-9,10],[-9,11],[-9,12],[-9,13],[-9,14], // Left hook long vertical
 		  [-8,6],[-7,6],[-6,6],[-5,6],[-5,6],[-4,6],[-3,6],                    // Left hook medium horizontal
 		  [-3,7],[-3,8],[-3,9],[-3,10],                                        // Left hook short vertical
-		  [-4,10],[-5,10],                                                     // Left hook shrot horizontal
+		  [-4,10],[-5,10],                                                     // Left hook short horizontal
 		  
 		  [12,-2],[11,-2],[10,-2],[9,-2],[8,-2],[7,-2],[6,-2],[5,-2],          // Right question mark long horizontal
 		  [5,-3],[5,-4],[5,-5],[5,-6],[5,-7],                                  // Right question mark medium vertical
@@ -223,7 +224,42 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 		  
 		];
 	    
-      }
+  }
+  else if(MAP_SELECTOR == 2)
+  {
+      this.wallsArray = 
+        [ 
+          [-13,11],[-12,11],[-11,11],[-10,11],[-9,11],[-8,11],[-7,11],[-6,11], // Top Left L
+          [-6,10],[-6,9],[-6,8],[-6,7],[-6,6],[-6,5],[-6,4],
+
+          [-1,8],[0,8],[1,8], // Middle dash
+
+          [13,11],[12,11],[11,11],[10,11],[9,11],[8,11],[7,11],[6,11], // Top Right L
+          [6,10],[6,9],[6,8],[6,7],[6,6],[6,5],[6,4],
+
+          [-7,-1],[-6,-1],[-5,-1],[-4,-1],
+          [-8,-1],[-8,-2],[-8,-3],[-8,-4],[-8,-5],[-8,-6],[-8,-7],[-8,-8],[-8,-9],[-8,-10],[-8,-11],[-8,-12], // Left Brace
+          [-7,-12],[-6,-12],[-5,-12],[-4,-12],
+
+          [7,-1],[6,-1],[5,-1],[4,-1],
+          [8,-1],[8,-2],[8,-3],[8,-4],[8,-5],[8,-6],[8,-7],[8,-8],[8,-9],[8,-10],[8,-11],[8,-12], // Right Brace
+          [7,-12],[6,-12],[5,-12],[4,-12],
+
+          [11,-13],[11,-12],[11,-11], // Botom Right L
+          [12,-11],[13,-11],[14,-11],
+
+          [-11,-13],[-11,-12],[-11,-11], // Bottom Left L
+          [-12,-11],[-13,-11],[-14,-11],
+
+          [-11,4],[-12,3],[-13,2],[-14,1], // Left zig-zag
+          [-13,0],[-12,-1],[-11,-2],
+          [-11,-2],[-12,-3],[-13,-4],[-14,-5],
+
+          [11,4],[12,3],[13,2],[14,1], // Right zig-zag
+          [13,0],[12,-1],[11,-2],
+          [11,-2],[12,-3],[13,-4],[14,-5]
+        ];
+  }
 	
 	this.wallBoolean = [];
 	for(var i=this.xMin;i<=this.xMax;i++){
