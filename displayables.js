@@ -27,8 +27,6 @@ const HEALTH_BOX = 1;
 const SPEED_BOX = 2;
 const TROLL_BOX = 3;
 
-
-var angle = 0;
 var enemies_dead = 0;
 /********** DECLARE ALL CONSTANTS HERE **********/
 
@@ -161,115 +159,112 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         // Pause Option
         this.pause = false;
 
-	// the following part of the map layout is added depending on the specified mapNum
-	if(MAP_SELECTOR == 0)
-	{
-        this.wallsArray =            // castle layout
-            [ [-10,12],[-9,12],[-8,12],[-7,12],[-6,12],[-5,12],[-4,12],[-3,12],[-2,12],       // start inner rim
-              [-10,11],[-10,10],[-10,9],[-10,8],[-10,7],[-10,6],[-10,5],[-10,4],[-10,3],[-10,2],
-              [10,12],[9,12],[8,12],[7,12],[6,12],[5,12],[4,12],[3,12],[2,12],
-              [10,11],[10,10],[10,9],[10,8],[10,7],[10,6],[10,5],[10,4],[10,3],[10,2],
-              [-10,-11],[-10,-10],[-10,-9],[-10,-8],[-10,-7],[-10,-6],[-10,-5],[-10,-4],[-10,-3],[-10,-2],
-              [-10,-12],[-9,-12],[-8,-12],[-7,-12],[-6,-12],[-5,-12],[-4,-12],[-3,-12],[-2,-12],
-              [10,-12],[9,-12],[8,-12],[7,-12],[6,-12],[5,-12],[4,-12],[3,-12],[2,-12],
-              [10,-11],[10,-10],[10,-9],[10,-8],[10,-7],[10,-6],[10,-5],[10,-4],[10,-3],[10,-2],    // end inner rim    
-	      
-              [-4,8],[-4,7],[-4,6],[-5,6],[-6,6],
-              [-4,-8],[-4,-7],[-4,-6],[-5,-6],[-6,-6],
-              [4,8],[4,7],[4,6],[5,6],[6,6],
-              [4,-8],[4,-7],[4,-6],[5,-6],[6,-6],
-              
-              [-5,3],[-5,2],[-5,1],[-5,0],[-5,-1],[-5,-2],[-5,-3],
-              [5,3],[5,2],[5,1],[5,0],[5,-1],[5,-2],[5,-3],       
-	      
-              [-2,3],[-1,3],[2,3],
-              [-2,2],[-2,1],[-2,0],[-2,-1],[-2,-2],[2,2],[2,1],[2,0],[2,-1],[2,-2],
-              [-2,-3],[-1,-3],[0,-3],[1,-3],[2,-3]
-              
-            ];    
-	}
-	else if(MAP_SELECTOR == 1)// mapNum would be some non-zero here
-	{
-            this.wallsArray =
-		[ 
-      [9,6],[9,7],[9,8],[9,9],[9,10],[9,11],[9,12],[9,13],[9,14], // Right hook long vertical
-		  [8,6],[7,6],[6,6],[5,6],[5,6],[4,6],[3,6],                  // Right hook medium horizontal
-		  [3,7],[3,8],[3,9],[3,10],                                   // Right hook short vertical
-		  [4,10],[5,10],                                              // Right hook short horizontal
-		  
-		  [-9,6],[-9,7],[-9,8],[-9,9],[-9,10],[-9,11],[-9,12],[-9,13],[-9,14], // Left hook long vertical
-		  [-8,6],[-7,6],[-6,6],[-5,6],[-5,6],[-4,6],[-3,6],                    // Left hook medium horizontal
-		  [-3,7],[-3,8],[-3,9],[-3,10],                                        // Left hook short vertical
-		  [-4,10],[-5,10],                                                     // Left hook short horizontal
-		  
-		  [12,-2],[11,-2],[10,-2],[9,-2],[8,-2],[7,-2],[6,-2],[5,-2],          // Right question mark long horizontal
-		  [5,-3],[5,-4],[5,-5],[5,-6],[5,-7],                                  // Right question mark medium vertical
-		  [6,-7],[7,-7],[8,-7],[9,-7],                                         // Right question mark short horizontal
-		  [9,-8],[9,-9],[9,-10],[9,-11],                                       // Right question mark long vertical
-		  
-		  [-12,-2],[-11,-2],[-10,-2],[-9,-2],[-8,-2],[-7,-2],[-6,-2],[-5,-2],  // Left question mark long horizontal
-		  [-5,-3],[-5,-4],[-5,-5],[-5,-6],[-5,-7],                             // Left question mark medium vertical
-		  [-6,-7],[-7,-7],[-8,-7],[-9,-7],                                     // Left question mark short horizontal
-		  [-9,-8],[-9,-9],[-9,-10],[-9,-11],                                   // Left question mark long vertical
-		  
-		  [-12, 12],[-12,11],[-12,8],[-12,7],[-12,4],[-12,3],                  // Top left dashes
-		  [12, 12],[12,11],[12,8],[12,7],[12,4],[12,3],                        // Top right dashes
-		  
-		  [-14,-3],[-14,-4],[-14,-7],[-14,-8],[-14,-11],[-14,-12],             // Bottom left dashes
-		  [14,-3],[14,-4],[14,-7],[14,-8],[14,-11],[14,-12],             // Bottom right dashes
-		  
-		  [-1,-7],[-1,-12],[0,-7],[0,-12],[1,-7],[1,-12],
-		  
-		  [-6,1],[-5,1],[-4,1],[4,1],[5,1],[6,1]
-		  
-		];
-	    
-  }
-  else if(MAP_SELECTOR == 2)
-  {
-      this.wallsArray = 
-        [ 
-          [-13,11],[-12,11],[-11,11],[-10,11],[-9,11],[-8,11],[-7,11],[-6,11], // Top Left L
-          [-6,10],[-6,9],[-6,8],[-6,7],[-6,6],[-6,5],[-6,4],
+       	// the following part of the map layout is added depending on the specified mapNum
+       	if(MAP_SELECTOR == 0)
+       	{
+          this.wallsArray =            // castle layout
+              [ [-10,12],[-9,12],[-8,12],[-7,12],[-6,12],[-5,12],[-4,12],[-3,12],[-2,12],       // start inner rim
+                [-10,11],[-10,10],[-10,9],[-10,8],[-10,7],[-10,6],[-10,5],[-10,4],[-10,3],[-10,2],
+                [10,12],[9,12],[8,12],[7,12],[6,12],[5,12],[4,12],[3,12],[2,12],
+                [10,11],[10,10],[10,9],[10,8],[10,7],[10,6],[10,5],[10,4],[10,3],[10,2],
+                [-10,-11],[-10,-10],[-10,-9],[-10,-8],[-10,-7],[-10,-6],[-10,-5],[-10,-4],[-10,-3],[-10,-2],
+                [-10,-12],[-9,-12],[-8,-12],[-7,-12],[-6,-12],[-5,-12],[-4,-12],[-3,-12],[-2,-12],
+                [10,-12],[9,-12],[8,-12],[7,-12],[6,-12],[5,-12],[4,-12],[3,-12],[2,-12],
+                [10,-11],[10,-10],[10,-9],[10,-8],[10,-7],[10,-6],[10,-5],[10,-4],[10,-3],[10,-2],    // end inner rim    
+  	      
+                [-4,8],[-4,7],[-4,6],[-5,6],[-6,6],
+                [-4,-8],[-4,-7],[-4,-6],[-5,-6],[-6,-6],
+                [4,8],[4,7],[4,6],[5,6],[6,6],
+                [4,-8],[4,-7],[4,-6],[5,-6],[6,-6],
+                
+                [-5,3],[-5,2],[-5,1],[-5,0],[-5,-1],[-5,-2],[-5,-3],
+                [5,3],[5,2],[5,1],[5,0],[5,-1],[5,-2],[5,-3],       
+  	      
+                [-2,3],[-1,3],[2,3],
+                [-2,2],[-2,1],[-2,0],[-2,-1],[-2,-2],[2,2],[2,1],[2,0],[2,-1],[2,-2],
+                [-2,-3],[-1,-3],[0,-3],[1,-3],[2,-3]
+                
+          ];    
+       	}
+       	else if(MAP_SELECTOR == 1)// mapNum would be some non-zero here
+       	{
+          this.wallsArray =
+       		[ [9,6],[9,7],[9,8],[9,9],[9,10],[9,11],[9,12],[9,13],[9,14], // Right hook long vertical
+       		  [8,6],[7,6],[6,6],[5,6],[5,6],[4,6],[3,6],                  // Right hook medium horizontal
+       		  [3,7],[3,8],[3,9],[3,10],                                   // Right hook short vertical
+       		  [4,10],[5,10],                                              // Right hook short horizontal
+       		  
+       		  [-9,6],[-9,7],[-9,8],[-9,9],[-9,10],[-9,11],[-9,12],[-9,13],[-9,14], // Left hook long vertical
+       		  [-8,6],[-7,6],[-6,6],[-5,6],[-5,6],[-4,6],[-3,6],                    // Left hook medium horizontal
+       		  [-3,7],[-3,8],[-3,9],[-3,10],                                        // Left hook short vertical
+       		  [-4,10],[-5,10],                                                     // Left hook short horizontal
+       		  
+       		  [12,-2],[11,-2],[10,-2],[9,-2],[8,-2],[7,-2],[6,-2],[5,-2],          // Right question mark long horizontal
+       		  [5,-3],[5,-4],[5,-5],[5,-6],[5,-7],                                  // Right question mark medium vertical
+       		  [6,-7],[7,-7],[8,-7],[9,-7],                                         // Right question mark short horizontal
+       		  [9,-8],[9,-9],[9,-10],[9,-11],                                       // Right question mark long vertical
+       		  
+       		  [-12,-2],[-11,-2],[-10,-2],[-9,-2],[-8,-2],[-7,-2],[-6,-2],[-5,-2],  // Left question mark long horizontal
+       		  [-5,-3],[-5,-4],[-5,-5],[-5,-6],[-5,-7],                             // Left question mark medium vertical
+       		  [-6,-7],[-7,-7],[-8,-7],[-9,-7],                                     // Left question mark short horizontal
+       		  [-9,-8],[-9,-9],[-9,-10],[-9,-11],                                   // Left question mark long vertical
+       		  
+       		  [-12, 12],[-12,11],[-12,8],[-12,7],[-12,4],[-12,3],                  // Top left dashes
+       		  [12, 12],[12,11],[12,8],[12,7],[12,4],[12,3],                        // Top right dashes
+       		  
+       		  [-14,-3],[-14,-4],[-14,-7],[-14,-8],[-14,-11],[-14,-12],             // Bottom left dashes
+       		  [14,-3],[14,-4],[14,-7],[14,-8],[14,-11],[14,-12],             // Bottom right dashes
+       		  
+       		  [-1,-7],[-1,-12],[0,-7],[0,-12],[1,-7],[1,-12],
+       		  
+       		  [-6,1],[-5,1],[-4,1],[4,1],[5,1],[6,1]
+       		];
+        }
+         else if(MAP_SELECTOR == 2)
+         {
+             this.wallsArray = 
+               [ 
+                 [-13,11],[-12,11],[-11,11],[-10,11],[-9,11],[-8,11],[-7,11],[-6,11], // Top Left L
+                 [-6,10],[-6,9],[-6,8],[-6,7],[-6,6],[-6,5],[-6,4],       
 
-          [-1,8],[0,8],[1,8], // Middle dash
+                 [-1,8],[0,8],[1,8], // Middle dash       
 
-          [13,11],[12,11],[11,11],[10,11],[9,11],[8,11],[7,11],[6,11], // Top Right L
-          [6,10],[6,9],[6,8],[6,7],[6,6],[6,5],[6,4],
+                 [13,11],[12,11],[11,11],[10,11],[9,11],[8,11],[7,11],[6,11], // Top Right L
+                 [6,10],[6,9],[6,8],[6,7],[6,6],[6,5],[6,4],      
 
-          [-7,-1],[-6,-1],[-5,-1],[-4,-1],
-          [-8,-1],[-8,-2],[-8,-3],[-8,-4],[-8,-5],[-8,-6],[-8,-7],[-8,-8],[-8,-9],[-8,-10],[-8,-11],[-8,-12], // Left Brace
-          [-7,-12],[-6,-12],[-5,-12],[-4,-12],
+                 [-7,-1],[-6,-1],[-5,-1],[-4,-1],
+                 [-8,-1],[-8,-2],[-8,-3],[-8,-4],[-8,-5],[-8,-6],[-8,-7],[-8,-8],[-8,-9],[-8,-10],[-8,-11],[-8,-12], // Left Brace
+                 [-7,-12],[-6,-12],[-5,-12],[-4,-12],       
 
-          [7,-1],[6,-1],[5,-1],[4,-1],
-          [8,-1],[8,-2],[8,-3],[8,-4],[8,-5],[8,-6],[8,-7],[8,-8],[8,-9],[8,-10],[8,-11],[8,-12], // Right Brace
-          [7,-12],[6,-12],[5,-12],[4,-12],
+                 [7,-1],[6,-1],[5,-1],[4,-1],
+                 [8,-1],[8,-2],[8,-3],[8,-4],[8,-5],[8,-6],[8,-7],[8,-8],[8,-9],[8,-10],[8,-11],[8,-12], // Right Brace
+                 [7,-12],[6,-12],[5,-12],[4,-12],       
 
-          [11,-13],[11,-12],[11,-11], // Botom Right L
-          [12,-11],[13,-11],[14,-11],
+                 [11,-13],[11,-12],[11,-11], // Botom Right L
+                 [12,-11],[13,-11],[14,-11],      
 
-          [-11,-13],[-11,-12],[-11,-11], // Bottom Left L
-          [-12,-11],[-13,-11],[-14,-11],
+                 [-11,-13],[-11,-12],[-11,-11], // Bottom Left L
+                 [-12,-11],[-13,-11],[-14,-11],       
 
-          [-11,4],[-12,3],[-13,2],[-14,1], // Left zig-zag
-          [-13,0],[-12,-1],[-11,-2],
-          [-11,-2],[-12,-3],[-13,-4],[-14,-5],
+                 [-11,4],[-12,3],[-13,2],[-14,1], // Left zig-zag
+                 [-13,0],[-12,-1],[-11,-2],
+                 [-11,-2],[-12,-3],[-13,-4],[-14,-5],       
 
-          [11,4],[12,3],[13,2],[14,1], // Right zig-zag
-          [13,0],[12,-1],[11,-2],
-          [11,-2],[12,-3],[13,-4],[14,-5]
-        ];
-  }
-	
-	this.wallBoolean = [];
-	for(var i=this.xMin;i<=this.xMax;i++){
-	    for(var j= this.yMin; j<=this.yMax;j++){
-		this.wallBoolean.push(false);
-	    }
-	}
-	for(var i=0;i<this.wallsArray.length;i++){
-	    this.wallBoolean[this.wallsArray[i][0]*(this.yMax-this.yMin)+this.wallsArray[i][1]] = true;
-	}
+                 [11,4],[12,3],[13,2],[14,1], // Right zig-zag
+                 [13,0],[12,-1],[11,-2],
+                 [11,-2],[12,-3],[13,-4],[14,-5]
+               ];
+         }
+       	
+       	this.wallBoolean = [];
+       	for(var i=this.xMin;i<=this.xMax;i++){
+       	    for(var j= this.yMin; j<=this.yMax;j++){
+       		this.wallBoolean.push(false);
+       	    }
+       	}
+       	for(var i=0;i<this.wallsArray.length;i++){
+       	    this.wallBoolean[this.wallsArray[i][0]*(this.yMax-this.yMin)+this.wallsArray[i][1]] = true;
+       	}
       	//TODO: set up geometry shared by all actors
       	shapes_in_use.cube = new Cube();
       	shapes_in_use.sphere = new Subdivision_Sphere(3);
@@ -288,23 +283,22 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       },
     'init_keys': function( controls )   // init_keys():  Define any extra keyboard shortcuts here
       {
-	this.keyBitMap = {}; //deals with the problem of simultaneous keypresses
+        	this.keyBitMap = {}; //deals with the problem of simultaneous keypresses
           controls.add( "up", this, function() { this.keyBitMap["up"]=true; this.player.moveForward(true); } ); 
-	  controls.add( "up",this, function() {  this.keyBitMap["up"]=false; this.player.moveForward(false); if(this.keyBitMap["down"]) this.player.moveBackward(true); }, {'type':'keyup'} );
-          
-	  controls.add( "left", this, function() { this.keyBitMap["left"]=true; this.player.moveLeft(true); } ); 
-	  controls.add( "left",this, function() {this.keyBitMap["left"]=false; this.player.moveLeft(false); if(this.keyBitMap["right"]) this.player.moveRight(true); }, {'type':'keyup'} );
-         
-	  controls.add( "down", this, function() { this.keyBitMap["down"]=true; this.player.moveBackward(true); } ); 
-	  controls.add( "down",this, function() { this.keyBitMap["down"]=false; this.player.moveBackward(false); if(this.keyBitMap["up"]) this.player.moveForward(true); }, {'type':'keyup'} );
-          
-	  controls.add( "right", this, function() { this.keyBitMap["right"]=true; this.player.moveRight(true); } ); 
-	  controls.add( "right",this, function() {this.keyBitMap["right"]=false; this.player.moveRight(false); if(this.keyBitMap["left"]) this.player.moveLeft(true); }, {'type':'keyup'} );
-    controls.add( "m", this, function() { this.mute = !this.mute;}); 
-    controls.add( "p", this, function() { this.pause = !this.pause;});
-
-
-	  controls.add( "space", this, function() {this.player.attack()} ); 
+        	controls.add( "up",this, function() {  this.keyBitMap["up"]=false; this.player.moveForward(false); if(this.keyBitMap["down"]) this.player.moveBackward(true); }, {'type':'keyup'} );
+                  
+        	controls.add( "left", this, function() { this.keyBitMap["left"]=true; this.player.moveLeft(true); } ); 
+        	controls.add( "left",this, function() {this.keyBitMap["left"]=false; this.player.moveLeft(false); if(this.keyBitMap["right"]) this.player.moveRight(true); }, {'type':'keyup'} );
+                 
+        	controls.add( "down", this, function() { this.keyBitMap["down"]=true; this.player.moveBackward(true); } ); 
+        	controls.add( "down",this, function() { this.keyBitMap["down"]=false; this.player.moveBackward(false); if(this.keyBitMap["up"]) this.player.moveForward(true); }, {'type':'keyup'} );
+                  
+        	controls.add( "right", this, function() { this.keyBitMap["right"]=true; this.player.moveRight(true); } ); 
+        	controls.add( "right",this, function() {this.keyBitMap["right"]=false; this.player.moveRight(false); if(this.keyBitMap["left"]) this.player.moveLeft(true); }, {'type':'keyup'} );
+          controls.add( "m", this, function() { this.mute = !this.mute;}); 
+          controls.add( "p", this, function() { this.pause = !this.pause;});        
+        
+      	  controls.add( "space", this, function() {this.player.attack()} ); 
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -540,13 +534,24 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     },
     'renderScreen': function(title)
       {
-        var title = new Material( Color( 0,0,0,1 ), .8, .4, 0, 0, title );
+        var title = new Material( Color( 0,0,0,1 ), 0.8, .4, 0, 0, title );
+        var saved_camera  = this.shared_scratchpad.graphics_state.camera_transform;
+        this.shared_scratchpad.graphics_state.camera_transform = translation(0, 0, -2.5);
         model_transform = mat4();
-        model_transform = mult(model_transform, rotation(180, 0, 0, 1));  // rotate square
-        model_transform = mult(model_transform, rotation(130, 1, 0, 0));  // tilt square to align with camera
+        model_transform = mult(model_transform, rotation(180, 0, 1, 0));  // rotate
         model_transform = mult(model_transform, scale(1.875, 1.055, 1));  // fix aspect ratio
-        model_transform = mult(model_transform, scale(4.8, 4.8, 4.8));    // scale to camera                         THIS IS REALLY JANK lOl
         shapes_in_use.flat_square.draw(this.shared_scratchpad.graphics_state, model_transform, title); 
+        this.shared_scratchpad.graphics_state.camera_transform = saved_camera;
+    },
+    'resetGame': function()
+    {
+        this.shared_scratchpad.animate = 1;
+        this.level = 1;
+        this.player = new Player(this);
+        this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 30;
+        this.projectiles = [];
+        this.ammoCrate = []; this.crateSpawnTimer = 0; this.maxCrates = MAX_AMMO_CRATES;
+        this.mapObjects = [];
     },
     'display': function(time)
       {
@@ -566,7 +571,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         **********************************/ 
         // initialize start screen
         if(!this.gameStart){
-            this.renderScreen("screens/end.jpg");    
+            this.renderScreen("screens/title.jpg");    
             if(this.mouse.anchor){
               if(this.mouse.from_center[0] > -310 && this.mouse.from_center[0] < 320 && this.mouse.from_center[1] > -50 && this.mouse.from_center[1] < 70)
                 this.gameStart = true;
@@ -577,6 +582,12 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         }
         else{
             this.renderScreen("screens/end.jpg");
+            if(this.mouse.anchor){
+              if(this.mouse.from_center[0] > -340 && this.mouse.from_center[0] < 340 && this.mouse.from_center[1] > 0 && this.mouse.from_center[1] < 120){
+                this.gameStart = false;
+                this.resetGame();       // need to fix
+              }
+            }
         }
         
       }
@@ -588,9 +599,9 @@ Declare_Any_Class( "Player",
       this.define_data_members(
         { world: worldHandle, model_transform: modelTransMat, position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
           heading:vec4(0,1,0,0), velocity: vec4(0,0,0,0),
-				  bool_reverseAnimate:false, limbAngle:0,moveSpeed: 4, defaultSpeed: 4, alive: true, 
+				  bool_reverseAnimate:false, limbAngle:0,moveSpeed: 4, defaultSpeed: 4, dying: false, alive: true, 
           health:initHealth, maxHealth:initHealth, autoAttackTimer:0.0, ammo: START_AMMO, materials:{},
-          lowHPThres: 0.4, midHPThres: 0.6, buff_timer: 0.0
+          lowHPThres: 0.4, midHPThres: 0.6, buff_timer: 0.0, fallAngle: 0, fadeTimer: 1, fadeRate: 0, 
         });
     this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/player_head.jpg");
     this.materials.body = new Material(Color(0,0,0,1),0.8,.4,0,10, "Visuals/player_body.jpg");
@@ -625,7 +636,7 @@ Declare_Any_Class( "Player",
        this.health = Math.min(this.health, this.maxHealth);
         console.log("My health has changed to: " + this.health);
 	     if(this.health <= 0){
-	       this.alive = false;
+	       this.dying = true;
        }
       },
     'changeAmmo': function(deltaAmmo){
@@ -659,14 +670,16 @@ Declare_Any_Class( "Player",
     },
     'display': function(delta_time)
       {
-	  if(!this.alive){ 
-      // TODO: rotate, fall to the ground, disappear, prompt end screen
+	  
+    if(!this.alive){ 
       return;
     }
-
+    
 	  var graphics_state = this.world.shared_scratchpad.graphics_state;
 	  var displacement = scale_vec(delta_time/1000, this.velocity);
-	 
+	  if(this.dying) {
+      displacement[0]=0; displacement[1]=0;
+    }
 	  this.autoAttackTimer -= delta_time/1000;
  	  
     //change game level
@@ -680,6 +693,7 @@ Declare_Any_Class( "Player",
 	  if(dot(displacement,displacement) != 0){
 	      this.heading = normalize(displacement.slice(0));
 	  }
+
 	  //try going to a new position
 	  var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
 	  if (this.world.checkEnemyCollision(this,newPosition,0.7) != -1 || this.world.collidesWithWall(newPosition,1.1)){
@@ -706,6 +720,27 @@ Declare_Any_Class( "Player",
 	  //must still build compound shapes using it as a basis (i.e. from the ground up)
 	  var model_transform = this.model_transform; 
 	  var headingAngle = Math.acos(dot(this.heading,vec4(0,1,0,0))) * 180/Math.PI * (this.heading[0]>0?-1:1);
+
+    //if the player is dying, just fall back without any movement
+    if(this.dying) 
+    {
+      if(this.fallAngle < 90)
+      this.fallAngle+=10;
+      if (this.fallAngle == 90 && this.fadeTimer > 0) 
+      {
+        this.fadeRate += 0.01;
+        model_transform = mult(model_transform, translation(0, 0, -this.fadeRate));  
+        this.fadeTimer -= delta_time/1000 ;
+      }
+      else if(this.fadeTimer <= 0)
+      {
+        this.alive = false;
+        return;
+      }                         // -y, x gives us the axis where the enemy will fall in its normal's direction
+        model_transform = mult(model_transform, rotation(-this.fallAngle, -this.heading[1], this.heading[0],0));   
+    }
+
+
 
 	  //get body center and turn by heading angle
 	  var body_center = model_transform = mult(mult(model_transform, translation(0,0,1.5)),rotation(headingAngle,0,0,1));
