@@ -1,15 +1,6 @@
 const ENEMY_SHOOT_RANGE = 7;
 const ENEMY_MELEE_RANGE = 1.3;
 
-Declare_Any_Class( "Point", 
-{
-	'construct': function(xVal, yVal)
-	{
-		this.x = xVal;
-		this.y = yVal;
-	}
-});
-
 Declare_Any_Class( "Enemy", 
   { 
   	'construct': function( worldHandle, modelTransMat=mat4(), initHealth=3)
@@ -130,10 +121,9 @@ Declare_Any_Class( "Enemy",
 		if(this.restTimer > 0) {
 			this.restTimer -= delta_time/1000;
 	  	}
-    	//TODO: attack if near player
     	else if (this.canAttack(delta_time))
     	{
-	    this.heading = normalize(subtract(this.world.player.position,this.position));
+	    	this.heading = normalize(subtract(this.world.player.position,this.position));
     		this.attack(delta_time);
 	  	}
 	  	else { //get vector to player
@@ -335,6 +325,9 @@ Declare_Any_Class( "Devil_Enemy",
   { 
   	'canAttack': function() 
   	{
+  		if (this.dying)
+  			return false;
+
   		if (this.world.checkPlayerCollision(this.position, ENEMY_SHOOT_RANGE))
   			return true;
   		return false;
