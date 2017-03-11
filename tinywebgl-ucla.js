@@ -284,8 +284,8 @@ Declare_Any_Class( "Canvas_Manager",                      // This class performs
   } );
 
 Declare_Any_Class( "Texture",                                                             // Wrap a pointer to a new texture buffer along with a new HTML image object.
-  { construct: function(            filename, bool_mipMap, bool_will_copy_to_GPU = true )
-      { this.define_data_members( { filename, bool_mipMap, bool_will_copy_to_GPU,       id: gl.createTexture() } );
+  { construct: function(            filename, bool_mipMap, bool_clamp_to_edge = false, bool_will_copy_to_GPU = true )
+      { this.define_data_members( { filename, bool_mipMap, bool_will_copy_to_GPU, bool_clamp_to_edge ,     id: gl.createTexture() } );
         gl.bindTexture(gl.TEXTURE_2D, this.id );
         gl.texImage2D (gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
                       new Uint8Array([255, 0, 0, 255]));              // A single red pixel, as a placeholder image to prevent console warning
@@ -296,8 +296,10 @@ Declare_Any_Class( "Texture",                                                   
               gl.bindTexture  ( gl.TEXTURE_2D, texture.id );
               gl.texImage2D   ( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image );
               gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
-              gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
-              gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
+	      if(bool_clamp_to_edge){
+		  gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
+		  gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
+	      }
               if( bool_mipMap )
                 { gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.generateMipmap(gl.TEXTURE_2D); }
               else

@@ -48,11 +48,11 @@ index.html - The web page document containing the canvas (drawing surface), that
       unfiltered_textures_to_load.push( "screens/title.jpg");
       unfiltered_textures_to_load.push( "screens/end.jpg");
 
-      unfiltered_textures_to_load.push( "Visuals/wall_bumpmap.jpg");
+      filtered_textures_to_load.push( "Visuals/wall_bumpmap.jpg");
 
       for( var i = 0; i < filtered_textures_to_load.length; i++ ) textures_in_use[ filtered_textures_to_load[i] ] = ( new Texture( filtered_textures_to_load[i], true ) );
 
-      for( var i = 0; i < unfiltered_textures_to_load.length; i++ ) textures_in_use[ unfiltered_textures_to_load[i] ] = ( new Texture( unfiltered_textures_to_load[i], false ) );
+      for( var i = 0; i < unfiltered_textures_to_load.length; i++ ) textures_in_use[ unfiltered_textures_to_load[i] ] = ( new Texture( unfiltered_textures_to_load[i], false,true ) );
 
       main_canvas.register_display_object( new Debug_Screen     ( main_canvas ) );  // We instantiate some of our custom "Animation" subclasses and register these displayable
       main_canvas.register_display_object( new World( main_canvas ) );  // objects to their master "Canvas_Manager" object -- which OpenGL calls upon every time a
