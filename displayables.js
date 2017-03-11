@@ -332,10 +332,10 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 			    vec4(Math.floor(newPosition[0]+0.5)-1,Math.floor(newPosition[1]+0.5),0,1),
 			    vec4(Math.floor(newPosition[0]+0.5),Math.floor(newPosition[1]+0.5)+1,0,1),
 			    vec4(Math.floor(newPosition[0]+0.5),Math.floor(newPosition[1]+0.5)-1,0,1),
-			    vec4(Math.floor(newPosition[0]+0.5)+1,Math.floor(newPosition[1]+0.5)+1,0,1),
+			    /*vec4(Math.floor(newPosition[0]+0.5)+1,Math.floor(newPosition[1]+0.5)+1,0,1),
 			    vec4(Math.floor(newPosition[0]+0.5)-1,Math.floor(newPosition[1]+0.5)-1,0,1),
 			    vec4(Math.floor(newPosition[0]+0.5)-1,Math.floor(newPosition[1]+0.5)+1,0,1),
-			    vec4(Math.floor(newPosition[0]+0.5)+1,Math.floor(newPosition[1]+0.5)-1,0,1),
+			    vec4(Math.floor(newPosition[0]+0.5)+1,Math.floor(newPosition[1]+0.5)-1,0,1),*/
 			   ]
 	for(var i=0;i<intPositions.length;i++){
 	    if(this.wallBoolean[intPositions[i][0]*(this.yMax-this.yMin)+intPositions[i][1]]){
@@ -363,7 +363,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	     newPosition[1]>=this.yMin && newPosition[1]<=this.yMax
     },
     'drawWalls': function(){
-      wall = new Material( Color( 0,0,0,1 ), 0.3, 0.7, 0, 10, "Visuals/simple_outline.jpg");
+
+      wall = new Material( Color( 0,0,0,1 ), 0.3, 0.5, 0, 10, "Visuals/simple_outline.jpg")//,"Visuals/wall_bumpmap.jpg");
       for(var i = 0; i < this.wallsArray.length; i++){
         model_transform = mat4();
         model_transform = mult(model_transform, translation(this.wallsArray[i][0], this.wallsArray[i][1], 0));
@@ -377,7 +378,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 
       // *** Materials: 
       // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
-      var ground = new Material( Color( 0,0,0,1 ), .8, .4, 0, 0, "Visuals/ground_texture.jpg" ), // Omit the final (string) parameter if you want no texture
+      var ground = new Material( Color( 0,0,0,1 ), .4, 10, 0, 10, "Visuals/ground_texture.jpg","Visuals/wall_bumpmap.jpg" ), // Omit the final (string) parameter if you want no texture
           wall = new Material( Color( 0,0,0,1 ), 0.3, 0.7, 0, 10, "Visuals/simple_outline.jpg");
           portal = new Material( Color( 0.3,0.3,0.3,1 ), 0.5, 0.4, 0, 10, "Visuals/portal.jpg");
           placeHolder = new Material( Color(0,0,0,0), 0,0,0,0, "Blank" );

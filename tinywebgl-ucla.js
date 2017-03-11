@@ -1,7 +1,7 @@
 // UCLA's Graphics Example Code (Javascript and C++ translations available), by Garett Ridge for CS174a.
 // tinywebgl_ucla.js - A file to show how to organize a complete graphics program.  It wraps common WebGL commands.
 
-var shapes_in_use = [], shaders_in_use = [], textures_in_use = [], active_shader, texture_filenames_to_load = [], gl, g_addrs;    // ****** GLOBAL VARIABLES *******
+var shapes_in_use = [], shaders_in_use = [], textures_in_use = [], active_shader, filtered_textures_to_load = [], unfiltered_textures_to_load = [], gl, g_addrs;    // ****** GLOBAL VARIABLES *******
 
 function Declare_Any_Class( name, methods, superclass = Object, scope = window )              // Making javascript behave more like Object Oriented C++
   {
@@ -23,7 +23,7 @@ function Declare_Any_Class( name, methods, superclass = Object, scope = window )
 Declare_Any_Class( "Shape",
   {
     'construct': function( args )
-      { this.define_data_members( { positions: [], normals: [], texture_coords: [], indices: [], indexed: true, sent_to_GPU: false } );
+      { this.define_data_members( { positions: [], normals: [], tangents:[], texture_coords: [], indices: [], indexed: true, sent_to_GPU: false } );
         this.populate.apply( this, arguments ); // Immediately fill in appropriate vertices via polymorphism, calling whichever sub-class's populate().
       },
     'insert_transformed_copy_into': function( recipient, args, points_transform = mat4() )
@@ -46,7 +46,8 @@ Declare_Any_Class( "Shape",
           switch(i) {
             case 0: gl.bufferData(gl.ARRAY_BUFFER, flatten(this.positions), gl.STATIC_DRAW); break;
             case 1: gl.bufferData(gl.ARRAY_BUFFER, flatten(this.normals), gl.STATIC_DRAW); break;
-            case 2: gl.bufferData(gl.ARRAY_BUFFER, flatten(this.texture_coords), gl.STATIC_DRAW); break;  }
+            case 2: gl.bufferData(gl.ARRAY_BUFFER, flatten(this.texture_coords), gl.STATIC_DRAW); break;  
+            case 3: gl.bufferData(gl.ARRAY_BUFFER, flatten(this.tangents), gl.STATIC_DRAW); break;  }
         }
         if( this.indexed )
         { gl.getExtension("OES_element_index_uint");
@@ -63,13 +64,24 @@ Declare_Any_Class( "Shape",
         if( material.texture_filename )  // Omit the texture string parameter from Material's constructor to signal not to draw a texture.
         { g_addrs.shader_attributes[2].enabled = true;
           gl.uniform1f ( g_addrs.USE_TEXTURE_loc, 1 );
+	  gl.uniform1i(g_addrs.texture_loc, 0); 
+	  gl.activeTexture(gl.TEXTURE0);
           if( textures_in_use[ material.texture_filename ] ) gl.bindTexture( gl.TEXTURE_2D, textures_in_use[ material.texture_filename ].id );
         }
         else  { gl.uniform1f ( g_addrs.USE_TEXTURE_loc, 0 );   g_addrs.shader_attributes[2].enabled = false; }
 
+	if(material.bump_texture_filename){
+	    g_addrs.shader_attributes[3].enabled = true;
+            gl.uniform1f ( g_addrs.BUMP_MAP_loc, 1 );
+	    gl.uniform1i(g_addrs.bumpTexture_loc, 1); 
+	    gl.activeTexture(gl.TEXTURE1);
+          if( textures_in_use[ material.bump_texture_filename ] ) gl.bindTexture( gl.TEXTURE_2D, textures_in_use[ material.bump_texture_filename ].id );
+	}
+        else  { gl.uniform1f ( g_addrs.BUMP_MAP_loc, 0 );   g_addrs.shader_attributes[3].enabled = false; }
+
         for( var i = 0, it = g_addrs.shader_attributes[0]; i < g_addrs.shader_attributes.length, it = g_addrs.shader_attributes[i]; i++ )
-          if( it.enabled )
-          { gl.enableVertexAttribArray( it.index );
+	    if( it.enabled )
+        { gl.enableVertexAttribArray( it.index );
             gl.bindBuffer( gl.ARRAY_BUFFER, this.graphics_card_buffers[i] );
             gl.vertexAttribPointer( it.index, it.size, it.type, it.normalized, it.stride, it.pointer );
           }
@@ -179,7 +191,7 @@ Declare_Any_Class( "Shortcut_Manager",        // Google shortcut.js for this key
 
 Declare_Any_Class( "Graphics_State", // The properties of the whole scene
   { 'construct': function(          camera_transform = mat4(), projection_transform = mat4(), animation_time = 0 )
-      { this.define_data_members( { camera_transform,          projection_transform,          animation_time, animation_delta_time: 0, lights: [] } );
+      { this.define_data_members( { camera_transform,          projection_transform,          animation_time, animation_delta_time: 0, lights: [], bump_map:false } );
 
         Declare_Any_Class( "Light",          // The properties of one light in the scene
           { 'construct': function(          position, color, size )
@@ -188,8 +200,8 @@ Declare_Any_Class( "Graphics_State", // The properties of the whole scene
       } } );
 
 Declare_Any_Class( "Material",
-  { 'construct': function(          color, ambient, diffusivity, shininess, smoothness, texture_filename )
-      { this.define_data_members( { color, ambient, diffusivity, shininess, smoothness, texture_filename } ); } } );
+  { 'construct': function(          color, ambient, diffusivity, shininess, smoothness, texture_filename, bump_texture_filename )
+      { this.define_data_members( { color, ambient, diffusivity, shininess, smoothness, texture_filename, bump_texture_filename} ); } } );
 function Color( r, g, b, a ) { return vec4( r, g, b, a ); }     // Colors are just special vec4s expressed as: ( red, green, blue, opacity )
 
 Declare_Any_Class( "Graphics_Addresses",  // Find out the memory addresses internal to the graphics card of each of its variables, and store them here locally for the Javascript to use
@@ -201,7 +213,7 @@ Declare_Any_Class( "Graphics_Addresses",  // Find out the memory addresses inter
         this.shader_attributes = [ new Shader_Attribute( gl.getAttribLocation( program, "vPosition"), 3, gl.FLOAT, true,  false, 0, 0 ),  // Pointers to all shader
                                    new Shader_Attribute( gl.getAttribLocation( program, "vNormal"  ), 3, gl.FLOAT, true,  false, 0, 0 ),  // attribute variables
                                    new Shader_Attribute( gl.getAttribLocation( program, "vTexCoord"), 2, gl.FLOAT, false, false, 0, 0 ),
-                                   new Shader_Attribute( gl.getAttribLocation( program, "vColor"   ), 3, gl.FLOAT, false, false, 0, 0 ) ];
+				   new Shader_Attribute( gl.getAttribLocation( program, "vTangent"), 3, gl.FLOAT, true, false, 0, 0 )];
 
         var num_uniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
         for (var i = 0; i < num_uniforms; ++i)
@@ -274,7 +286,6 @@ Declare_Any_Class( "Canvas_Manager",                      // This class performs
 Declare_Any_Class( "Texture",                                                             // Wrap a pointer to a new texture buffer along with a new HTML image object.
   { construct: function(            filename, bool_mipMap, bool_will_copy_to_GPU = true )
       { this.define_data_members( { filename, bool_mipMap, bool_will_copy_to_GPU,       id: gl.createTexture() } );
-
         gl.bindTexture(gl.TEXTURE_2D, this.id );
         gl.texImage2D (gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
                       new Uint8Array([255, 0, 0, 255]));              // A single red pixel, as a placeholder image to prevent console warning

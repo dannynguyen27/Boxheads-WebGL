@@ -29,32 +29,31 @@ index.html - The web page document containing the canvas (drawing surface), that
       shaders_in_use[ "Default"     ] = new Phong_or_Gouraud_Shader( g_state );    // Put all our shader programs in the GPU.
 
                                                                                 // IMPORTANT: -- You have to include all your new images in here:
-      texture_filenames_to_load.push( "text.png" );                             // Put all our texture images in the GPU.
-      texture_filenames_to_load.push( "Visuals/ground_texture.jpg" );
-      texture_filenames_to_load.push( "Visuals/player_head.jpg");
-      texture_filenames_to_load.push( "Visuals/player_body.jpg");
-      texture_filenames_to_load.push( "Visuals/enemy_head.jpg");
-      texture_filenames_to_load.push( "Visuals/enemy_body.jpg");
-      texture_filenames_to_load.push( "Visuals/demon_head2.jpg");
+      filtered_textures_to_load.push( "text.png" );                             // Put all our texture images in the GPU.
+      filtered_textures_to_load.push( "Visuals/ground_texture.jpg" );
+      filtered_textures_to_load.push( "Visuals/player_head.jpg");
+      filtered_textures_to_load.push( "Visuals/player_body.jpg");
+      filtered_textures_to_load.push( "Visuals/enemy_head.jpg");
+      filtered_textures_to_load.push( "Visuals/enemy_body.jpg");
+      filtered_textures_to_load.push( "Visuals/demon_head2.jpg");
       
-      texture_filenames_to_load.push( "Visuals/simple_outline.jpg");
-      texture_filenames_to_load.push( "Visuals/portal.jpg");
+      filtered_textures_to_load.push( "Visuals/simple_outline.jpg");
+      filtered_textures_to_load.push( "Visuals/portal.jpg");
 
-      texture_filenames_to_load.push( "Memes/Troll_Lose_Ammo.jpg" );
-      texture_filenames_to_load.push( "Visuals/Crates/speed.jpg");
-      texture_filenames_to_load.push( "Visuals/Crates/ammo.jpg");
-      texture_filenames_to_load.push( "Visuals/Crates/health.jpg");
+      filtered_textures_to_load.push( "Memes/Troll_Lose_Ammo.jpg" );
+      filtered_textures_to_load.push( "Visuals/Crates/speed.jpg");
+      filtered_textures_to_load.push( "Visuals/Crates/ammo.jpg");
+      filtered_textures_to_load.push( "Visuals/Crates/health.jpg");
 
-      texture_filenames_to_load.push( "screens/title.jpg");
-      texture_filenames_to_load.push( "screens/end.jpg");
+      unfiltered_textures_to_load.push( "screens/title.jpg");
+      unfiltered_textures_to_load.push( "screens/end.jpg");
 
-      console.log(texture_filenames_to_load[13]);
+      unfiltered_textures_to_load.push( "Visuals/wall_bumpmap.jpg");
 
-      for( var i = 0; i < texture_filenames_to_load.length-2; i++ ) textures_in_use[ texture_filenames_to_load[i] ] = ( new Texture( texture_filenames_to_load[i], true ) );
+      for( var i = 0; i < filtered_textures_to_load.length; i++ ) textures_in_use[ filtered_textures_to_load[i] ] = ( new Texture( filtered_textures_to_load[i], true ) );
 
-      textures_in_use[ texture_filenames_to_load[13] ] = ( new Texture( texture_filenames_to_load[13], false ) );
-      textures_in_use[ texture_filenames_to_load[14] ] = ( new Texture( texture_filenames_to_load[14], false ) );
-      
+      for( var i = 0; i < unfiltered_textures_to_load.length; i++ ) textures_in_use[ unfiltered_textures_to_load[i] ] = ( new Texture( unfiltered_textures_to_load[i], false ) );
+
       main_canvas.register_display_object( new Debug_Screen     ( main_canvas ) );  // We instantiate some of our custom "Animation" subclasses and register these displayable
       main_canvas.register_display_object( new World( main_canvas ) );  // objects to their master "Canvas_Manager" object -- which OpenGL calls upon every time a
       main_canvas.register_display_object( new Camera   ( main_canvas ) );  // draw / keyboard / mouse event happens.

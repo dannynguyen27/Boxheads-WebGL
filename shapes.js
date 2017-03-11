@@ -35,6 +35,7 @@ Declare_Any_Class( "Floor",    // A square, demonstrating shared vertices.  On a
          this.positions     .push( vec3(-1,-1,0), vec3(1,-1,0), vec3(-1,1,0), vec3(1,1,0) ); // Specify the 4 vertices -- the point cloud that our Square needs.
          this.normals       .push( vec3(0,0,1), vec3(0,0,1), vec3(0,0,1), vec3(0,0,1) );     // ...
          this.texture_coords.push( vec2(0,0),   vec2(100,0),   vec2(0,100),   vec2(100,100)   );     // ...
+	 this.tangents      .push( vec3(0,1,0), vec3(0,1,0), vec3(0,1,0), vec3(0,1,0));
          this.indices       .push( 0, 1, 2,     1, 3, 2 );                                   // Two triangles this time, indexing into four distinct vertices.
       }
   }, Shape )
@@ -170,7 +171,6 @@ Declare_Any_Class("Cube",
 	 this.genFacePoints(5,6,2,1);
 
 	 this.flat_shade();
-
      },
      'genFacePoints': function(a,b,c,d){
 	 var triangulationOrder = [ a,b,d,b,c,d ];
@@ -183,6 +183,13 @@ Declare_Any_Class("Cube",
 	     this.indices.push(this.indices.length);
 	     this.texture_coords.push(textureCoords[i]);
 	 }
+	 var dPos1 = subtract(this.vertices[1],this.vertices[0]);
+	 var dPos2 = subtract(this.vertices[2],this.vertices[0]);
+	 var dST1 = subtract(textureCoords[1],textureCoords[0]);
+	 var dST2 = subtract(textureCoords[2],textureCoords[0]);
+	 var r = 1.0/(dST1[0]*dST2[1]-dST1[1]*dST2[0]);
+	 var tangent = scale_vec(r,subtract(scale_vec(dST2[1],dPos1),scale_vec(dST1[1],dPos2)));
+	 this.tangents.push(tangent, tangent, tangent, tangent, tangent, tangent);
      }
    },
   Shape)

@@ -111,5 +111,6 @@ Declare_Any_Class( "Enemy_Bullet",
 	'populate': function()
 	{
 		this.materials.body = new Material(Color(1.0,0,0,1),1,.8,0,10);
+	    this.velocity = scale_vec(0.5, this.velocity);
 	}
 }, Projectile);
