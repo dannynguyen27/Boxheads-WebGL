@@ -1,4 +1,4 @@
-// UCLA's Graphics Example Code (Javascript and C++ translations available), by Garett Ridge for CS174a.
+  // UCLA's Graphics Example Code (Javascript and C++ translations available), by Garett Ridge for CS174a.
 // displayables.js - The subclass definitions here each describe different independent animation processes that you want to fire off each frame, by defining a display
 // event and how to react to key and mouse input events.  Make one or two of your own subclasses, and fill them in with all your shape drawing calls and any extra key / mouse controls.
 
@@ -158,7 +158,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
   { 'construct': function( context )
       { this.shared_scratchpad    = context.shared_scratchpad;
       	this.shared_scratchpad.animate = 1;
-      	
+
       	this.level = 0;
       	this.player = new Player(this);
       	this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 5;    // actual starting max is 10 because game starts at level 0
@@ -188,7 +188,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         this.waveSpawnCount = 0;
         this.waveDeathCount = 0;
 
-      	// Set up geometry shared by all actors
       	shapes_in_use.cube = new Cube();
       	shapes_in_use.sphere = new Subdivision_Sphere(3);
         shapes_in_use.oriented_cube = new Oriented_Cube();      
@@ -442,8 +441,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       // *** Materials: 
       // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
       var ground = new Material( Color( 0,0,0,1 ), .4, 2, 0, 10, "Visuals/ground_texture.jpg","Visuals/wall_bumpmap.jpg" ), // Omit the final (string) parameter if you want no texture
-          portal = new Material( Color( 0.3,0.3,0.3,1 ), 0.5, 0.4, 0, 10, "Visuals/portal.jpg"),
-          placeHolder = new Material( Color(0,0,0,0), 0,0,0,0, "Blank" );
+          portal = new Material( Color( 0.3,0.3,0.3,1 ), 0.5, 0.4, 0, 10, "Visuals/portal.jpg");
 
       // Map Indexing
       /*
@@ -460,8 +458,9 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         |                     | -15
         -----------------------
       */
+	
+	this.drawWalls();    
 
-      this.drawWalls();    
 
       model_transform = mat4();
       model_transform = mult(model_transform, translation(0, 17, 0.8));
@@ -587,7 +586,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     'resetGame': function()
     {
         this.score = 0;
-        this.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-12), rotation(-50,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
+        this.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-60), rotation(-50,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
         this.shared_scratchpad.animate = 1;
         this.waveSpawnCount = 0;
         this.waveDeathCount = 0;
@@ -610,11 +609,28 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         graphics_state.lights = [];                    // First clear the light list each frame so we can replace & update lights.
 
 	      //One light to illuminate them all
-        graphics_state.lights.push( new Light( vec4(  0,  0,  10, 1 ), Color(1, 1, 1, 1 ), 1000 ) );
+        graphics_state.lights.push( new Light( vec4(  10,  10,  50, 1 ), Color(1, 1, 1, 1 ), 5000 ) );
 
         /**********************************
         Start coding down here!!!!
         **********************************/
+
+	      shaders_in_use["Cube"].activate();
+      	var skybox = new Cube(true);
+      	skybox.copy_onto_graphics_card();
+      	gl.enableVertexAttribArray(g_addrs.shader_attributes[0].index);
+              gl.bindBuffer( gl.ARRAY_BUFFER, skybox.graphics_card_buffers[0] );
+              gl.vertexAttribPointer( g_addrs.shader_attributes[0].index, g_addrs.shader_attributes[0].size, g_addrs.shader_attributes[0].type, g_addrs.shader_attributes[0].normalized, g_addrs.shader_attributes[0].stride, g_addrs.shader_attributes[0].pointer );
+      	gl.uniform1i(g_addrs.cubeMap_loc, 0);
+      	active_shader.update_uniforms(new Graphics_State(rotation(30,1,0,0), perspective(45, canvas.width/canvas.height, .1, 1000), 0 ), mult(rotation(180,0,0,1),scale(40,40,40)));
+      	gl.activeTexture(gl.TEXTURE0);
+      	gl.bindTexture(gl.TEXTURE_CUBE_MAP, textures_in_use["skybox"].id);
+      	gl.disable(gl.DEPTH_TEST);
+      	gl.drawArrays(gl.TRIANGLES,0,skybox.positions.length);
+      	gl.enable(gl.DEPTH_TEST);
+	     
+        shaders_in_use["Default"].activate();
+        
         // initialize start screen
         if(!this.gameStart){
             switch(this.screenIndex){
@@ -671,6 +687,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
               this.event_timer = 5.0;
               this.event = "Wave Cleared. Rest Period.";
               this.waveDeathCount+=1;
+              console.log("dead counter increased");
             }
             if(this.event_timer <= 0){
               this.levelUp();

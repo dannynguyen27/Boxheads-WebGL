@@ -213,7 +213,7 @@ Declare_Any_Class( "Graphics_Addresses",  // Find out the memory addresses inter
         this.shader_attributes = [ new Shader_Attribute( gl.getAttribLocation( program, "vPosition"), 3, gl.FLOAT, true,  false, 0, 0 ),  // Pointers to all shader
                                    new Shader_Attribute( gl.getAttribLocation( program, "vNormal"  ), 3, gl.FLOAT, true,  false, 0, 0 ),  // attribute variables
                                    new Shader_Attribute( gl.getAttribLocation( program, "vTexCoord"), 2, gl.FLOAT, false, false, 0, 0 ),
-				   new Shader_Attribute( gl.getAttribLocation( program, "vTangent"), 3, gl.FLOAT, true, false, 0, 0 )];
+				   new Shader_Attribute( gl.getAttribLocation( program, "vTangent"), 3, gl.FLOAT, false, false, 0, 0 )];
 
         var num_uniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
         for (var i = 0; i < num_uniforms; ++i)
@@ -284,31 +284,58 @@ Declare_Any_Class( "Canvas_Manager",                      // This class performs
   } );
 
 Declare_Any_Class( "Texture",                                                             // Wrap a pointer to a new texture buffer along with a new HTML image object.
-  { construct: function(            filename, bool_mipMap, bool_clamp_to_edge = false, bool_will_copy_to_GPU = true )
-      { this.define_data_members( { filename, bool_mipMap, bool_will_copy_to_GPU, bool_clamp_to_edge ,     id: gl.createTexture() } );
+  { construct: function(            filename, bool_mipMap, bool_will_copy_to_GPU = true )
+      { this.define_data_members( { filename, bool_mipMap, bool_will_copy_to_GPU,     id: gl.createTexture() } );
         gl.bindTexture(gl.TEXTURE_2D, this.id );
         gl.texImage2D (gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
-                      new Uint8Array([255, 0, 0, 255]));              // A single red pixel, as a placeholder image to prevent console warning
+                       new Uint8Array([255, 0, 0, 255]));              // A single red pixel, as a placeholder image to prevent console warning
         this.image          = new Image();
         this.image.onload   = ( function (texture, bool_mipMap)       // This self-executing anonymous function makes the real onload() function
           { return function( )      // Instrctions for whenever the real image file is ready
             { gl.pixelStorei  ( gl.UNPACK_FLIP_Y_WEBGL, true );
-              gl.bindTexture  ( gl.TEXTURE_2D, texture.id );
+              gl.bindTexture  ( gl.TEXTURE_2D, texture.id ); 
               gl.texImage2D   ( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image );
               gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
-	      if(bool_clamp_to_edge){
+              if( bool_mipMap ){
+		  gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.generateMipmap(gl.TEXTURE_2D); 
+	      }
+              else{
+                  gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 		  gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
 		  gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
 	      }
-              if( bool_mipMap )
-                { gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.generateMipmap(gl.TEXTURE_2D); }
-              else
-                  gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
               texture.loaded = true;
             }
           } ) ( this, bool_mipMap, bool_will_copy_to_GPU );
         if( bool_will_copy_to_GPU ) this.image.src = this.filename;
       } } );
+
+Declare_Any_Class( "CubeMap",
+  { construct: function(            filenames, bool_will_copy_to_GPU = true )
+      { this.define_data_members( { filenames, bool_will_copy_to_GPU,     id: gl.createTexture() } );
+        gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.id );
+	for(var i=0;i<6;i++){
+            gl.texImage2D (gl.TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,  new Uint8Array([255, 0, 0, 255]));              // A single red pixel, as a placeholder image to prevent console warning
+	}
+	this.images=[];
+	for(var i=0;i<6;i++){
+            this.images.push(new Image());
+            this.images[i].onload   = ( function (texture, offset)       // This self-executing anonymous function makes the real onload() function
+					{ return function()      // Instrctions for whenever the real image file is ready
+					  {
+					      gl.pixelStorei  ( gl.UNPACK_FLIP_Y_WEBGL, true );
+					      gl.bindTexture  ( gl.TEXTURE_CUBE_MAP, texture.id );
+					      gl.texImage2D   ( gl.TEXTURE_CUBE_MAP_POSITIVE_X+offset, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.images[offset] );
+					      gl.texParameteri( gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
+					      gl.texParameteri( gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
+					      gl.texParameteri( gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
+					      gl.texParameteri( gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
+					  }
+					} ) ( this, i );
+            if( bool_will_copy_to_GPU ) this.images[i].src = this.filenames[i];
+	}
+      } 
+  });
 
 Declare_Any_Class( "Animation",           // Animation Superclass -- the base for all displayable sub-programs we can use on a canvas
   { 'construct': function() {},    'init_keys': function() {},    'update_strings': function() {},    'display': function() {} } );

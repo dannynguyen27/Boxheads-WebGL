@@ -45,7 +45,7 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
           attribute vec3 vPosition, vNormal, vTangent;
           attribute vec2 vTexCoord;
           varying vec2 fTexCoord;
-          varying vec3 N, E, pos;
+          varying vec3 N, E, R, pos;
 
           uniform float ambient, diffusivity, shininess, smoothness, animation_time, attenuation_factor[N_LIGHTS];
           uniform bool BUMP_MAP;    // Flags for alternate shading methods
@@ -60,7 +60,7 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
 
           void main()
           {
-            N = normalize( camera_model_transform_normal * vNormal );
+              N = normalize( camera_model_transform_normal * vNormal );
 	      vec3 T;
 	      vec3 B;
 	    if(BUMP_MAP){
@@ -110,14 +110,15 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
           uniform float ambient, diffusivity, shininess, smoothness, animation_time, attenuation_factor[N_LIGHTS];
 
           varying vec2 fTexCoord;   // per-fragment interpolated values from the vertex shader
-          varying vec3 N, E, pos;
+          varying vec3 N, E, R, pos;
 
           uniform sampler2D texture;
 	  uniform sampler2D bumpTexture;
+	  uniform samplerCube cubeMap;
           uniform bool BUMP_MAP, USE_TEXTURE;
 
           void main()
-          {
+          {	      
             vec4 tex_color = texture2D( texture, fTexCoord );
             gl_FragColor = tex_color * ( USE_TEXTURE ? ambient : 0.0 ) + vec4( shapeColor.xyz * ambient, USE_TEXTURE ? shapeColor.w * tex_color.w : shapeColor.w ) ;
             for( int i = 0; i < N_LIGHTS; i++ )
@@ -143,6 +144,67 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
 		gl_FragColor.xyz += attenuation_multiplier * (tex_color.xyz * diffusivity * diffuse  + lightColor[i].xyz * shininess * specular );
             }
             gl_FragColor.a = gl_FragColor.w;
+          }`;
+      }
+  }, Shader );
+
+Declare_Any_Class( "CubeMap_Shader",
+  { 'update_uniforms'          : function( g_state, model_transform )     // Send javascrpt's variables to the GPU to update its overall state.
+      {
+          let [ P, C, M ]  = [ g_state.projection_transform, g_state.camera_transform, model_transform ],   // PCM will mean Projection * Camera * Model
+          CM             = mult( C,  M ),
+          PCM            = mult( P, CM ),                               // Send the current matrices to the shader.  Go ahead and pre-compute the products
+          inv_trans_CM   = toMat3( transpose( inverse( CM ) ) );        // we'll need of the of the three special matrices and just send those, since these
+                                                                        // will be the same throughout this draw call & across each instance of the vertex shader.
+        gl.uniformMatrix4fv( g_addrs.projection_camera_model_transform_loc, false, flatten( PCM ) );
+        gl.uniformMatrix3fv( g_addrs.camera_model_transform_normal_loc,     false, flatten( inv_trans_CM ) );
+      },
+    'vertex_glsl_code_string'  : function()           // ********* VERTEX SHADER *********
+      { return `
+          // The following string is loaded by our javascript and then used as the Vertex Shader program.  Our javascript sends this code to the graphics card at runtime, where on each run it gets
+          // compiled and linked there.  Thereafter, all of your calls to draw shapes will launch the vertex shader program once per vertex in the shape (three times per triangle), sending results on
+          // to the next phase.  The purpose of this program is to calculate the final resting place of vertices in screen coordinates; each of them starts out in local object coordinates.
+
+          precision mediump float;
+
+          attribute vec3 vPosition, vNormal;
+          attribute vec2 vTexCoord;
+          varying vec2 fTexCoord;
+          varying vec3 N, R;
+
+          uniform mat4 projection_camera_model_transform;
+          uniform mat3 camera_model_transform_normal;
+
+          void main()
+          {
+	      gl_Position = projection_camera_model_transform * vec4(vPosition, 1.0);
+	      
+              N = normalize( camera_model_transform_normal * vNormal );
+	      R= (vec4(vPosition,1.0).xyz);//projection_camera_model_transform * vec4(vPosition, 1.0)).xyz;
+
+              vec4 object_space_pos = vec4(vPosition, 1.0);
+              gl_Position = projection_camera_model_transform * object_space_pos;
+              fTexCoord = vTexCoord;
+          }`;
+      },
+    'fragment_glsl_code_string': function()           // ********* FRAGMENT SHADER *********
+      { return `
+          // Likewise, the following string is loaded by our javascript and then used as the Fragment Shader program, which gets sent to the graphics card at runtime.  The fragment shader runs
+          // once all vertices in a triangle / element finish their vertex shader programs, and thus have finished finding out where they land on the screen.  The fragment shader fills in (shades)
+          // every pixel (fragment) overlapping where the triangle landed.  At each pixel it interpolates different values from the three extreme points of the triangle, and uses them in formulas
+          // to determine color.
+
+          precision mediump float;
+
+          varying vec2 fTexCoord;   // per-fragment interpolated values from the vertex shader
+          varying vec3 N, R;
+
+	  uniform samplerCube cubeMap;
+
+          void main()
+          {	      
+	      vec4 texColor = textureCube(cubeMap,R); 
+	      gl_FragColor = texColor;
           }`;
       }
   }, Shader );

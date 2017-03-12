@@ -28,7 +28,7 @@ index.html - The web page document containing the canvas (drawing surface), that
           g_state = main_canvas.shared_scratchpad.graphics_state;
           
       shaders_in_use[ "Default"     ] = new Phong_or_Gouraud_Shader( g_state );    // Put all our shader programs in the GPU.
-
+      shaders_in_use[ "Cube" ]        = new CubeMap_Shader(g_state);
                                                                                 // IMPORTANT: -- You have to include all your new images in here:
       filtered_textures_to_load.push( "text.png" );                             // Put all our texture images in the GPU.
       filtered_textures_to_load.push( "Visuals/ground_texture.jpg" );
@@ -53,10 +53,12 @@ index.html - The web page document containing the canvas (drawing surface), that
 
       filtered_textures_to_load.push( "Visuals/wall_bumpmap.jpg");
 
-      for( var i = 0; i < filtered_textures_to_load.length; i++ ) textures_in_use[ filtered_textures_to_load[i] ] = ( new Texture( filtered_textures_to_load[i], true ) );
+      for( var i = 0; i < filtered_textures_to_load.length; i++ ) textures_in_use[ filtered_textures_to_load[i] ] = ( new Texture( filtered_textures_to_load[i],true) );
 
-      for( var i = 0; i < unfiltered_textures_to_load.length; i++ ) textures_in_use[ unfiltered_textures_to_load[i] ] = ( new Texture( unfiltered_textures_to_load[i], false,true ) );
+      for( var i = 0; i < unfiltered_textures_to_load.length; i++ ) textures_in_use[ unfiltered_textures_to_load[i] ] = ( new Texture( unfiltered_textures_to_load[i], false) );
 
+      textures_in_use["skybox"] = new CubeMap(["Visuals/TropicalSunnyDayRight2048.png","Visuals/TropicalSunnyDayLeft2048.png","Visuals/TropicalSunnyDayDown2048.png","Visuals/TropicalSunnyDayUp2048.png","Visuals/TropicalSunnyDayFront2048.png","Visuals/TropicalSunnyDayBack2048.png"]);
+			  
       main_canvas.register_display_object( new Debug_Screen     ( main_canvas ) );  // We instantiate some of our custom "Animation" subclasses and register these displayable
       main_canvas.register_display_object( new World( main_canvas ) );  // objects to their master "Canvas_Manager" object -- which OpenGL calls upon every time a
       main_canvas.register_display_object( new Camera   ( main_canvas ) );  // draw / keyboard / mouse event happens.
