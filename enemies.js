@@ -131,7 +131,7 @@ Declare_Any_Class( "Enemy",
 		if(this.restTimer > 0) {
 			this.restTimer -= delta_time/1000;
 	  	}
-    	else if (this.canAttack(delta_time))
+    	else if (this.canAttack(delta_time) && !this.dying)
     	{
 	    	this.heading = normalize(subtract(this.world.player.position,this.position));
     		this.attack(delta_time);
@@ -159,7 +159,7 @@ Declare_Any_Class( "Enemy",
 		}
 
 		//change heading of this enemy
-		if(length(displacement) != 0) {
+		if(length(displacement) != 0 && !this.dying) {
 			this.heading = normalize(displacement.slice(0));
 		}
 
@@ -175,8 +175,7 @@ Declare_Any_Class( "Enemy",
 			//displacement = scale_vec(delta_time/1000, this.velocity);
 			//newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
 		}
-   	        else if (this.world.collidesWithWall(newPosition,1.1) || !this.world.checkBounds(newPosition)) { 
-	        }
+   	    else if (this.world.collidesWithWall(newPosition,1.1) || !this.world.checkBounds(newPosition)) { }
 		else {
 			this.position=newPosition;
 			this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
@@ -203,7 +202,7 @@ Declare_Any_Class( "Enemy",
 				this.alive = false;
 				return;
 			}                         // -y, x gives us the axis where the enemy will fall in its normal's direction
-				model_transform = mult(model_transform, rotation(-this.fallAngle, -this.heading[1], this.heading[0],0));   
+			model_transform = mult(model_transform, rotation(-this.fallAngle, -this.heading[1], this.heading[0],0));   
 		}
 
 		//get body center and turn by heading angle

@@ -116,7 +116,6 @@ Declare_Any_Class( "Enemy_Bullet",
 	{
 		if (this.world.checkPlayerCollision(this.position, PROJECTILE_HITBOX))
 		{
-			console.log("I'm bleeding!");
 			this.world.player.changeHealth(-ENEMY_BULLET_DAMAGE);
 			return true;
 		}

@@ -165,6 +165,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       	this.projectiles = [];
         this.crates = []; this.crateSpawnTimer = 0; this.maxCrates = MAX_AMMO_CRATES;
       	this.mapObjects = [];
+        this.numDevils = 0;
       	//set up the (static!) world objects
       	shapes_in_use.groundPlane = new Floor();
       	//setup boundary
@@ -212,6 +213,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       this.event = "  Wave " + this.level + " : Start!";
       this.waveSpawnCount = 0;
       this.waveDeathCount = 0;
+      this.numDevils = 0;
       this.maxEnemies = Math.min(25, this.maxEnemies + 5);
     },
     'init_keys': function( controls )   // init_keys():  Define any extra keyboard shortcuts here
@@ -231,7 +233,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           controls.add( "m", this, function() { this.mute = !this.mute;}); 
           controls.add( "p", this, function() { this.pause = !this.pause;});        
         
-      	  controls.add( "space", this, function() {this.player.attack()} ); 
+      	  controls.add( "space", this, function() {this.player.attack();  console.log("it's been pressed");   } ); 
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -470,6 +472,13 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       shapes_in_use.square.draw(graphics_state, model_transform, portal);
 
       model_transform = mat4();
+      model_transform = mult(model_transform, translation(0, -17, 0.8));
+      model_transform = mult(model_transform, rotation(90, 1, 0, 0));
+      model_transform = mult(model_transform, rotation(90, 0, 0, 1));
+      model_transform = mult(model_transform, scale(1.5, 1.5, 1));
+      shapes_in_use.square.draw(graphics_state, model_transform, portal);
+
+      model_transform = mat4();
       model_transform = mult(model_transform, translation(17, 0, 0.8));
       model_transform = mult(model_transform, rotation(90, 0, 1, 0));
       model_transform = mult(model_transform, scale(1.5, 1.5, 1));
@@ -481,9 +490,12 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       model_transform = mult(model_transform, scale(1.5, 1.5, 1));
       shapes_in_use.square.draw(graphics_state, model_transform, portal);
 
-      if (this.pause)
+      if (this.pause){
+        this.event_timer = 0.1;
+        this.event = "       Paused";
         return;
-      
+      }
+
       // spawn new actors
       if(this.enemySpawnTimer < 0 && this.waveSpawnCount < this.maxEnemies){
           // This currently spawns enemies in the corners of the map
@@ -507,12 +519,13 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 
            // TODO: UPDATE THIS WITH FORMULA TO GENERATE NORMAL/DEVIL
           var random = Math.floor(Math.random() * 10);
-          if (random < 2)
+          if (random < 2 && this.numDevils < this.level){
             this.enemies.push(new Devil_Enemy(this, translation(XCoord, YCoord, 0), 15));
+            this.numDevils++;
+          }
           else 
             this.enemies.push(new Normal_Enemy(this, translation(XCoord, YCoord, 0)));
           this.waveSpawnCount++;
-
           this.enemySpawnTimer = 2.0;
       }
       else{
@@ -586,7 +599,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     'resetGame': function()
     {
         this.score = 0;
-        this.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-60), rotation(-50,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
+        this.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-12), rotation(-50,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
         this.shared_scratchpad.animate = 1;
         this.waveSpawnCount = 0;
         this.waveDeathCount = 0;
@@ -762,12 +775,10 @@ Declare_Any_Class( "Player",
     'changeHealth': function(deltaHealth){
 	     this.health += deltaHealth;
        this.health = Math.min(this.health, this.maxHealth);
-	      if(this.health == 0 && !this.world.mute){
+	      if(this.health <= 0 && !this.dying && !this.world.mute){
             var audio = new Audio('Audio/dying.mp3');
             audio.play();
-        }
-        if(this.health <= 0){
-          this.dying = true;
+            this.dying = true;
         }
     },
     'changeAmmo': function(deltaAmmo){
@@ -781,21 +792,20 @@ Declare_Any_Class( "Player",
       this.buff_timer = 5.0;
       },
     'attack': function(){
-  // Cannot shoot if player has no ammo
-  var audio = new Audio('Audio/gunshot.mp3');
-  
-  if(this.ammo <= 0 || !this.alive )
-    return;
-	if(this.autoAttackTimer <= 0){
-	    this.world.projectiles.push(new Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
-	    this.autoAttackTimer = ATTACK_TIMER;
-      this.ammo--;
-      if (!this.world.mute)
-      {
-        var audio = new Audio('Audio/gunshot.mp3');
-        audio.play();
-      }
-	}
+      // Cannot shoot if player has no ammo
+      var audio = new Audio('Audio/gunshot.mp3');
+      if(this.ammo <= 0 || !this.alive )
+        return;
+    	if(this.autoAttackTimer <= 0){
+          this.world.projectiles.push(new Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
+          this.autoAttackTimer = ATTACK_TIMER;
+          this.ammo--;
+          if (!this.world.mute)
+          {
+            var audio = new Audio('Audio/gunshot.mp3');
+            audio.play();
+          }
+    	}
     },
     'display': function(delta_time)
       {
