@@ -500,7 +500,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
            // TODO: UPDATE THIS WITH FORMULA TO GENERATE NORMAL/DEVIL
           var random = Math.floor(Math.random() * 10);
           if (random < 2)
-            this.enemies.push(new Devil_Enemy(this, translation(XCoord, YCoord, 0)));
+            this.enemies.push(new Devil_Enemy(this, translation(XCoord, YCoord, 0), 15));
           else 
             this.enemies.push(new Normal_Enemy(this, translation(XCoord, YCoord, 0)));
           //this.enemies.push(new Enemy(this, translation(XCoord,YCoord,0)));
