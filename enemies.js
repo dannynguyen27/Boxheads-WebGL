@@ -165,16 +165,18 @@ Declare_Any_Class( "Enemy",
 		var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
 
 		//make sure new position is valid; rest a few ticks if not, then try with a slightly different angle
-		if(this.world.checkEnemyCollision(this,newPosition,1.2)!= -1)
+		if(this.world.checkEnemyCollision(this,newPosition,1.2)!= -1 || this.world.collidesWithWall(newPosition,1.1) || !this.world.checkBounds(newPosition))
 		{
-			restTimer = 0.5;
-			displacement=vec4(0,0,0,0);
+		    if(this.restTimer <=0){
+			this.velocity = scale_vec(this.moveSpeed,mult_vec(rotation(Math.random()*360, 0,0,1), vec4(1,0,0,0)));
+			restTimer = 0.6;
+		    }
+		    displacement=vec4(0,0,0,0);
 			//this.velocity=mult_vec(rotation(45,0,0,1), this.velocity);
 			//displacement = scale_vec(delta_time/1000, this.velocity);
 			//newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
 		}
-   	    else if (this.world.collidesWithWall(newPosition,1.1) || !this.world.checkBounds(newPosition)) { }
-		else {
+	        else {
 			this.position=newPosition;
 			this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
 		}
@@ -237,9 +239,6 @@ Declare_Any_Class( "Enemy",
 				}
 			}
 			this.armAngle = this.legAngle;
-		}
-		else{
-			this.legAngle = 0;
 		}
 
 		// right leg	  
