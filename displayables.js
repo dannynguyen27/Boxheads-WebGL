@@ -14,7 +14,7 @@ const ATTACK_TIMER = 1 / 5.4; // Three shots per second
 
 /********** CRATE CONSTANTS**********/
 
-const AMMO_PER_CRATE = 50;
+const AMMO_PER_CRATE = 10;
 const MAX_AMMO_CRATES = 10;
 const AMMO_SPAWN_RADIUS = 15;
 const CRATE_DESPAWN_TIMER = 15;
@@ -561,7 +561,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           {
             var randomType = Math.floor(Math.random() * NUM_TYPES_OF_CRATES);
             this.crates.push(new AmmoCrate(this, randomType, translation(randomX,randomY,0)));
-            this.crateSpawnTimer = 2.0; //TODO: update this with a formula later
+            this.crateSpawnTimer = 2 / this.level /*2.0*/; //TODO: update this with a formula later
           }
       }
       else{
