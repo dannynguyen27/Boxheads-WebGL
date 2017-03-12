@@ -353,12 +353,12 @@ Declare_Any_Class( "Devil_Enemy",
     },
 	'populate': function()
 	{
-	  	this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/demon_head2.jpg");
-    	this.materials.body = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/enemy_body.jpg");
+	  	this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/devil_head.jpg");
+    	this.materials.body = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/devil_body.jpg");
     	this.materials.fullBar = new Material(Color(0,0.7,0,1),1,0,0,10);
     	this.materials.midBar = new Material(Color(1,0.6,0,1),1,0,0,10);
     	this.materials.lowBar = new Material(Color(0.6,0,0,1),1,0,0,10);
-    	this.materials.default = new Material(Color(0.1,0.1,0.1,1),0.1,0.6,0,20);		
+    	this.materials.default = new Material(Color(0.1,0.4,0.1,1),0.3,0.6,0,20);		
 	}
   }, Enemy);
 
