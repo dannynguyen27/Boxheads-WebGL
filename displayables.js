@@ -348,6 +348,16 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	var vec = subtract(this.player.position,newPosition);
 	     return dot(vec,vec) < tolerance*tolerance;
     },
+    'checkPlayerLineOfSight': function(position){
+	var diff = scale_vec(0.6,normalize(subtract(this.player.position,position)));
+	while(!this.collidesWithWall(position, 1.5)){
+	    position = add(position,diff);
+	    if(!this.checkBounds(position) || this.checkPlayerCollision(position,1)){
+		return true;
+	    }
+	}
+	return false;
+    },
     'checkEnemyCollision': function(self,newPosition,tolerance){
 	      for(var i=0;i<this.enemies.length;i++){
 		  var vec = subtract(this.enemies[i].position,newPosition);

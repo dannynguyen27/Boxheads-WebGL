@@ -24,20 +24,15 @@ Declare_Any_Class( "Enemy",
     	this.populate.apply( this, arguments );
     },
     'getVecToPlayer': function(){
-	var discovered = []
-	for(var i=this.world.xMin; i<=this.world.xMax;i++){
-	    for(var j =this.world.yMin; j<this.world.yMax;j++){
-		discovered.push(false);
-	    }
-	}
+	var discovered = {}
 
 	var currentPos = {'position':vec4(this.position[0], this.position[1], 0, 1),'originVec':vec4(0,0,0,0)};
-	if(this.world.checkPlayerCollision(currentPos.position,1.3)){
+	if(this.world.checkPlayerCollision(currentPos.position,1.5)){
 	    return vec4(0,0,0,0);
 	}
 
 	var queue = new Queue();
-	var stepSize = 0.8;
+	var stepSize = 1;
 	var immediateNeighbors = [{'position':vec4(currentPos.position[0],currentPos.position[1]+stepSize,0,1),'originVec':vec4(0,1,0,0)},
 				  {'position':vec4(currentPos.position[0],currentPos.position[1]-stepSize,0,1),'originVec':vec4(0,-1,0,0)},
 				  {'position':vec4(currentPos.position[0]-stepSize,currentPos.position[1],0,1),'originVec':vec4(-1,0,0,0)},
@@ -47,10 +42,10 @@ Declare_Any_Class( "Enemy",
 				  {'position':vec4(currentPos.position[0]-stepSize,currentPos.position[1]+stepSize,0,1),'originVec':vec4(-1,1,0,0)},
 				  {'position':vec4(currentPos.position[0]-stepSize,currentPos.position[1]-stepSize,0,1),'originVec':vec4(-1,-1,0,0)}];*/
 	for(var i=0;i<immediateNeighbors.length;i++){
-	    if(this.world.checkBounds(immediateNeighbors[i].position) && !this.world.collidesWithWall(immediateNeighbors[i].position,1.2)){
+	    if(this.world.checkBounds(immediateNeighbors[i].position) && !this.world.collidesWithWall(immediateNeighbors[i].position,1.15)){
 		queue.enqueue(immediateNeighbors[i]);
 	    }
-	    discovered[immediateNeighbors[i].position[0]*(this.world.yMax-this.world.yMin)+immediateNeighbors[i].position[1]]=true;
+	    discovered[immediateNeighbors[i].position[0].toFixed(1)+','+immediateNeighbors[i].position[1].toFixed(1)]=true;
 	}
 	while(!queue.isEmpty()){
 	    var searchLeaf = queue.dequeue();
@@ -66,15 +61,16 @@ Declare_Any_Class( "Enemy",
 			      {'position':vec4(searchLeaf.position[0]-stepSize,searchLeaf.position[1]+stepSize,0,1),'originVec':searchLeaf.originVec},
 			      {'position':vec4(searchLeaf.position[0]-stepSize,searchLeaf.position[1]-stepSize,0,1),'originVec':searchLeaf.originVec}];*/
 	    for(var i=0;i<toDiscover.length;i++){
-		if(//!discovered[toDiscover[i].position[0]+','+toDiscover[i].position[1]] &&
-		    !discovered[toDiscover[i].position[0]*(this.world.yMax-this.world.yMin)+toDiscover[i].position[1]] && 
-		   this.world.checkBounds(toDiscover[i].position) && !this.world.collidesWithWall(toDiscover[i].position,1.2)){
+		if(!discovered[toDiscover[i].position[0].toFixed(1)+','+toDiscover[i].position[1].toFixed(1)] &&
+		   // !discovered[toDiscover[i].position[0]*(this.world.yMax-this.world.yMin)+toDiscover[i].position[1]] &&
+		   this.world.checkBounds(toDiscover[i].position) && !this.world.collidesWithWall(toDiscover[i].position,1.15)){
 		    queue.enqueue(toDiscover[i]);
 		}
 		//discovered[toDiscover[i].position[0]+','+toDiscover[i].position[1]]=true;
-		discovered[toDiscover[i].position[0]*(this.world.yMax-this.world.yMin)+toDiscover[i].position[1]]=true; 
+		discovered[toDiscover[i].position[0].toFixed(1)+','+toDiscover[i].position[1].toFixed(1)]=true; 
 	    }
 	}
+	console.log("not found!")
 	return vec4(0,0,0,0);
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
@@ -136,6 +132,9 @@ Declare_Any_Class( "Enemy",
 	    	this.heading = normalize(subtract(this.world.player.position,this.position));
     		this.attack(delta_time);
 	  	}
+                else if (this.world.checkPlayerLineOfSight(this.position)){
+		    this.velocity = scale_vec(this.moveSpeed,normalize(subtract(this.world.player.position,this.position)));    
+		}
 	  	else { //get vector to player
 		    if(this.bfsTimer <= 0){
 			var vec2Player = this.getVecToPlayer();
@@ -150,7 +149,6 @@ Declare_Any_Class( "Enemy",
 		    else{
 			this.bfsTimer -= delta_time/1000;
 		    }
-	    	//this.velocity = scale_vec(this.moveSpeed,normalize(subtract(this.world.player.position,this.position)));
 	  	}
 
 		var displacement = scale_vec(delta_time/1000, this.velocity);
@@ -375,7 +373,8 @@ Declare_Any_Class( "Devil_Enemy",
   		if (this.dying)
   			return false;
 
-  		if (this.world.checkPlayerCollision(this.position, ENEMY_SHOOT_RANGE))
+  		if (this.world.checkPlayerCollision(this.position, ENEMY_SHOOT_RANGE)&&
+		   this.world.checkPlayerLineOfSight(this.position))
   			return true;
   		return false;
   	},
