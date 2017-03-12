@@ -106,7 +106,11 @@ Declare_Any_Class( "Enemy",
     'changeHealth': function(deltaHealth){
 	    this.health += deltaHealth;
 	    if(this.health <= 0)
-	       this.dying = true;
+	    {
+	    	this.dying = true;
+	    	this.updateScore();
+	    }
+	       
     },
     'isDead': function(){
     	return this.dying;
@@ -116,6 +120,9 @@ Declare_Any_Class( "Enemy",
     },
     'attack': function(delta_time) {
     	// This is empty as it will be overridden
+    },
+    'updateScore': function() {
+		// This is empty as it will be overridden
     },
     'display': function(delta_time)
     {
@@ -315,6 +322,10 @@ Declare_Any_Class( "Normal_Enemy",
 	  		this.autoAttackTimer -= delta_time/1000;
       	}
     },
+	'updateScore': function()
+	{
+		this.world.score += 1000;
+	},
 	'populate': function()
 	{
 	  	this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/enemy_head.jpg");
@@ -356,14 +367,18 @@ Declare_Any_Class( "Devil_Enemy",
 	  		this.autoAttackTimer -= delta_time/1000;
       	}
     },
+    'updateScore': function()
+    {
+    	this.world.score += 5000;
+    },
 	'populate': function()
 	{
-	  	this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/demon_head2.jpg");
-    	this.materials.body = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/enemy_body.jpg");
+	  	this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/devil_head.jpg");
+    	this.materials.body = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/devil_body.jpg");
     	this.materials.fullBar = new Material(Color(0,0.7,0,1),1,0,0,10);
     	this.materials.midBar = new Material(Color(1,0.6,0,1),1,0,0,10);
     	this.materials.lowBar = new Material(Color(0.6,0,0,1),1,0,0,10);
-    	this.materials.default = new Material(Color(0.1,0.1,0.1,1),0.1,0.6,0,20);		
+    	this.materials.default = new Material(Color(0.1,0.4,0.1,1),0.3,0.6,0,20);		
 	}
   }, Enemy);
 

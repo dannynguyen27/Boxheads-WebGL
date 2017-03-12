@@ -175,6 +175,9 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         // Pause Option
         this.pause = false;
 
+        // Keeps track of player's score
+        this.score = 0;
+
         // Keeps track of enemies slain
         this.enemiesKilled = 0;
         this.enemiesNeededToLevelUp = 10;
@@ -489,7 +492,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
            // TODO: UPDATE THIS WITH FORMULA TO GENERATE NORMAL/DEVIL
           var random = Math.floor(Math.random() * 10);
           if (random < 2)
-            this.enemies.push(new Devil_Enemy(this, translation(XCoord, YCoord, 0)));
+            this.enemies.push(new Devil_Enemy(this, translation(XCoord, YCoord, 0), 15));
           else 
             this.enemies.push(new Normal_Enemy(this, translation(XCoord, YCoord, 0)));
           //this.enemies.push(new Enemy(this, translation(XCoord,YCoord,0)));
@@ -567,6 +570,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     },
     'resetGame': function()
     {
+        this.score = 0;
         this.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-12), rotation(-50,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
         this.shared_scratchpad.animate = 1;
         this.enemiesKilled = 0;
@@ -616,7 +620,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
             if(this.mouse.anchor){
               if(this.mouse.from_center[0] > -340 && this.mouse.from_center[0] < 340 && this.mouse.from_center[1] > 0 && this.mouse.from_center[1] < 120){
                 this.gameStart = false;
-                this.resetGame();       // need to fix
+                this.resetGame();
               }
             }
         }
@@ -646,7 +650,7 @@ Declare_Any_Class( "Player",
       {
   	  //TODO: may want to update UI with player info later on
         user_interface_string_manager.info_map["ammo"]  = "Ammo: " + this.ammo;
-        user_interface_string_manager.info_map["score"] = "Score: 00000000";
+        user_interface_string_manager.info_map["score"] = "Score: " + this.world.score;
         if(this.world.event_timer > 0){
           user_interface_string_manager.info_map["event"] = this.world.event;
           this.world.event_timer -= this.delta_time/1000;
