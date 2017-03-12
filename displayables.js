@@ -1,4 +1,4 @@
-// UCLA's Graphics Example Code (Javascript and C++ translations available), by Garett Ridge for CS174a.
+  // UCLA's Graphics Example Code (Javascript and C++ translations available), by Garett Ridge for CS174a.
 // displayables.js - The subclass definitions here each describe different independent animation processes that you want to fire off each frame, by defining a display
 // event and how to react to key and mouse input events.  Make one or two of your own subclasses, and fill them in with all your shape drawing calls and any extra key / mouse controls.
 
@@ -207,7 +207,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
                 [-5,3],[-5,2],[-5,1],[-5,0],[-5,-1],[-5,-2],[-5,-3],
                 [5,3],[5,2],[5,1],[5,0],[5,-1],[5,-2],[5,-3],       
   	      
-                [-2,3],[-1,3],[2,3],
+                [-2,3],[2,3],
                 [-2,2],[-2,1],[-2,0],[-2,-1],[-2,-2],[2,2],[2,1],[2,0],[2,-1],[2,-2],
                 [-2,-3],[-1,-3],[0,-3],[1,-3],[2,-3]
                 
@@ -461,7 +461,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       model_transform = mat4();
       model_transform = mult(model_transform, translation(0, 17, 1.5));
       model_transform = mult(model_transform, scale(2, 1, 2));
-      shapes_in_use.cube.draw(graphics_state, model_transform, portal);
+      //shapes_in_use.cube.draw(graphics_state, model_transform, portal);
 
       if (this.pause)
         return;
@@ -569,7 +569,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     'resetGame': function()
     {
         this.score = 0;
-        this.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-12), rotation(-50,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
+        this.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-60), rotation(-50,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
         this.shared_scratchpad.animate = 1;
         this.waveSpawnCount = 0;
         this.waveDeathCount = 0;
@@ -615,6 +615,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
               this.event_timer = 5.0;
               this.event = "Wave Cleared. Rest Period.";
               this.waveDeathCount+=1;
+              console.log("dead counter increased");
             }
             if(this.event_timer <= 0){
               this.levelUp();
