@@ -14,7 +14,7 @@ const ATTACK_TIMER = 1 / 5.4; // Three shots per second
 
 /********** CRATE CONSTANTS**********/
 
-const AMMO_PER_CRATE = 10;
+const AMMO_PER_CRATE = 50;
 const MAX_AMMO_CRATES = 10;
 const AMMO_SPAWN_RADIUS = 15;
 const CRATE_DESPAWN_TIMER = 15;
@@ -458,16 +458,16 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       // Map Indexing
       /*
 
-           -15 <--0--> +15
+           -16 <--0--> +16
         -----------------------
-        |                     | 15
+        |                     | 16
         |                     | +
         |                     | ^
         |                     | |
         |                     | 0
         |                     | |
         |                     | v
-        |                     | -15
+        |                     | -16
         -----------------------
       */
 	

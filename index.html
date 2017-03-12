@@ -70,22 +70,23 @@ index.html - The web page document containing the canvas (drawing surface), that
       function( callback, element) { window.setTimeout(callback, 1000/60);  };
     })();
 </script>
-</head><body>
-<canvas id="gl-canvas" width="1024" height="768"></canvas><p>
-<a href="#" onclick='document.getElementById( "instructions" ).style = "display:block"; this.style = "display:none";'> Click for instructions </a><div id="instructions" style = "display:none">
-Controlling this Graphics Object: 
-<ul><li>Animation is paused when this program starts, so first you should press ALT+a to play or pause animation. <li>
-    Press t to un-hide the heads-up-display text.  **If this doesn't do anything** then you are running your files without correctly hosting them.  You need to 
-    run cd path/to/these/files, then python -m http.server, then visit the URL localhost:8000. <li>
-    Clicking and dragging spins the scene around while the camera stays still.  If you'd like to spin around some other focal point, 
-    you can set one by flying the camera right up to a desired point and then pressing o.<li>
-		Fly the camera around the scene to adjust your vantage point using the keys w a s d to move in the plane that's along the ground, 
-		and the keys space and z to float up and down.  At any time press r to reset the camera and vantage point back to the origin. <li>
-		The f key unfreezes the camera's rotation setting so you can aim it around while flying or sitting still.  Move the mouse around away from the 
-		center of the window to steer, and press f again to stop this and to freeze the steering again.  Any roll rotation is controlled separately with the comma and period keys. <li> 
-    The keys ALT+n and ALT+g switch shading behaviors.  ALT+n directly shows you normal vectors on shapes by interpreting X,Y,Z vectors
-    as R,G,B colors.  ALT+g toggles Gouraud shading vs Smooth Phong shading with textures.<li>
-		Press up and down to cycle through a live feed of important strings and values of the program -- the code for each Displayable object includes a function where it can provide these. <li>
-		Have fun.
-</div></p></body>
+</head>
+
+<body>
+  <canvas id="gl-canvas" width="1024" height="768"></canvas>
+  <p>
+    <a href="#" onclick='document.getElementById( "instructions" ).style = "display:block"; this.style = "display:none";'> Click for instructions </a>
+    <div id="instructions" style = "display:none">
+      <h1>Blockheads</h1>
+        <p>Gene Block is tired of all of memes on the UCLA Memes for Sick AF Tweens Facebook page. Now, he's out for revenge - help him destroy waves of the meme army!
+        <ul>
+              <li> Use the 'left', 'right', 'up', and 'down' arrow keys to control Gene's movement.</li>
+              <li> Use the 'space' key to shoot down enemies.</li>
+              <li> Crates will spawn at various locations and times throughout the game. Pick them up!</li>
+              <li> Try to use the map layout to your advantage and earn the highest score possible! </li>
+        </ul>
+    </div>
+  </p>
+</body>
+
 </html>
