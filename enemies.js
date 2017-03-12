@@ -99,8 +99,7 @@ Declare_Any_Class( "Enemy",
     },
     'recoil': function(newState){
 	 	this.velocity=vec4(0,0,0,0);
-  		this.restTimer = 0.3;                     // move backwards?!?!
-  		//this.moveBackward(2);
+  		this.restTimer = 0.7;
     },
     //end navigation interface
     'changeHealth': function(deltaHealth){
