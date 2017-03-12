@@ -59,15 +59,13 @@ Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayabl
         shapes_in_use.debug_text.set_string( this.info_map["ammo"] );
         shapes_in_use.debug_text.draw( this.graphicsState, model_transform, true, vec4(0,0,0,1) );  // Draw some UI text (strings)
 
-        model_transform = mult( translation(-.2, .9, 0), font_scale );
+        model_transform = mult( translation(-.25, .9, 0), font_scale );
         shapes_in_use.debug_text.set_string( this.info_map["score"] );
         shapes_in_use.debug_text.draw( this.graphicsState, model_transform, true, vec4(0,0,0,1) );
 
         model_transform = mult( translation(-.3, -.7, 0), font_scale );
         shapes_in_use.debug_text.set_string( this.info_map["event"] );
         shapes_in_use.debug_text.draw( this.graphicsState, model_transform, true, vec4(0,0,0,1) );
-
-
 
         model_transform = mult( translation( -.95, -.9, 0 ), font_scale );
 
@@ -180,6 +178,9 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         // Keeps track of enemies slain
         this.enemiesKilled = 0;
         this.enemiesNeededToLevelUp = 10;
+
+        this.event_timer = 3.0;
+        this.event = "Level " + this.level + " : Start!";
 
        	// the following part of the map layout is added depending on the specified mapNum
        	if(MAP_SELECTOR == 0)
@@ -639,7 +640,7 @@ Declare_Any_Class( "Player",
           heading:vec4(0,1,0,0), velocity: vec4(0,0,0,0),
 				  bool_reverseAnimate:false, limbAngle:0,moveSpeed: 4, defaultSpeed: 4, dying: false, alive: true, 
           health:initHealth, maxHealth:initHealth, autoAttackTimer:0.0, ammo: START_AMMO, materials:{},
-          lowHPThres: 0.4, midHPThres: 0.6, buff_timer: 0.0, event_timer: 0.0, event: "", deltaTime: 0, fallAngle: 0, fadeTimer: 1, fadeRate: 0, 
+          lowHPThres: 0.4, midHPThres: 0.6, buff_timer: 0.0, deltaTime: 0, fallAngle: 0, fadeTimer: 1, fadeRate: 0, 
         });
     this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/player_head.jpg");
     this.materials.body = new Material(Color(0,0,0,1),0.8,.4,0,10, "Visuals/player_body.jpg");
@@ -654,13 +655,13 @@ Declare_Any_Class( "Player",
   	  //TODO: may want to update UI with player info later on
         user_interface_string_manager.info_map["ammo"]  = "Ammo: " + this.ammo;
         user_interface_string_manager.info_map["score"] = "Score: 00000000";
-        if(this.event_timer > 0){
-          user_interface_string_manager.info_map["event"] = "Picked up: " + this.event;
-          this.event_timer -= this.delta_time/1000;
+        if(this.world.event_timer > 0){
+          user_interface_string_manager.info_map["event"] = this.world.event;
+          this.world.event_timer -= this.delta_time/1000;
         }
         else{
          user_interface_string_manager.info_map["event"] = ""; 
-         this.event_timer = 0;
+         this.world.event_timer = 0;
         }
       },
     //begin navigation interface
