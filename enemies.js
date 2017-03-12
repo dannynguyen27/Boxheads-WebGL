@@ -16,6 +16,11 @@ Declare_Any_Class( "Enemy",
 			// TODO: fit to accomodate multiple levels with formula
     		this.moveSpeed = 2.2;
     	}
+    	else if (worldHandle.level == 3)
+    		this.moveSpeed = 2.9;
+    	else if (worldHandle.level >= 4)
+    		this.moveSpeed = 3.6;
+
     	this.populate.apply( this, arguments );
     },
     'getVecToPlayer': function(){
