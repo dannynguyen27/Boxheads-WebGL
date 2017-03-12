@@ -1,4 +1,4 @@
-// UCLA's Graphics Example Code (Javascript and C++ translations available), by Garett Ridge for CS174a.
+  // UCLA's Graphics Example Code (Javascript and C++ translations available), by Garett Ridge for CS174a.
 // displayables.js - The subclass definitions here each describe different independent animation processes that you want to fire off each frame, by defining a display
 // event and how to react to key and mouse input events.  Make one or two of your own subclasses, and fill them in with all your shape drawing calls and any extra key / mouse controls.
 
@@ -27,7 +27,6 @@ const HEALTH_BOX = 1;
 const SPEED_BOX = 2;
 const TROLL_BOX = 3;
 
-var enemies_dead = 0;
 /********** DECLARE ALL CONSTANTS HERE **********/
 
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
@@ -59,7 +58,12 @@ Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayabl
         shapes_in_use.debug_text.set_string( this.info_map["ammo"] );
         shapes_in_use.debug_text.draw( this.graphicsState, model_transform, true, vec4(0,0,0,1) );  // Draw some UI text (strings)
 
-        model_transform = mult( translation(-.25, .9, 0), font_scale );
+        //model_transform = mult( translation(-.55, .9, 0), font_scale );
+        model_transform = mult( translation(0, -.08, 0), model_transform);
+        shapes_in_use.debug_text.set_string( this.info_map["wave"] );
+        shapes_in_use.debug_text.draw( this.graphicsState, model_transform, true, vec4(0,0,0,1) );
+
+        model_transform = mult( translation(-.1, .9, 0), font_scale );
         shapes_in_use.debug_text.set_string( this.info_map["score"] );
         shapes_in_use.debug_text.draw( this.graphicsState, model_transform, true, vec4(0,0,0,1) );
 
@@ -156,11 +160,12 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
   { 'construct': function( context )
       { this.shared_scratchpad    = context.shared_scratchpad;
       	this.shared_scratchpad.animate = 1;
-      	this.level = 1;
+
+      	this.level = 0;
       	this.player = new Player(this);
-      	this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 30;
+      	this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = -3;    // actual starting max is 10 because game starts at level 0
       	this.projectiles = [];
-        this.ammoCrate = []; this.crateSpawnTimer = 0; this.maxCrates = MAX_AMMO_CRATES;
+        this.crates = []; this.crateSpawnTimer = 0; this.maxCrates = MAX_AMMO_CRATES;
       	this.mapObjects = [];
       	//set up the (static!) world objects
       	shapes_in_use.groundPlane = new Floor();
@@ -178,11 +183,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         this.score = 0;
 
         // Keeps track of enemies slain
-        this.enemiesKilled = 0;
-        this.enemiesNeededToLevelUp = 10;
-
-        this.event_timer = 3.0;
-        this.event = "Level " + this.level + " : Start!";
+        this.waveSpawnCount = 0;
+        this.waveDeathCount = 0;
 
        	// the following part of the map layout is added depending on the specified mapNum
        	if(MAP_SELECTOR == 0)
@@ -205,7 +207,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
                 [-5,3],[-5,2],[-5,1],[-5,0],[-5,-1],[-5,-2],[-5,-3],
                 [5,3],[5,2],[5,1],[5,0],[5,-1],[5,-2],[5,-3],       
   	      
-                [-2,3],[-1,3],[2,3],
+                [-2,3],[2,3],
                 [-2,2],[-2,1],[-2,0],[-2,-1],[-2,-2],[2,2],[2,1],[2,0],[2,-1],[2,-2],
                 [-2,-3],[-1,-3],[0,-3],[1,-3],[2,-3]
                 
@@ -310,8 +312,12 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     'levelUp': function()
     {
       this.level++;
-      this.enemiesKilled = 0;
-      this.enemiesNeededToLevelUp = Math.min(25, this.enemiesNeededToLevelUp + 5);
+      this.crates = [];
+      this.event_timer = 5.0;
+      this.event = "  Wave " + this.level + " : Start!";
+      this.waveSpawnCount = 0;
+      this.waveDeathCount = 0;
+      this.maxEnemies = Math.min(25, this.maxEnemies + 5);
     },
     'init_keys': function( controls )   // init_keys():  Define any extra keyboard shortcuts here
       {
@@ -374,10 +380,10 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         return false;
     },
     'canSpawnCrates': function(self, newPosition, tolerance){
-      for (var i = 0; i < this.ammoCrate.length; i++){
-        if (this.ammoCrate[i] == self)
+      for (var i = 0; i < this.crates.length; i++){
+        if (this.crates[i] == self)
           continue;
-        if (length(subtract(this.ammoCrate[i].position, newPosition)) < tolerance)
+        if (length(subtract(this.crates[i].position, newPosition)) < tolerance)
         {
           return false;
         }
@@ -450,22 +456,26 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       */
 	
 
+
+	this.drawWalls();    
+	
 	this.drawWalls();    
 
-        model_transform = mat4();
-        model_transform = mult(model_transform, translation(0, 17, 1.5));
-        model_transform = mult(model_transform, scale(2, 1, 2));
-        shapes_in_use.cube.draw(graphics_state, model_transform, portal);
+
+      model_transform = mat4();
+      model_transform = mult(model_transform, translation(0, 17, 1.5));
+      model_transform = mult(model_transform, scale(2, 1, 2));
+      //shapes_in_use.cube.draw(graphics_state, model_transform, portal);
 
       if (this.pause)
         return;
       
-      //spawn new actors
-      if(this.enemySpawnTimer < 0 && this.enemies.length < this.maxEnemies){
+      // spawn new actors
+      if(this.enemySpawnTimer < 0 && this.waveSpawnCount < this.maxEnemies){
           // This currently spawns enemies in the corners of the map
           var XCoord, YCoord;
           var timeOut = 0;
-      do 
+        do 
           {
             var random = Math.floor(Math.random() * 4);
               switch (random) {
@@ -478,32 +488,26 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
               case 3:
                 XCoord = 0; YCoord = -16; break;
             }
-          } while (timeOut++ < 5 && (this.checkPlayerCollision(vec4(XCoord,YCoord,0,1),3) || this.checkEnemyCollision(null,vec4(XCoord,YCoord,0,1),3) != -1));
-          /*
-          do{
-          randomX = Math.random()*(this.xMax-this.xMin)+this.xMin;
-          randomY = Math.random()*(this.yMax-this.yMin)+this.yMin;    
-          
-          }
-          while(this.checkPlayerCollision(vec4(randomX,randomY,0,1),3) || 
-          this.checkEnemyCollision(null,vec4(randomX,randomY,0,1),3)!= -1); */
+          } while (timeOut++ < 5 && (this.checkPlayerCollision(vec4(XCoord,YCoord,0,1),3) || this.checkEnemyCollision(null,vec4(XCoord,YCoord,0,1),3) != -1)
+              && (this.enemies.length  != this.maxEnemies));
+
            // TODO: UPDATE THIS WITH FORMULA TO GENERATE NORMAL/DEVIL
           var random = Math.floor(Math.random() * 10);
           if (random < 2)
             this.enemies.push(new Devil_Enemy(this, translation(XCoord, YCoord, 0), 15));
           else 
             this.enemies.push(new Normal_Enemy(this, translation(XCoord, YCoord, 0)));
-          //this.enemies.push(new Enemy(this, translation(XCoord,YCoord,0)));
-          //var audio = new Audio('init_dog.mp3');
-          //audio.play();
-          this.enemySpawnTimer = 4.0;//TODO: update this with a formula later
+          this.waveSpawnCount++;
+
+
+          this.enemySpawnTimer = 2.0;//TODO: update this with a formula later
       }
       else{
           this.enemySpawnTimer -= graphics_state.animation_delta_time/1000;
       }   
 
-      // Spawn Ammo Crates
-      if(this.crateSpawnTimer < 0 && this.ammoCrate.length < this.maxCrates){
+      // Spawn Crates
+      if(this.crateSpawnTimer < 0 && this.crates.length < this.maxCrates){
           // Spawn at random locations, make sure that crates do not bunch together
           var randomX;
           var randomY;
@@ -520,7 +524,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           if (timeOut < 5)
           {
             var randomType = Math.floor(Math.random() * NUM_TYPES_OF_CRATES);
-            this.ammoCrate.push(new AmmoCrate(this, randomType, translation(randomX,randomY,0)));
+            this.crates.push(new AmmoCrate(this, randomType, translation(randomX,randomY,0)));
             this.crateSpawnTimer = 2.0; //TODO: update this with a formula later
           }
       }
@@ -539,7 +543,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           }
           else{
             this.enemies.splice(i,1);
-            this.enemiesKilled++;
+            this.waveDeathCount++;
           }
       }
       for (var i=0;i<this.projectiles.length;i++){
@@ -548,11 +552,11 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           }
           else this.projectiles.splice(i,1);
       }
-      for (var i = 0; i < this.ammoCrate.length; i++){
-        if(this.ammoCrate[i].alive){
-          this.ammoCrate[i].display(graphics_state.animation_delta_time);
+      for (var i = 0; i < this.crates.length; i++){
+        if(this.crates[i].alive){
+          this.crates[i].display(graphics_state.animation_delta_time);
         }
-        else this.ammoCrate.splice(i,1);
+        else this.crates.splice(i,1);
       }
     },
     'renderScreen': function(title)
@@ -569,15 +573,15 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     'resetGame': function()
     {
         this.score = 0;
-        this.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-12), rotation(-50,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
+        this.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-60), rotation(-50,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
         this.shared_scratchpad.animate = 1;
-        this.enemiesKilled = 0;
-        this.enemiesNeededToLevelUp = 10;
-        this.level = 1;
+        this.waveSpawnCount = 0;
+        this.waveDeathCount = 0;
+        this.level = 0;
         this.player = new Player(this);
-        this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 30;
+        this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 5;
         this.projectiles = [];
-        this.ammoCrate = []; this.crateSpawnTimer = 0; this.maxCrates = MAX_AMMO_CRATES;
+        this.crates = []; this.crateSpawnTimer = 0; this.maxCrates = MAX_AMMO_CRATES;
         this.mapObjects = [];
     },
     'display': function(time)
@@ -592,12 +596,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 
 	      //One light to illuminate them all
         graphics_state.lights.push( new Light( vec4(  10,  10,  50, 1 ), Color(1, 1, 1, 1 ), 5000 ) );
-
-        //change game level
-        if(this.enemiesKilled >= this.enemiesNeededToLevelUp)
-        {
-          this.levelUp();
-        }
 
         /**********************************
         Start coding down here!!!!
@@ -627,6 +625,21 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         }                
         else if(this.player.alive){
           this.animateGame(time, MAP_SELECTOR);
+          // increase level if wave has been cleared
+          if( this.level == 0)
+            this.levelUp();
+          else if( this.waveDeathCount >= this.maxEnemies ){
+            if(this.waveDeathCount == this.maxEnemies){   // just to make sure the event timer doesn't keep looping
+              this.crates = [];
+              this.event_timer = 5.0;
+              this.event = "Wave Cleared. Rest Period.";
+              this.waveDeathCount+=1;
+              console.log("dead counter increased");
+            }
+            if(this.event_timer <= 0){
+              this.levelUp();
+            }
+          }
         }
         else{
             this.renderScreen("screens/end.jpg");
@@ -663,14 +676,15 @@ Declare_Any_Class( "Player",
       {
   	  //TODO: may want to update UI with player info later on
         user_interface_string_manager.info_map["ammo"]  = "Ammo: " + this.ammo;
+        user_interface_string_manager.info_map["wave"]  = "Enemies Left: " + (this.world.maxEnemies - this.world.waveDeathCount);
         user_interface_string_manager.info_map["score"] = "Score: " + this.world.score;
         if(this.world.event_timer > 0){
           user_interface_string_manager.info_map["event"] = this.world.event;
           this.world.event_timer -= this.delta_time/1000;
         }
         else{
-         user_interface_string_manager.info_map["event"] = ""; 
-         this.world.event_timer = 0;
+          user_interface_string_manager.info_map["event"] = ""; 
+          this.world.event_timer = 0;
         }
       },
     //begin navigation interface
@@ -690,11 +704,14 @@ Declare_Any_Class( "Player",
     'changeHealth': function(deltaHealth){
 	     this.health += deltaHealth;
        this.health = Math.min(this.health, this.maxHealth);
-      
-	     if(this.health <= 0){
-	       this.dying = true;
-       }
-      },
+	      if(this.health == 0 && !this.world.mute){
+            var audio = new Audio('Audio/dying.mp3');
+            audio.play();
+        }
+        if(this.health <= 0){
+          this.dying = true;
+        }
+    },
     'changeAmmo': function(deltaAmmo){
       this.ammo += deltaAmmo;
       if(this.ammo > MAX_AMMO)
@@ -788,8 +805,6 @@ Declare_Any_Class( "Player",
       }                         // -y, x gives us the axis where the enemy will fall in its normal's direction
         model_transform = mult(model_transform, rotation(-this.fallAngle, -this.heading[1], this.heading[0],0));   
     }
-
-
 
 	  //get body center and turn by heading angle
 	  var body_center = model_transform = mult(mult(model_transform, translation(0,0,1.5)),rotation(headingAngle,0,0,1));

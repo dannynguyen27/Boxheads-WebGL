@@ -7,9 +7,9 @@ Declare_Any_Class( "Enemy",
     {  
     	this.define_data_members(
     		{ world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
-			  velocity: vec4(0,0,0,0), heading:vec4(0,0,0,0), bool_reverseAnimate:false, limbAngle:0, moveSpeed: 1.5, 
+			  velocity: vec4(0,0,0,0), heading:vec4(0,0,0,0), bool_reverseAnimate:false, legAngle:0, armAngle:0, moveSpeed: 1.5, 
 			  alive: true, dying: false, health:initHealth, maxHealth: initHealth, autoAttackTimer:0.0, restTimer:0.0, 
-			  lowHPThres: 0.35, midHPThres: 0.67, fallAngle: 0, fadeTimer: 1, fadeRate: 0, materials:{}, bfsTimer: 0.0
+			  lowHPThres: 0.35, midHPThres: 0.67, fallAngle: 0, fadeTimer: 1, fadeRate: 0, materials:{}, bfsTimer: 0.0, isDevil: false
 			});
     	// update speed for level 2
     	if(worldHandle.level == 2){
@@ -30,7 +30,6 @@ Declare_Any_Class( "Enemy",
 		discovered.push(false);
 	    }
 	}
-
 
 	var currentPos = {'position':vec4(this.position[0], this.position[1], 0, 1),'originVec':vec4(0,0,0,0)};
 	if(this.world.checkPlayerCollision(currentPos.position,1.3)){
@@ -99,8 +98,7 @@ Declare_Any_Class( "Enemy",
     },
     'recoil': function(newState){
 	 	this.velocity=vec4(0,0,0,0);
-  		this.restTimer = 0.3;                     // move backwards?!?!
-  		//this.moveBackward(2);
+  		this.restTimer = 0.7;
     },
     //end navigation interface
     'changeHealth': function(deltaHealth){
@@ -223,32 +221,34 @@ Declare_Any_Class( "Enemy",
 		shapes_in_use.oriented_cube.draw(graphics_state, model_transform, this.materials.head);
 	  
 		//get angle offsets for leg animation
-		var maxLimbAngle = 30;
+		var maxLegAngle = 30;
 		if (length(displacement) > 0) 
 		{
 			if (this.bool_reverseAnimate) 
 			{
 				//angle rate of change calculated based on movement speed
-				this.limbAngle += this.moveSpeed/0.7*180/Math.PI*delta_time/1000
-				if (this.limbAngle > maxLimbAngle)
+				this.legAngle += this.moveSpeed/0.7*180/Math.PI*delta_time/1000
+				if (this.legAngle > maxLegAngle)
 				this.bool_reverseAnimate = !this.bool_reverseAnimate;
 			}
 			else 
 			{
-				this.limbAngle -= this.moveSpeed/0.7*180/Math.PI*delta_time/1000
-				if(this.limbAngle < -maxLimbAngle) 
+				this.legAngle -= this.moveSpeed/0.7*180/Math.PI*delta_time/1000
+				if(this.legAngle < -maxLegAngle) 
 				{
 					this.bool_reverseAnimate = !this.bool_reverseAnimate;
 				}
 			}
+			this.armAngle = this.legAngle;
 		}
-		else
-			this.limbAngle=0;
+		else{
+			this.legAngle = 0;
+		}
 
 		// right leg	  
 		model_transform = body_center;
 		model_transform = mult(model_transform, translation(0.2,0,-0.7));               
-		model_transform = mult(model_transform, rotation(-this.limbAngle, 1, 0, 0));
+		model_transform = mult(model_transform, rotation(-this.legAngle, 1, 0, 0));
 		model_transform = mult(model_transform, translation(0,0,-0.3));
 		//always scale at end
 		model_transform = mult(model_transform, scale(0.1,0.1,0.8));	  
@@ -258,17 +258,22 @@ Declare_Any_Class( "Enemy",
 		// left leg	  
 		model_transform = body_center;
 		model_transform = mult(model_transform, translation(-0.2,0,-0.7));               
-		model_transform = mult(model_transform, rotation(this.limbAngle, 1, 0, 0));
+		model_transform = mult(model_transform, rotation(this.legAngle, 1, 0, 0));
 		model_transform = mult(model_transform, translation(0,0,-0.3));
 		//always scale at end
 		model_transform = mult(model_transform, scale(0.1,0.1,0.8));	  
 
 		shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.default);
 
+		
+
 		// left arm
 		model_transform = body_center;  
 		model_transform = mult(model_transform, translation(-0.5,0,0.2));
-		model_transform = mult(model_transform, rotation(-this.limbAngle, 1, 0, 0));
+		if (length(displacement) > 0) 
+			model_transform = mult(model_transform, rotation(-this.armAngle, 1, 0, 0));		// fling back if walking
+		else
+			model_transform = mult(model_transform, rotation(this.armAngle, 1, 0, 0));		// only swing forward if attacking
 		model_transform = mult(model_transform, translation(0,0,-0.2));
 		model_transform = mult(model_transform, rotation(20, 0, 1, 0));
 		model_transform = mult(model_transform, scale(0.1,0.1,0.5));
@@ -277,7 +282,7 @@ Declare_Any_Class( "Enemy",
 		// right arm
 		model_transform = body_center;
 		model_transform = mult(model_transform, translation(0.5,0,0.2));
-		model_transform = mult(model_transform, rotation(this.limbAngle, 1, 0, 0));
+		model_transform = mult(model_transform, rotation(this.armAngle, 1, 0, 0));
 		model_transform = mult(model_transform, translation(0,0,-0.2));
 		model_transform = mult(model_transform, rotation(-20, 0, 1, 0));
 		model_transform = mult(model_transform, scale(0.1,0.1,0.5));
@@ -321,6 +326,24 @@ Declare_Any_Class( "Normal_Enemy",
       	else {
 	  		this.autoAttackTimer -= delta_time/1000;
       	}
+
+      	// enemy attack animation
+      	var maxArmAngle = 120;
+  		if (this.bool_reverseAnimate)
+		{
+			//angle rate of change calculated based on movement speed
+			this.armAngle += (this.moveSpeed*180/Math.PI*delta_time/1000)*2
+			if (this.armAngle > maxArmAngle)
+				this.bool_reverseAnimate = !this.bool_reverseAnimate;
+		}
+		else 
+		{
+			this.armAngle -= (this.moveSpeed*180/Math.PI*delta_time/1000)*2
+			if(this.armAngle < 0)
+			{
+				this.bool_reverseAnimate = !this.bool_reverseAnimate;
+			}
+		}
     },
 	'updateScore': function()
 	{
@@ -373,6 +396,7 @@ Declare_Any_Class( "Devil_Enemy",
     },
 	'populate': function()
 	{
+		this.isDevil = true;
 	  	this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/devil_head.jpg");
     	this.materials.body = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/devil_body.jpg");
     	this.materials.fullBar = new Material(Color(0,0.7,0,1),1,0,0,10);
@@ -381,4 +405,3 @@ Declare_Any_Class( "Devil_Enemy",
     	this.materials.default = new Material(Color(0.1,0.4,0.1,1),0.3,0.6,0,20);		
 	}
   }, Enemy);
-
