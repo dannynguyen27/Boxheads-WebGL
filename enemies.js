@@ -70,7 +70,6 @@ Declare_Any_Class( "Enemy",
 		discovered[toDiscover[i].position[0].toFixed(1)+','+toDiscover[i].position[1].toFixed(1)]=true; 
 	    }
 	}
-	console.log("not found!")
 	return vec4(0,0,0,0);
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
@@ -143,7 +142,8 @@ Declare_Any_Class( "Enemy",
 			    this.velocity = scale_vec(this.moveSpeed,normalize(vec2Player));
 			}
 			else{
-			    this.velocity = vec4(-1,-1,0,0);
+			    this.restTimer = 0.5;
+			    this.velocity = scale_vec(this.moveSpeed,mult_vec(rotation(Math.random()*360, 0,0,1), vec4(1,0,0,0)));
 			}
 		    }
 		    else{

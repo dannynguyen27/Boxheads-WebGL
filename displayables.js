@@ -158,7 +158,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
   { 'construct': function( context )
       { this.shared_scratchpad    = context.shared_scratchpad;
       	this.shared_scratchpad.animate = 1;
-
+        this.skyboxLoaded = false;
       	this.level = 0;
       	this.player = new Player(this);
       	this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 5;    // actual starting max is 10 because game starts at level 0
@@ -625,7 +625,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       {
         var graphics_state  = this.shared_scratchpad.graphics_state,
             model_transform = mat4();             // We have to reset model_transform every frame, so that as each begins, our basis starts as the identity.
-        shaders_in_use[ "Default" ].activate();
 
         // *** Lights: *** Values of vector or point lights over time.  Arguments to construct a Light(): position or vector (homogeneous coordinates), color, size
         // If you want more than two lights, you're going to need to increase a number in the vertex shader file (index.html).  For some reason this won't work in Firefox.
@@ -637,22 +636,32 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         /**********************************
         Start coding down here!!!!
         **********************************/
-
-	      shaders_in_use["Cube"].activate();
-      	var skybox = new Cube(true);
-      	skybox.copy_onto_graphics_card();
-      	gl.enableVertexAttribArray(g_addrs.shader_attributes[0].index);
-              gl.bindBuffer( gl.ARRAY_BUFFER, skybox.graphics_card_buffers[0] );
-              gl.vertexAttribPointer( g_addrs.shader_attributes[0].index, g_addrs.shader_attributes[0].size, g_addrs.shader_attributes[0].type, g_addrs.shader_attributes[0].normalized, g_addrs.shader_attributes[0].stride, g_addrs.shader_attributes[0].pointer );
-      	gl.uniform1i(g_addrs.cubeMap_loc, 0);
-      	active_shader.update_uniforms(new Graphics_State(rotation(30,1,0,0), perspective(45, canvas.width/canvas.height, .1, 1000), 0 ), mult(rotation(180,0,0,1),scale(40,40,40)));
-      	gl.activeTexture(gl.TEXTURE0);
-      	gl.bindTexture(gl.TEXTURE_CUBE_MAP, textures_in_use["skybox"].id);
-      	gl.disable(gl.DEPTH_TEST);
-      	gl.drawArrays(gl.TRIANGLES,0,skybox.positions.length);
-      	gl.enable(gl.DEPTH_TEST);
-	     
-        shaders_in_use["Default"].activate();
+	if(!this.skyboxLoaded){
+	    var trueCount = 0;
+	    for(i=0;i<6;i++){
+		if(textures_in_use["skybox"].loaded[i])
+		trueCount++;
+	    }
+	    if (trueCount == 6)
+		this.skyboxLoaded = true;
+	}
+	else{
+	    shaders_in_use["Cube"].activate();
+      	    var skybox = new Cube(true);
+      	    skybox.copy_onto_graphics_card();
+      	    gl.enableVertexAttribArray(g_addrs.shader_attributes[0].index);
+            gl.bindBuffer( gl.ARRAY_BUFFER, skybox.graphics_card_buffers[0] );
+            gl.vertexAttribPointer( g_addrs.shader_attributes[0].index, g_addrs.shader_attributes[0].size, g_addrs.shader_attributes[0].type, g_addrs.shader_attributes[0].normalized, g_addrs.shader_attributes[0].stride, g_addrs.shader_attributes[0].pointer );
+      	    gl.uniform1i(g_addrs.cubeMap_loc, 0);
+      	    active_shader.update_uniforms(new Graphics_State(rotation(30,1,0,0), perspective(45, canvas.width/canvas.height, .1, 1000), 0 ), mult(rotation(180,0,0,1),scale(40,40,40)));
+      	    gl.activeTexture(gl.TEXTURE0);
+      	    gl.bindTexture(gl.TEXTURE_CUBE_MAP, textures_in_use["skybox"].id);
+      	    gl.disable(gl.DEPTH_TEST);
+      	    gl.drawArrays(gl.TRIANGLES,0,skybox.positions.length);
+      	    gl.enable(gl.DEPTH_TEST);
+	}
+        
+	  shaders_in_use["Default"].activate();
         
         // initialize start screen
         if(!this.gameStart){
