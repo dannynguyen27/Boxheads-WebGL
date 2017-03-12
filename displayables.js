@@ -390,10 +390,35 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     'drawWalls': function(){
 
       wall = new Material( Color( 0,0,0,1 ), 0.3, 0.5, 0, 10, "Visuals/simple_outline.jpg")//,"Visuals/wall_bumpmap.jpg");
+
+      for(var i = this.xMin-1; i < this.xMax+2; i++){
+        if(i > -2 && i < 2)           //  opening for enemies to walk through
+          continue;
+        model_transform = mult(translation(this.xMin-1, i, 1),scale(0.8, 1, 2.5)) ;      // initialize walls for left side
+        shapes_in_use.cube.draw(this.shared_scratchpad.graphics_state, model_transform, wall);
+      }
+      for(var i = this.yMin; i < this.yMax+2; i++){                                          // front side
+        if(i > -2 && i < 2)
+          continue;
+        model_transform = mult(translation(i, this.yMin-1, 1), scale(1, 0.8, 2.5));
+        shapes_in_use.cube.draw(this.shared_scratchpad.graphics_state, model_transform, wall);
+      }
+      for(var i = this.xMin; i < this.xMax+1; i++){                                          // right side
+        if(i > -2 && i < 2)
+          continue;
+        model_transform = mult(translation(this.xMax+1, i, 1), scale(0.8, 1, 2.5));
+        shapes_in_use.cube.draw(this.shared_scratchpad.graphics_state, model_transform, wall);
+      }
+      for(var i = this.yMin; i < this.yMax+2; i++){                                          // back side
+        if(i > -2 && i < 2)
+          continue;
+        model_transform = mult(translation(i, this.yMax+1, 1),scale(1, 0.8, 2.5));
+        shapes_in_use.cube.draw(this.shared_scratchpad.graphics_state, model_transform, wall);
+      }
+
       for(var i = 0; i < this.wallsArray.length; i++){
-        model_transform = mat4();
-        model_transform = mult(model_transform, translation(this.wallsArray[i][0], this.wallsArray[i][1], 0));
-        model_transform = mult(model_transform, scale(1, 1, 5));
+        model_transform = translation(this.wallsArray[i][0], this.wallsArray[i][1], 1);
+        model_transform = mult(model_transform, scale(1, 1, 2.5));
         shapes_in_use.cube.draw(this.shared_scratchpad.graphics_state, model_transform, wall);
       }
     },
@@ -403,9 +428,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 
       // *** Materials: 
       // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
-      var ground = new Material( Color( 0,0,0,1 ), .4, 10, 0, 10, "Visuals/ground_texture.jpg","Visuals/wall_bumpmap.jpg" ), // Omit the final (string) parameter if you want no texture
-          wall = new Material( Color( 0,0,0,1 ), 0.3, 0.7, 0, 10, "Visuals/simple_outline.jpg");
-          portal = new Material( Color( 0.3,0.3,0.3,1 ), 0.5, 0.4, 0, 10, "Visuals/portal.jpg");
+      var ground = new Material( Color( 0,0,0,1 ), .4, 2, 0, 10, "Visuals/ground_texture.jpg","Visuals/wall_bumpmap.jpg" ), // Omit the final (string) parameter if you want no texture
+          portal = new Material( Color( 0.3,0.3,0.3,1 ), 0.5, 0.4, 0, 10, "Visuals/portal.jpg"),
           placeHolder = new Material( Color(0,0,0,0), 0,0,0,0, "Blank" );
 
       // Map Indexing
@@ -424,38 +448,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         -----------------------
       */
 
-      for(var i = this.xMin-1; i < this.xMax+2; i++){
-        if(i > -2 && i < 2)           //  opening for enemies to walk through
-          continue;
-        model_transform = mat4();
-        model_transform = mult(model_transform, translation(this.xMin-1, i, 0));      // initialize walls for left side
-        model_transform = mult(model_transform, scale(0.8, 1, 5));
-        shapes_in_use.cube.draw(graphics_state, model_transform, wall);
-      }
-      for(var i = this.yMin; i < this.yMax+2; i++){                                          // front side
-        if(i > -2 && i < 2)
-          continue;
-        model_transform = mat4();
-        model_transform = mult(model_transform, translation(i, this.yMin-1, 0));
-        model_transform = mult(model_transform, scale(1, 0.8, 5));
-        shapes_in_use.cube.draw(graphics_state, model_transform, wall);
-      }
-      for(var i = this.xMin; i < this.xMax+1; i++){                                          // right side
-        if(i > -2 && i < 2)
-          continue;
-        model_transform = mat4();
-        model_transform = mult(model_transform, translation(this.xMax+1, i, 0));
-        model_transform = mult(model_transform, scale(0.8, 1, 5));
-        shapes_in_use.cube.draw(graphics_state, model_transform, wall);
-      }
-      for(var i = this.yMin; i < this.yMax+2; i++){                                          // back side
-        if(i > -2 && i < 2)
-          continue;
-        model_transform = mat4();
-        model_transform = mult(model_transform, translation(i, this.yMax+1, 0));
-        model_transform = mult(model_transform, scale(1, 0.8, 5));
-        shapes_in_use.cube.draw(graphics_state, model_transform, wall);
-      }
 
       this.drawWalls();    
 
@@ -536,7 +528,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       }   
 
       //draw the ground
-      shapes_in_use.groundPlane.draw(graphics_state, scale(100,100,100), ground);    
+      shapes_in_use.groundPlane.draw(graphics_state, scale(17,17,1), ground);    
 
       //let player + each actor do their thing
       this.player.display(graphics_state.animation_delta_time);
