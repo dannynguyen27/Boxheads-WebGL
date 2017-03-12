@@ -9,7 +9,7 @@ Declare_Any_Class( "Enemy",
     		{ world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
 			  velocity: vec4(0,0,0,0), heading:vec4(0,0,0,0), bool_reverseAnimate:false, limbAngle:0, moveSpeed: 1.5, 
 			  alive: true, dying: false, health:initHealth, maxHealth: initHealth, autoAttackTimer:0.0, restTimer:0.0, 
-			  lowHPThres: 0.35, midHPThres: 0.67, fallAngle: 0, fadeTimer: 1, fadeRate: 0, materials:{}, bfsTimer: 0.0
+			  lowHPThres: 0.35, midHPThres: 0.67, fallAngle: 0, fadeTimer: 1, fadeRate: 0, materials:{}, bfsTimer: 0.0, isDevil: false
 			});
     	// update speed for level 2
     	if(worldHandle.level == 2){
@@ -372,6 +372,7 @@ Declare_Any_Class( "Devil_Enemy",
     },
 	'populate': function()
 	{
+		this.isDevil = true;
 	  	this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/devil_head.jpg");
     	this.materials.body = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/devil_body.jpg");
     	this.materials.fullBar = new Material(Color(0,0.7,0,1),1,0,0,10);

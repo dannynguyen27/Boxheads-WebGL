@@ -91,8 +91,14 @@ Declare_Any_Class( "Bullet",
 			this.world.enemies[enemyID].recoil();
 			if (!this.world.mute)
 			{
-				var audio = new Audio('Audio/dog_hurt.mp3');
-				audio.play();
+				if(this.world.enemies[enemyID].isDevil && (this.world.enemies[enemyID].health+1) % 5 == 0) {
+					var audio = new Audio('Audio/cat_hurt.mp3');
+					audio.play();
+				}
+				else if(!this.world.enemies[enemyID].isDevil){
+					var audio = new Audio('Audio/dog_hurt.mp3');
+					audio.play();
+				}
 			}
 			return true;
 		}
