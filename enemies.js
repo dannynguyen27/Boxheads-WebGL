@@ -348,6 +348,7 @@ Declare_Any_Class( "Normal_Enemy",
 			}
 		}
 	}
+	else this.armAngle = 30;
     },
 	'updateScore': function()
 	{
