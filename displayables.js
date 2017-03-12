@@ -158,7 +158,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
   { 'construct': function( context )
       { this.shared_scratchpad    = context.shared_scratchpad;
       	this.shared_scratchpad.animate = 1;
-      	//TODO: initialize the actors contained in the world
+      	
       	this.level = 1;
       	this.player = new Player(this);
       	this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 30;
@@ -176,6 +176,10 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         this.mute = false;
         // Pause Option
         this.pause = false;
+
+        // Keeps track of enemies slain
+        this.enemiesKilled = 0;
+        this.enemiesNeededToLevelUp = 10;
 
        	// the following part of the map layout is added depending on the specified mapNum
        	if(MAP_SELECTOR == 0)
@@ -300,6 +304,12 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         canvas.addEventListener( "mouseout",  ( function(self) { return function(e) { self.mouse.from_center = vec2(); }; } ) (this), false );    // Stop steering if the mouse leaves the canvas.
              
       },
+    'levelUp': function()
+    {
+      this.level++;
+      this.enemiesKilled = 0;
+      this.enemiesNeededToLevelUp = Math.min(25, this.enemiesNeededToLevelUp + 5);
+    },
     'init_keys': function( controls )   // init_keys():  Define any extra keyboard shortcuts here
       {
         	this.keyBitMap = {}; //deals with the problem of simultaneous keypresses
@@ -535,7 +545,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           }
           else{
             this.enemies.splice(i,1);
-            enemies_dead++;
+            this.enemiesKilled++;
           }
       }
       for (var i=0;i<this.projectiles.length;i++){
@@ -566,6 +576,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     {
         this.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-12), rotation(-50,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
         this.shared_scratchpad.animate = 1;
+        this.enemiesKilled = 0;
+        this.enemiesNeededToLevelUp = 10;
         this.level = 1;
         this.player = new Player(this);
         this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 30;
@@ -585,6 +597,12 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 
 	      //One light to illuminate them all
         graphics_state.lights.push( new Light( vec4(  0,  0,  10, 1 ), Color(1, 1, 1, 1 ), 1000 ) );
+
+        //change game level
+        if(this.enemiesKilled >= this.enemiesNeededToLevelUp)
+        {
+          this.levelUp();
+        }
 
         /**********************************
         Start coding down here!!!!
@@ -662,7 +680,7 @@ Declare_Any_Class( "Player",
     'changeHealth': function(deltaHealth){
 	     this.health += deltaHealth;
        this.health = Math.min(this.health, this.maxHealth);
-        console.log("My health has changed to: " + this.health);
+      
 	     if(this.health <= 0){
 	       this.dying = true;
        }
@@ -671,7 +689,6 @@ Declare_Any_Class( "Player",
       this.ammo += deltaAmmo;
       if(this.ammo > MAX_AMMO)
         this.ammo = MAX_AMMO;
-      console.log("My # ammo has changed to: " + this.ammo);
       },
     'boostSpeed': function(deltaSpeed){
       if(this.buff_timer == 0.0)          // doesn't stack
@@ -693,7 +710,6 @@ Declare_Any_Class( "Player",
         var audio = new Audio('Audio/gunshot.mp3');
         audio.play();
       }
-      console.log("My # ammo changed to: " + this.ammo);
 	}
     },
     'display': function(delta_time)
@@ -711,13 +727,6 @@ Declare_Any_Class( "Player",
       displacement[0]=0; displacement[1]=0;
     }
 	  this.autoAttackTimer -= delta_time/1000;
- 	  
-    //change game level
-    if(enemies_dead == 2)
-    {
-      this.world.level++;
-      enemies_dead = 0;
-    }
 
 	  //change heading of player
 	  if(dot(displacement,displacement) != 0){
