@@ -320,30 +320,38 @@ Declare_Any_Class( "Normal_Enemy",
 		this.velocity = vec4(0,0,0,0);
 		if (this.autoAttackTimer <= 0)
 		{
-	    	this.world.player.changeHealth(-1);
-    		this.autoAttackTimer = 1/1.2; //attack speed for bots 
-      	}
+	    	    this.world.player.changeHealth(-1);
+    		    this.autoAttackTimer = 1/1.2; //attack speed for bots 
+		    this.animationCompletionStatus=2;  //2 = arm needs to swing both ways to finish one attack
+		                                       //1 = arm needs to swing one way
+		                                       //0 = attack animation finished
+      		}
       	else {
-	  		this.autoAttackTimer -= delta_time/1000;
+	    this.autoAttackTimer -= delta_time/1000;
       	}
-
+	
+	if(this.animationCompletionStatus){
       	// enemy attack animation
       	var maxArmAngle = 120;
   		if (this.bool_reverseAnimate)
 		{
 			//angle rate of change calculated based on movement speed
-			this.armAngle += (this.moveSpeed*180/Math.PI*delta_time/1000)*2
-			if (this.armAngle > maxArmAngle)
+			this.armAngle += (this.moveSpeed*180/Math.PI*delta_time/1000)*10
+			if (this.armAngle > maxArmAngle){
 				this.bool_reverseAnimate = !this.bool_reverseAnimate;
+			        this.animationCompletionStatus--;
+			    }
 		}
 		else 
 		{
-			this.armAngle -= (this.moveSpeed*180/Math.PI*delta_time/1000)*2
+			this.armAngle -= (this.moveSpeed*180/Math.PI*delta_time/1000)*10
 			if(this.armAngle < 0)
 			{
 				this.bool_reverseAnimate = !this.bool_reverseAnimate;
+			        this.animationCompletionStatus--;
 			}
 		}
+	}
     },
 	'updateScore': function()
 	{
