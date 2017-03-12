@@ -7,9 +7,10 @@ Declare_Any_Class( "Projectile",
     	this.define_data_members(
     	{ 
 			world: worldHandle, model_transform: modelTransMat,position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
-			moveSpeed: 10, velocity: scale_vec(15,shooterHeading), alive: true,  materials:{}
+			moveSpeed: 10, velocity: scale_vec(15,shooterHeading), alive: true, headingAngle: 0, materials:{}
 		});
 
+    	this.headingAngle = Math.acos(dot(shooterHeading,vec4(0,1,0,0))) * 180/Math.PI * (shooterHeading[0]>0?-1:1);
 		this.position[2]=0;
 		this.populate.apply( this, arguments );
     },
@@ -64,9 +65,16 @@ Declare_Any_Class( "Projectile",
 			this.alive=false;
 		}
 		//the member variable modelTransMat ONLY represents the (x,y) coordinates.
+		
 		var model_transform = this.model_transform; 
 		model_transform = mult(model_transform, translation(0,0,0.5));
-		model_transform = mult(model_transform, scale(0.1,0.1,0.1));
+
+		model_transform = mult(model_transform, rotation(this.headingAngle,0,0,1));
+
+		model_transform = mult(model_transform, scale(0.05,0.15,0.1));
+
+		//model_transform = mult(mult(model_transform, translation(0,0,1.5)),rotation(headingAngle,0,0,1));
+
 		shapes_in_use.sphere.draw(graphics_state, model_transform, this.materials.body);
 	}
 });
@@ -92,7 +100,7 @@ Declare_Any_Class( "Bullet",
 	},
 	'populate': function()
 	{
-		this.materials.body = new Material(Color(1.0,0.4,0,1),1,.8,0,10);
+		this.materials.body = new Material(Color(0.78,0.53,0,1),0.7,1.0,0,10);
 	}
 }, Projectile);
 
