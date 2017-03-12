@@ -233,8 +233,38 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         	controls.add( "right",this, function() {this.keyBitMap["right"]=false; this.player.moveRight(false); if(this.keyBitMap["left"]) this.player.moveLeft(true); }, {'type':'keyup'} );
           controls.add( "m", this, function() { this.mute = !this.mute;}); 
           controls.add( "p", this, function() { this.pause = !this.pause;});
-          controls.add( ",", this, function() { this.player.usingGun[PISTOL] = true; this.player.usingGun[UZI] = false;});        
-          controls.add( ".", this, function() { this.player.usingGun[PISTOL] = false; this.player.usingGun[UZI] = true;});        
+          // Cycles gun leftwardly
+          controls.add( ",", this, function() 
+            { 
+              this.player.gunIndex--; 
+              if (this.player.gunIndex <= -1)
+              {
+                this.player.gunIndex = NUM_GUNS - 1;
+              }
+
+              for (var i = 0; i < NUM_GUNS; i++)
+              {
+                this.player.usingGun[i] = false;
+              }
+
+              this.player.usingGun[this.player.gunIndex] = true;
+            });        
+          // Cycles gun rightwardly
+          controls.add( ".", this, function() 
+            { 
+              this.player.gunIndex++; 
+              if (this.player.gunIndex >= NUM_GUNS)
+              {
+                this.player.gunIndex = 0;
+              }
+
+              for (var i = 0; i < NUM_GUNS; i++)
+              {
+                this.player.usingGun[i] = false;
+              }
+
+              this.player.usingGun[this.player.gunIndex] = true;
+            });        
         
       	  controls.add( "space", this, function() {this.player.attack();  console.log("it's been pressed");   } ); 
       },
@@ -754,9 +784,10 @@ Declare_Any_Class( "Player",
         { world: worldHandle, model_transform: modelTransMat, position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
           heading:vec4(0,1,0,0), velocity: vec4(0,0,0,0),
 				  bool_reverseAnimate:false, limbAngle:0,moveSpeed: 4, defaultSpeed: 4, dying: false, alive: true, 
-          health:initHealth, maxHealth:initHealth, autoAttackTimer:0.0, pistolAmmo: PISTOL_START_AMMO, uziAmmo: UZI_START_AMMO, materials:{},
+          health:initHealth, maxHealth:initHealth, autoAttackTimer:0.0, materials:{},
           lowHPThres: 0.4, midHPThres: 0.6, buff_timer: 0.0, deltaTime: 0, fallAngle: 0, fadeTimer: 1, fadeRate: 0,
-          usingGun: [true, false, false], gunIndex: 0 
+          usingGun: [true, false, false], gunIndex: 0,
+          pistolAmmo: PISTOL_START_AMMO, uziAmmo: UZI_START_AMMO, shotgunAmmo: SHOTGUN_START_AMMO
         });
     this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/player_head.jpg");
     this.materials.body = new Material(Color(0,0,0,1),0.8,.4,0,10, "Visuals/player_body.jpg");
@@ -768,11 +799,14 @@ Declare_Any_Class( "Player",
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
-  	  //TODO: may want to update UI with player info later on
+  	  //
         if (this.usingGun[PISTOL])
           user_interface_string_manager.info_map["ammo"]  = "pistol ammo: " + this.pistolAmmo;
         else if (this.usingGun[UZI])
           user_interface_string_manager.info_map["ammo"]  = "uzi ammo: " + this.uziAmmo;
+        else if (this.usingGun[SHOTGUN])
+          user_interface_string_manager.info_map["ammo"]  = "shotgun ammo: " + this.shotgunAmmo;
+
         user_interface_string_manager.info_map["wave"]  = "Enemies Left: " + (this.world.maxEnemies - this.world.waveDeathCount);
         user_interface_string_manager.info_map["score"] = "Score: " + this.world.score;
         if(this.world.event_timer > 0){
@@ -852,6 +886,10 @@ Declare_Any_Class( "Player",
               audio.play();
             }
         }
+      }
+      else if (this.usingGun[SHOTGUN])
+      {
+
       }
 
 
