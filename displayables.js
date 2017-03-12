@@ -545,6 +545,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     },
     'resetGame': function()
     {
+        this.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-12), rotation(-50,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
+        //this.graphics_state.camera_transform = mat4();
         this.shared_scratchpad.animate = 1;
         this.level = 1;
         this.player = new Player(this);
