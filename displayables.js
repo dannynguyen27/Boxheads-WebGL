@@ -8,9 +8,11 @@
 
 // Constants for player ammunition
 const MAX_AMMO = 1000;
-const START_AMMO = 100;
+const PISTOL_START_AMMO = 100;
+const UZI_START_AMMO = 50;
 
-const ATTACK_TIMER = 1 / 5.4; // Three shots per second
+const PISTOL_ATTACK_TIMER = 1 / 5.4; // Three shots per second
+const UZI_ATTACK_TIMER = 1 / 16.2; // Nine shots per second
 
 /********** CRATE CONSTANTS**********/
 
@@ -26,6 +28,7 @@ const SPEED_BOX = 2;
 const TROLL_BOX = 3;
 
 /********** DECLARE ALL CONSTANTS HERE **********/
+
 
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
   { 'construct': function( context )
@@ -231,7 +234,9 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         	controls.add( "right", this, function() { this.keyBitMap["right"]=true; this.player.moveRight(true); } ); 
         	controls.add( "right",this, function() {this.keyBitMap["right"]=false; this.player.moveRight(false); if(this.keyBitMap["left"]) this.player.moveLeft(true); }, {'type':'keyup'} );
           controls.add( "m", this, function() { this.mute = !this.mute;}); 
-          controls.add( "p", this, function() { this.pause = !this.pause;});        
+          controls.add( "p", this, function() { this.pause = !this.pause;});
+          controls.add( ",", this, function() { this.player.usingPistol = true; this.player.usingUzi = false;});        
+          controls.add( ".", this, function() { this.player.usingPistol = false; this.player.usingUzi = true;});        
         
       	  controls.add( "space", this, function() {this.player.attack();  console.log("it's been pressed");   } ); 
       },
@@ -751,8 +756,9 @@ Declare_Any_Class( "Player",
         { world: worldHandle, model_transform: modelTransMat, position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
           heading:vec4(0,1,0,0), velocity: vec4(0,0,0,0),
 				  bool_reverseAnimate:false, limbAngle:0,moveSpeed: 4, defaultSpeed: 4, dying: false, alive: true, 
-          health:initHealth, maxHealth:initHealth, autoAttackTimer:0.0, ammo: START_AMMO, materials:{},
-          lowHPThres: 0.4, midHPThres: 0.6, buff_timer: 0.0, deltaTime: 0, fallAngle: 0, fadeTimer: 1, fadeRate: 0, 
+          health:initHealth, maxHealth:initHealth, autoAttackTimer:0.0, pistolAmmo: PISTOL_START_AMMO, uziAmmo: UZI_START_AMMO, materials:{},
+          lowHPThres: 0.4, midHPThres: 0.6, buff_timer: 0.0, deltaTime: 0, fallAngle: 0, fadeTimer: 1, fadeRate: 0,
+          usingPistol: true, usingUzi: false 
         });
     this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/player_head.jpg");
     this.materials.body = new Material(Color(0,0,0,1),0.8,.4,0,10, "Visuals/player_body.jpg");
@@ -765,7 +771,10 @@ Declare_Any_Class( "Player",
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
   	  //TODO: may want to update UI with player info later on
-        user_interface_string_manager.info_map["ammo"]  = "Ammo: " + this.ammo;
+        if (this.usingPistol)
+          user_interface_string_manager.info_map["ammo"]  = "pistol ammo: " + this.pistolAmmo;
+        else if (this.usingUzi)
+          user_interface_string_manager.info_map["ammo"]  = "uzi ammo: " + this.uziAmmo;
         user_interface_string_manager.info_map["wave"]  = "Enemies Left: " + (this.world.maxEnemies - this.world.waveDeathCount);
         user_interface_string_manager.info_map["score"] = "Score: " + this.world.score;
         if(this.world.event_timer > 0){
@@ -801,9 +810,9 @@ Declare_Any_Class( "Player",
         }
     },
     'changeAmmo': function(deltaAmmo){
-      this.ammo += deltaAmmo;
-      if(this.ammo > MAX_AMMO)
-        this.ammo = MAX_AMMO;
+      this.pistolAmmo += deltaAmmo;
+      if(this.pistolAmmo > MAX_AMMO)
+        this.pistolAmmo = MAX_AMMO;
       },
     'boostSpeed': function(deltaSpeed){
       if(this.buff_timer == 0.0)          // doesn't stack
@@ -811,20 +820,43 @@ Declare_Any_Class( "Player",
       this.buff_timer = 5.0;
       },
     'attack': function(){
-      // Cannot shoot if player has no ammo
+      // Cannot shoot if player has no pistolAmmo
       var audio = new Audio('Audio/gunshot.mp3');
-      if(this.ammo <= 0 || !this.alive )
-        return;
-    	if(this.autoAttackTimer <= 0){
-          this.world.projectiles.push(new Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
-          this.autoAttackTimer = ATTACK_TIMER;
-          this.ammo--;
-          if (!this.world.mute)
-          {
-            var audio = new Audio('Audio/gunshot.mp3');
-            audio.play();
-          }
-    	}
+
+      if (this.usingPistol)
+      {
+        if(this.pistolAmmo <= 0 || !this.alive )
+          return;
+        if(this.autoAttackTimer <= 0)
+        {
+            this.world.projectiles.push(new Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
+            this.autoAttackTimer = PISTOL_ATTACK_TIMER;
+            this.pistolAmmo--;
+            if (!this.world.mute)
+            {
+              var audio = new Audio('Audio/gunshot.mp3');
+              audio.play();
+            }
+        }
+      }
+      else if (this.usingUzi)
+      {
+        if(this.uziAmmo <= 0 || !this.alive )
+          return;
+        if(this.autoAttackTimer <= 0)
+        {
+            this.world.projectiles.push(new Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
+            this.autoAttackTimer = UZI_ATTACK_TIMER;
+            this.uziAmmo--;
+            if (!this.world.mute)
+            {
+              var audio = new Audio('Audio/gunshot.mp3');
+              audio.play();
+            }
+        }
+      }
+
+
     },
     'display': function(delta_time)
       {
