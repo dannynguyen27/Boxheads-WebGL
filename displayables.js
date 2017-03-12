@@ -10,9 +10,18 @@
 const MAX_AMMO = 1000;
 const PISTOL_START_AMMO = 100;
 const UZI_START_AMMO = 50;
+const SHOTGUN_START_AMMO = 30;
 
 const PISTOL_ATTACK_TIMER = 1 / 5.4; // Three shots per second
 const UZI_ATTACK_TIMER = 1 / 16.2; // Nine shots per second
+const SHOTGUN_ATTACK_TIMER = 1 / 3.6; // Two shots per second
+
+
+/********** CRATE CONSTANTS**********/
+const PISTOL = 0;
+const UZI = 1;
+const SHOTGUN = 2;
+const NUM_GUNS = 3;
 
 /********** CRATE CONSTANTS**********/
 
@@ -162,12 +171,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       { this.shared_scratchpad    = context.shared_scratchpad;
       	this.shared_scratchpad.animate = 1;
         this.skyboxLoaded = false;
-      	this.level = 0;
-      	this.player = new Player(this);
-      	this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 5;    // actual starting max is 10 because game starts at level 0
-      	this.projectiles = [];
-        this.crates = []; this.crateSpawnTimer = 0; this.maxCrates = MAX_AMMO_CRATES;
-      	this.mapObjects = [];
         this.numDevils = 0;
       	//set up the (static!) world objects
       	shapes_in_use.groundPlane = new Floor();
@@ -176,7 +179,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       	this.yMin=-16; this.yMax=16;
 
         this.gameStart = false;
-        this.screenIndex = 0; 
         this.screenDelay = 0.0;
         this.mapNumber = 0;
 
@@ -185,12 +187,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         // Pause Option
         this.pause = false;
 
-        // Keeps track of player's score
-        this.score = 0;
-
-        // Keeps track of enemies slain
-        this.waveSpawnCount = 0;
-        this.waveDeathCount = 0;
+        // Set up all other data members
+        this.setGame();
 
       	shapes_in_use.cube = new Cube();
       	shapes_in_use.sphere = new Subdivision_Sphere(3);
@@ -235,8 +233,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         	controls.add( "right",this, function() {this.keyBitMap["right"]=false; this.player.moveRight(false); if(this.keyBitMap["left"]) this.player.moveLeft(true); }, {'type':'keyup'} );
           controls.add( "m", this, function() { this.mute = !this.mute;}); 
           controls.add( "p", this, function() { this.pause = !this.pause;});
-          controls.add( ",", this, function() { this.player.usingPistol = true; this.player.usingUzi = false;});        
-          controls.add( ".", this, function() { this.player.usingPistol = false; this.player.usingUzi = true;});        
+          controls.add( ",", this, function() { this.player.usingGun[PISTOL] = true; this.player.usingGun[UZI] = false;});        
+          controls.add( ".", this, function() { this.player.usingGun[PISTOL] = false; this.player.usingGun[UZI] = true;});        
         
       	  controls.add( "space", this, function() {this.player.attack();  console.log("it's been pressed");   } ); 
       },
@@ -611,7 +609,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         shapes_in_use.flat_square.draw(this.shared_scratchpad.graphics_state, model_transform, title); 
         this.shared_scratchpad.graphics_state.camera_transform = saved_camera;
     },
-    'resetGame': function()
+    'setGame': function()
     {
         this.score = 0;
         this.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-12), rotation(-50,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
@@ -740,7 +738,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
             if(this.mouse.anchor){
               if(this.mouse.from_center[0] > -340 && this.mouse.from_center[0] < 340 && this.mouse.from_center[1] > 0 && this.mouse.from_center[1] < 120){
                 this.gameStart = false;
-                this.resetGame();
+                this.setGame();
                 this.screenDelay = 1;
               }
             }
@@ -758,7 +756,7 @@ Declare_Any_Class( "Player",
 				  bool_reverseAnimate:false, limbAngle:0,moveSpeed: 4, defaultSpeed: 4, dying: false, alive: true, 
           health:initHealth, maxHealth:initHealth, autoAttackTimer:0.0, pistolAmmo: PISTOL_START_AMMO, uziAmmo: UZI_START_AMMO, materials:{},
           lowHPThres: 0.4, midHPThres: 0.6, buff_timer: 0.0, deltaTime: 0, fallAngle: 0, fadeTimer: 1, fadeRate: 0,
-          usingPistol: true, usingUzi: false 
+          usingGun: [true, false, false], gunIndex: 0 
         });
     this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/player_head.jpg");
     this.materials.body = new Material(Color(0,0,0,1),0.8,.4,0,10, "Visuals/player_body.jpg");
@@ -771,9 +769,9 @@ Declare_Any_Class( "Player",
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
   	  //TODO: may want to update UI with player info later on
-        if (this.usingPistol)
+        if (this.usingGun[PISTOL])
           user_interface_string_manager.info_map["ammo"]  = "pistol ammo: " + this.pistolAmmo;
-        else if (this.usingUzi)
+        else if (this.usingGun[UZI])
           user_interface_string_manager.info_map["ammo"]  = "uzi ammo: " + this.uziAmmo;
         user_interface_string_manager.info_map["wave"]  = "Enemies Left: " + (this.world.maxEnemies - this.world.waveDeathCount);
         user_interface_string_manager.info_map["score"] = "Score: " + this.world.score;
@@ -823,7 +821,7 @@ Declare_Any_Class( "Player",
       // Cannot shoot if player has no pistolAmmo
       var audio = new Audio('Audio/gunshot.mp3');
 
-      if (this.usingPistol)
+      if (this.usingGun[PISTOL])
       {
         if(this.pistolAmmo <= 0 || !this.alive )
           return;
@@ -839,7 +837,7 @@ Declare_Any_Class( "Player",
             }
         }
       }
-      else if (this.usingUzi)
+      else if (this.usingGun[UZI])
       {
         if(this.uziAmmo <= 0 || !this.alive )
           return;
