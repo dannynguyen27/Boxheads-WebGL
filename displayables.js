@@ -12,8 +12,6 @@ const START_AMMO = 100;
 
 const ATTACK_TIMER = 1 / 5.4; // Three shots per second
 
-const MAP_TOTAL = 3;
-const MAP_SELECTOR = Math.floor(Math.random() * MAP_TOTAL);
 /********** CRATE CONSTANTS**********/
 
 const AMMO_PER_CRATE = 10;
@@ -163,17 +161,22 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 
       	this.level = 0;
       	this.player = new Player(this);
-      	this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = -3;    // actual starting max is 10 because game starts at level 0
+      	this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 5;    // actual starting max is 10 because game starts at level 0
       	this.projectiles = [];
         this.crates = []; this.crateSpawnTimer = 0; this.maxCrates = MAX_AMMO_CRATES;
       	this.mapObjects = [];
+        this.numDevils = 0;
       	//set up the (static!) world objects
       	shapes_in_use.groundPlane = new Floor();
       	//setup boundary
       	this.xMin=-16; this.xMax=16;
       	this.yMin=-16; this.yMax=16;
 
-        this.gameStart = false;     
+        this.gameStart = false;
+        this.screenIndex = 0; 
+        this.screenDelay = 0.0;
+        this.mapNumber = 0;
+
         // Mute Option 
         this.mute = false;
         // Pause Option
@@ -186,113 +189,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         this.waveSpawnCount = 0;
         this.waveDeathCount = 0;
 
-       	// the following part of the map layout is added depending on the specified mapNum
-       	if(MAP_SELECTOR == 0)
-       	{
-          this.wallsArray =            // castle layout
-              [ [-10,12],[-9,12],[-8,12],[-7,12],[-6,12],[-5,12],[-4,12],[-3,12],[-2,12],       // start inner rim
-                [-10,11],[-10,10],[-10,9],[-10,8],[-10,7],[-10,6],[-10,5],[-10,4],[-10,3],[-10,2],
-                [10,12],[9,12],[8,12],[7,12],[6,12],[5,12],[4,12],[3,12],[2,12],
-                [10,11],[10,10],[10,9],[10,8],[10,7],[10,6],[10,5],[10,4],[10,3],[10,2],
-                [-10,-11],[-10,-10],[-10,-9],[-10,-8],[-10,-7],[-10,-6],[-10,-5],[-10,-4],[-10,-3],[-10,-2],
-                [-10,-12],[-9,-12],[-8,-12],[-7,-12],[-6,-12],[-5,-12],[-4,-12],[-3,-12],[-2,-12],
-                [10,-12],[9,-12],[8,-12],[7,-12],[6,-12],[5,-12],[4,-12],[3,-12],[2,-12],
-                [10,-11],[10,-10],[10,-9],[10,-8],[10,-7],[10,-6],[10,-5],[10,-4],[10,-3],[10,-2],    // end inner rim    
-  	      
-                [-4,8],[-4,7],[-4,6],[-5,6],[-6,6],
-                [-4,-8],[-4,-7],[-4,-6],[-5,-6],[-6,-6],
-                [4,8],[4,7],[4,6],[5,6],[6,6],
-                [4,-8],[4,-7],[4,-6],[5,-6],[6,-6],
-                
-                [-5,3],[-5,2],[-5,1],[-5,0],[-5,-1],[-5,-2],[-5,-3],
-                [5,3],[5,2],[5,1],[5,0],[5,-1],[5,-2],[5,-3],       
-  	      
-                [-2,3],[2,3],
-                [-2,2],[-2,1],[-2,0],[-2,-1],[-2,-2],[2,2],[2,1],[2,0],[2,-1],[2,-2],
-                [-2,-3],[-1,-3],[0,-3],[1,-3],[2,-3]
-                
-          ];    
-       	}
-       	else if(MAP_SELECTOR == 1)// mapNum would be some non-zero here
-       	{
-          this.wallsArray =
-       		[ [9,6],[9,7],[9,8],[9,9],[9,10],[9,11],[9,12],[9,13],[9,14], // Right hook long vertical
-       		  [8,6],[7,6],[6,6],[5,6],[5,6],[4,6],[3,6],                  // Right hook medium horizontal
-       		  [3,7],[3,8],[3,9],[3,10],                                   // Right hook short vertical
-       		  [4,10],[5,10],                                              // Right hook short horizontal
-       		  
-       		  [-9,6],[-9,7],[-9,8],[-9,9],[-9,10],[-9,11],[-9,12],[-9,13],[-9,14], // Left hook long vertical
-       		  [-8,6],[-7,6],[-6,6],[-5,6],[-5,6],[-4,6],[-3,6],                    // Left hook medium horizontal
-       		  [-3,7],[-3,8],[-3,9],[-3,10],                                        // Left hook short vertical
-       		  [-4,10],[-5,10],                                                     // Left hook short horizontal
-       		  
-       		  [12,-2],[11,-2],[10,-2],[9,-2],[8,-2],[7,-2],[6,-2],[5,-2],          // Right question mark long horizontal
-       		  [5,-3],[5,-4],[5,-5],[5,-6],[5,-7],                                  // Right question mark medium vertical
-       		  [6,-7],[7,-7],[8,-7],[9,-7],                                         // Right question mark short horizontal
-       		  [9,-8],[9,-9],[9,-10],[9,-11],                                       // Right question mark long vertical
-       		  
-       		  [-12,-2],[-11,-2],[-10,-2],[-9,-2],[-8,-2],[-7,-2],[-6,-2],[-5,-2],  // Left question mark long horizontal
-       		  [-5,-3],[-5,-4],[-5,-5],[-5,-6],[-5,-7],                             // Left question mark medium vertical
-       		  [-6,-7],[-7,-7],[-8,-7],[-9,-7],                                     // Left question mark short horizontal
-       		  [-9,-8],[-9,-9],[-9,-10],[-9,-11],                                   // Left question mark long vertical
-       		  
-       		  [-12, 12],[-12,11],[-12,8],[-12,7],[-12,4],[-12,3],                  // Top left dashes
-       		  [12, 12],[12,11],[12,8],[12,7],[12,4],[12,3],                        // Top right dashes
-       		  
-       		  [-14,-3],[-14,-4],[-14,-7],[-14,-8],[-14,-11],[-14,-12],             // Bottom left dashes
-       		  [14,-3],[14,-4],[14,-7],[14,-8],[14,-11],[14,-12],             // Bottom right dashes
-       		  
-       		  [-1,-7],[-1,-12],[0,-7],[0,-12],[1,-7],[1,-12],
-       		  
-       		  [-6,1],[-5,1],[-4,1],[4,1],[5,1],[6,1]
-       		];
-        }
-         else if(MAP_SELECTOR == 2)
-         {
-             this.wallsArray = 
-               [ 
-                 [-13,11],[-12,11],[-11,11],[-10,11],[-9,11],[-8,11],[-7,11],[-6,11], // Top Left L
-                 [-6,10],[-6,9],[-6,8],[-6,7],[-6,6],[-6,5],[-6,4],       
-
-                 [-1,8],[0,8],[1,8], // Middle dash       
-
-                 [13,11],[12,11],[11,11],[10,11],[9,11],[8,11],[7,11],[6,11], // Top Right L
-                 [6,10],[6,9],[6,8],[6,7],[6,6],[6,5],[6,4],      
-
-                 [-7,-1],[-6,-1],[-5,-1],[-4,-1],
-                 [-8,-1],[-8,-2],[-8,-3],[-8,-4],[-8,-5],[-8,-6],[-8,-7],[-8,-8],[-8,-9],[-8,-10],[-8,-11],[-8,-12], // Left Brace
-                 [-7,-12],[-6,-12],[-5,-12],[-4,-12],       
-
-                 [7,-1],[6,-1],[5,-1],[4,-1],
-                 [8,-1],[8,-2],[8,-3],[8,-4],[8,-5],[8,-6],[8,-7],[8,-8],[8,-9],[8,-10],[8,-11],[8,-12], // Right Brace
-                 [7,-12],[6,-12],[5,-12],[4,-12],       
-
-                 [11,-13],[11,-12],[11,-11], // Botom Right L
-                 [12,-11],[13,-11],[14,-11],      
-
-                 [-11,-13],[-11,-12],[-11,-11], // Bottom Left L
-                 [-12,-11],[-13,-11],[-14,-11],       
-
-                 [-11,4],[-12,3],[-13,2],[-14,1], // Left zig-zag
-                 [-13,0],[-12,-1],[-11,-2],
-                 [-11,-2],[-12,-3],[-13,-4],[-14,-5],       
-
-                 [11,4],[12,3],[13,2],[14,1], // Right zig-zag
-                 [13,0],[12,-1],[11,-2],
-                 [11,-2],[12,-3],[13,-4],[14,-5]
-               ];
-         }
-       	
-       	this.wallBoolean = [];
-       	for(var i=this.xMin;i<=this.xMax;i++){
-       	    for(var j= this.yMin; j<=this.yMax;j++){
-       		this.wallBoolean.push(false);
-       	    }
-       	}
-       	for(var i=0;i<this.wallsArray.length;i++){
-       	    this.wallBoolean[this.wallsArray[i][0]*(this.yMax-this.yMin)+this.wallsArray[i][1]] = true;
-       	}
-      	//TODO: set up geometry shared by all actors
       	shapes_in_use.cube = new Cube();
       	shapes_in_use.sphere = new Subdivision_Sphere(3);
         shapes_in_use.oriented_cube = new Oriented_Cube();      
@@ -317,6 +213,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       this.event = "  Wave " + this.level + " : Start!";
       this.waveSpawnCount = 0;
       this.waveDeathCount = 0;
+      this.numDevils = 0;
       this.maxEnemies = Math.min(25, this.maxEnemies + 5);
     },
     'init_keys': function( controls )   // init_keys():  Define any extra keyboard shortcuts here
@@ -336,13 +233,122 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           controls.add( "m", this, function() { this.mute = !this.mute;}); 
           controls.add( "p", this, function() { this.pause = !this.pause;});        
         
-      	  controls.add( "space", this, function() {this.player.attack()} ); 
+      	  controls.add( "space", this, function() {this.player.attack();  console.log("it's been pressed");   } ); 
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
         this.player.update_strings( user_interface_string_manager );
         user_interface_string_manager.string_map["time"]    = "Animation Time: " + Math.round( this.shared_scratchpad.graphics_state.animation_time )/1000 + "s";
         user_interface_string_manager.string_map["animate"] = "Animation " + (this.shared_scratchpad.animate ? "on" : "off") ;
+      },
+    'update_walls': function (index)
+      {
+        // the following part of the map layout is added depending on the specified mapNum
+        if(index == 0)
+        {
+          this.wallsArray =
+          [ [9,6],[9,7],[9,8],[9,9],[9,10],[9,11],[9,12],[9,13],[9,14], // Right hook long vertical
+            [8,6],[7,6],[6,6],[5,6],[5,6],[4,6],[3,6],                  // Right hook medium horizontal
+            [3,7],[3,8],[3,9],[3,10],                                   // Right hook short vertical
+            [4,10],[5,10],                                              // Right hook short horizontal
+            
+            [-9,6],[-9,7],[-9,8],[-9,9],[-9,10],[-9,11],[-9,12],[-9,13],[-9,14], // Left hook long vertical
+            [-8,6],[-7,6],[-6,6],[-5,6],[-5,6],[-4,6],[-3,6],                    // Left hook medium horizontal
+            [-3,7],[-3,8],[-3,9],[-3,10],                                        // Left hook short vertical
+            [-4,10],[-5,10],                                                     // Left hook short horizontal
+            
+            [12,-2],[11,-2],[10,-2],[9,-2],[8,-2],[7,-2],[6,-2],[5,-2],          // Right question mark long horizontal
+            [5,-3],[5,-4],[5,-5],[5,-6],[5,-7],                                  // Right question mark medium vertical
+            [6,-7],[7,-7],[8,-7],[9,-7],                                         // Right question mark short horizontal
+            [9,-8],[9,-9],[9,-10],[9,-11],                                       // Right question mark long vertical
+            
+            [-12,-2],[-11,-2],[-10,-2],[-9,-2],[-8,-2],[-7,-2],[-6,-2],[-5,-2],  // Left question mark long horizontal
+            [-5,-3],[-5,-4],[-5,-5],[-5,-6],[-5,-7],                             // Left question mark medium vertical
+            [-6,-7],[-7,-7],[-8,-7],[-9,-7],                                     // Left question mark short horizontal
+            [-9,-8],[-9,-9],[-9,-10],[-9,-11],                                   // Left question mark long vertical
+            
+            [-12, 12],[-12,11],[-12,8],[-12,7],[-12,4],[-12,3],                  // Top left dashes
+            [12, 12],[12,11],[12,8],[12,7],[12,4],[12,3],                        // Top right dashes
+            
+            [-14,-3],[-14,-4],[-14,-7],[-14,-8],[-14,-11],[-14,-12],             // Bottom left dashes
+            [14,-3],[14,-4],[14,-7],[14,-8],[14,-11],[14,-12],             // Bottom right dashes
+            
+            [-1,-7],[-1,-12],[0,-7],[0,-12],[1,-7],[1,-12],
+            
+            [-6,1],[-5,1],[-4,1],[4,1],[5,1],[6,1]
+          ];
+        }
+        else if(index == 1)// mapNum would be some non-zero here
+        {
+          this.wallsArray = 
+               [ 
+                 [-13,11],[-12,11],[-11,11],[-10,11],[-9,11],[-8,11],[-7,11],[-6,11], // Top Left L
+                 [-6,10],[-6,9],[-6,8],[-6,7],[-6,6],[-6,5],[-6,4],       
+
+                 [-1,8],[0,8],[1,8], // Middle dash       
+
+                 [13,11],[12,11],[11,11],[10,11],[9,11],[8,11],[7,11],[6,11], // Top Right L
+                 [6,10],[6,9],[6,8],[6,7],[6,6],[6,5],[6,4],      
+
+                 [-7,-1],[-6,-1],[-5,-1],[-4,-1],
+                 [-8,-1],[-8,-2],[-8,-3],[-8,-4],[-8,-5],[-8,-6],[-8,-7],[-8,-8],[-8,-9],[-8,-10],[-8,-11],[-8,-12], // Left Brace
+                 [-7,-12],[-6,-12],[-5,-12],[-4,-12],       
+
+                 [7,-1],[6,-1],[5,-1],[4,-1],
+                 [8,-1],[8,-2],[8,-3],[8,-4],[8,-5],[8,-6],[8,-7],[8,-8],[8,-9],[8,-10],[8,-11],[8,-12], // Right Brace
+                 [7,-12],[6,-12],[5,-12],[4,-12],       
+
+                 [11,-13],[11,-12],[11,-11], // Bottom Right L
+                 [12,-11],[13,-11],[14,-11],      
+
+                 [-11,-13],[-11,-12],[-11,-11], // Bottom Left L
+                 [-12,-11],[-13,-11],[-14,-11],       
+
+                 [-11,4],[-12,3],[-13,2],[-14,1], // Left zig-zag
+                 [-13,0],[-12,-1],[-11,-2],
+                 [-11,-2],[-12,-3],[-13,-4],[-14,-5],       
+
+                 [11,4],[12,3],[13,2],[14,1], // Right zig-zag
+                 [13,0],[12,-1],[11,-2],
+                 [11,-2],[12,-3],[13,-4],[14,-5]
+               ];
+        }
+         else if(index == 2)
+         {   
+            this.wallsArray =            // castle layout
+                [ [-10,12],[-9,12],[-8,12],[-7,12],[-6,12],[-5,12],[-4,12],[-3,12],[-2,12],       // start inner rim
+                  [-10,11],[-10,10],[-10,9],[-10,8],[-10,7],[-10,6],[-10,5],[-10,4],[-10,3],[-10,2],
+                  [10,12],[9,12],[8,12],[7,12],[6,12],[5,12],[4,12],[3,12],[2,12],
+                  [10,11],[10,10],[10,9],[10,8],[10,7],[10,6],[10,5],[10,4],[10,3],[10,2],
+                  [-10,-11],[-10,-10],[-10,-9],[-10,-8],[-10,-7],[-10,-6],[-10,-5],[-10,-4],[-10,-3],[-10,-2],
+                  [-10,-12],[-9,-12],[-8,-12],[-7,-12],[-6,-12],[-5,-12],[-4,-12],[-3,-12],[-2,-12],
+                  [10,-12],[9,-12],[8,-12],[7,-12],[6,-12],[5,-12],[4,-12],[3,-12],[2,-12],
+                  [10,-11],[10,-10],[10,-9],[10,-8],[10,-7],[10,-6],[10,-5],[10,-4],[10,-3],[10,-2],    // end inner rim    
+            
+                  [-4,8],[-4,7],[-4,6],[-5,6],[-6,6],
+                  [-4,-8],[-4,-7],[-4,-6],[-5,-6],[-6,-6],
+                  [4,8],[4,7],[4,6],[5,6],[6,6],
+                  [4,-8],[4,-7],[4,-6],[5,-6],[6,-6],
+                  
+                  [-5,3],[-5,2],[-5,1],[-5,0],[-5,-1],[-5,-2],[-5,-3],
+                  [5,3],[5,2],[5,1],[5,0],[5,-1],[5,-2],[5,-3],       
+            
+                  [-2,3],[2,3],
+                  [-2,2],[-2,1],[-2,0],[-2,-1],[-2,-2],[2,2],[2,1],[2,0],[2,-1],[2,-2],
+                  [-2,-3],[-1,-3],[0,-3],[1,-3],[2,-3]
+                  
+            ];    
+         }
+        
+        this.wallBoolean = [];
+        for(var i=this.xMin;i<=this.xMax;i++){
+            for(var j= this.yMin; j<=this.yMax;j++){
+          this.wallBoolean.push(false);
+            }
+        }
+        for(var i=0;i<this.wallsArray.length;i++){
+            this.wallBoolean[this.wallsArray[i][0]*(this.yMax-this.yMin)+this.wallsArray[i][1]] = true;
+        }
       },
     'checkPlayerCollision': function(newPosition, tolerance){
 	var vec = subtract(this.player.position,newPosition);
@@ -440,7 +446,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         shapes_in_use.cube.draw(this.shared_scratchpad.graphics_state, model_transform, wall);
       }
     },
-    'animateGame': function(time, mapNum){   
+    'animateGame': function(time){   
       var graphics_state  = this.shared_scratchpad.graphics_state,
           model_transform = mat4(); 
 
@@ -465,21 +471,41 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         -----------------------
       */
 	
-
-
-	this.drawWalls();    
-	
 	this.drawWalls();    
 
 
       model_transform = mat4();
-      model_transform = mult(model_transform, translation(0, 17, 1.5));
-      model_transform = mult(model_transform, scale(2, 1, 2));
-      //shapes_in_use.cube.draw(graphics_state, model_transform, portal);
+      model_transform = mult(model_transform, translation(0, 17, 0.8));
+      model_transform = mult(model_transform, rotation(90, 1, 0, 0));
+      model_transform = mult(model_transform, rotation(90, 0, 0, 1));
+      model_transform = mult(model_transform, scale(1.5, 1.5, 1));
+      shapes_in_use.square.draw(graphics_state, model_transform, portal);
 
-      if (this.pause)
+      model_transform = mat4();
+      model_transform = mult(model_transform, translation(0, -17, 0.8));
+      model_transform = mult(model_transform, rotation(90, 1, 0, 0));
+      model_transform = mult(model_transform, rotation(90, 0, 0, 1));
+      model_transform = mult(model_transform, scale(1.5, 1.5, 1));
+      shapes_in_use.square.draw(graphics_state, model_transform, portal);
+
+      model_transform = mat4();
+      model_transform = mult(model_transform, translation(17, 0, 0.8));
+      model_transform = mult(model_transform, rotation(90, 0, 1, 0));
+      model_transform = mult(model_transform, scale(1.5, 1.5, 1));
+      shapes_in_use.square.draw(graphics_state, model_transform, portal);
+
+      model_transform = mat4();
+      model_transform = mult(model_transform, translation(-17, 0, 0.8));
+      model_transform = mult(model_transform, rotation(90, 0, 1, 0));
+      model_transform = mult(model_transform, scale(1.5, 1.5, 1));
+      shapes_in_use.square.draw(graphics_state, model_transform, portal);
+
+      if (this.pause){
+        this.event_timer = 0.1;
+        this.event = "       Paused";
         return;
-      
+      }
+
       // spawn new actors
       if(this.enemySpawnTimer < 0 && this.waveSpawnCount < this.maxEnemies){
           // This currently spawns enemies in the corners of the map
@@ -503,14 +529,14 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 
            // TODO: UPDATE THIS WITH FORMULA TO GENERATE NORMAL/DEVIL
           var random = Math.floor(Math.random() * 10);
-          if (random < 2)
+          if (random < 2 && this.numDevils < this.level){
             this.enemies.push(new Devil_Enemy(this, translation(XCoord, YCoord, 0), 15));
+            this.numDevils++;
+          }
           else 
             this.enemies.push(new Normal_Enemy(this, translation(XCoord, YCoord, 0)));
           this.waveSpawnCount++;
-
-
-          this.enemySpawnTimer = 2.0;//TODO: update this with a formula later
+          this.enemySpawnTimer = 2.0;
       }
       else{
           this.enemySpawnTimer -= graphics_state.animation_delta_time/1000;
@@ -583,10 +609,11 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     'resetGame': function()
     {
         this.score = 0;
-        this.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-60), rotation(-50,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
+        this.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-12), rotation(-50,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
         this.shared_scratchpad.animate = 1;
         this.waveSpawnCount = 0;
         this.waveDeathCount = 0;
+        this.screenIndex = 0;
         this.level = 0;
         this.player = new Player(this);
         this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 5;
@@ -611,33 +638,72 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         Start coding down here!!!!
         **********************************/
 
-	  shaders_in_use["Cube"].activate();
-	var skybox = new Cube(true);
-	skybox.copy_onto_graphics_card();
-	gl.enableVertexAttribArray(g_addrs.shader_attributes[0].index);
-        gl.bindBuffer( gl.ARRAY_BUFFER, skybox.graphics_card_buffers[0] );
-        gl.vertexAttribPointer( g_addrs.shader_attributes[0].index, g_addrs.shader_attributes[0].size, g_addrs.shader_attributes[0].type, g_addrs.shader_attributes[0].normalized, g_addrs.shader_attributes[0].stride, g_addrs.shader_attributes[0].pointer );
-	gl.uniform1i(g_addrs.cubeMap_loc, 0);
-	active_shader.update_uniforms(new Graphics_State(rotation(30,1,0,0), perspective(45, canvas.width/canvas.height, .1, 1000), 0 ), mult(rotation(180,0,0,1),scale(40,40,40)));
-	gl.activeTexture(gl.TEXTURE0);
-	gl.bindTexture(gl.TEXTURE_CUBE_MAP, textures_in_use["skybox"].id);
-	gl.disable(gl.DEPTH_TEST);
-	gl.drawArrays(gl.TRIANGLES,0,skybox.positions.length);
-	gl.enable(gl.DEPTH_TEST);
-	  shaders_in_use["Default"].activate();
+	      shaders_in_use["Cube"].activate();
+      	var skybox = new Cube(true);
+      	skybox.copy_onto_graphics_card();
+      	gl.enableVertexAttribArray(g_addrs.shader_attributes[0].index);
+              gl.bindBuffer( gl.ARRAY_BUFFER, skybox.graphics_card_buffers[0] );
+              gl.vertexAttribPointer( g_addrs.shader_attributes[0].index, g_addrs.shader_attributes[0].size, g_addrs.shader_attributes[0].type, g_addrs.shader_attributes[0].normalized, g_addrs.shader_attributes[0].stride, g_addrs.shader_attributes[0].pointer );
+      	gl.uniform1i(g_addrs.cubeMap_loc, 0);
+      	active_shader.update_uniforms(new Graphics_State(rotation(30,1,0,0), perspective(45, canvas.width/canvas.height, .1, 1000), 0 ), mult(rotation(180,0,0,1),scale(40,40,40)));
+      	gl.activeTexture(gl.TEXTURE0);
+      	gl.bindTexture(gl.TEXTURE_CUBE_MAP, textures_in_use["skybox"].id);
+      	gl.disable(gl.DEPTH_TEST);
+      	gl.drawArrays(gl.TRIANGLES,0,skybox.positions.length);
+      	gl.enable(gl.DEPTH_TEST);
+	     
+        shaders_in_use["Default"].activate();
+        
         // initialize start screen
         if(!this.gameStart){
-            this.renderScreen("screens/title.jpg");    
-            if(this.mouse.anchor){
-              if(this.mouse.from_center[0] > -310 && this.mouse.from_center[0] < 320 && this.mouse.from_center[1] > -50 && this.mouse.from_center[1] < 70)
-                this.gameStart = true;
+            switch(this.screenIndex){
+              case 0:
+                this.renderScreen("screens/title.jpg"); 
+                if(this.screenDelay > 0){
+                  this.screenDelay -= 0.1;
+                  return;
+                }
+                if(this.mouse.anchor){
+                    if(this.mouse.from_center[0] > -310 && this.mouse.from_center[0] < 320 && this.mouse.from_center[1] > -50 && this.mouse.from_center[1] < 70){
+                      this.screenIndex = 1;
+                      this.screenDelay = 1;
+                    }
+                }
+                break;
+              case 1:
+                this.renderScreen("screens/wall_selection.jpg");
+                if(this.screenDelay > 0){
+                  this.screenDelay -= 0.1;
+                  return;
+                }
+                if(this.mouse.anchor){
+                  if(this.mouse.from_center[0] > -840 && this.mouse.from_center[0] < -330 && this.mouse.from_center[1] > -140 && this.mouse.from_center[1] < 380){
+                    this.update_walls(0);
+                    this.gameStart = true;
+                  }
+                  else if(this.mouse.from_center[0] > -250 && this.mouse.from_center[0] < 260 && this.mouse.from_center[1] > -140 && this.mouse.from_center[1] < 380){
+                    this.update_walls(1);
+                    this.gameStart = true;
+                  }
+                  else if(this.mouse.from_center[0] > 335 && this.mouse.from_center[0] < 850 && this.mouse.from_center[1] > -140 && this.mouse.from_center[1] < 380){
+                    this.update_walls(2);
+                    this.gameStart = true;
+                  }
+                    //  this.gameStart = true;
+                }
+                break;
             }
         }                
         else if(this.player.alive){
-          this.animateGame(time, MAP_SELECTOR);
+          this.animateGame(time);
           // increase level if wave has been cleared
-          if( this.level == 0)
+          if( this.level == 0){
             this.levelUp();
+            if(!this.mute){
+              var audio = new Audio('Audio/wave_start.mp3');
+              audio.play();
+            }
+          }
           else if( this.waveDeathCount >= this.maxEnemies ){
             if(this.waveDeathCount == this.maxEnemies){   // just to make sure the event timer doesn't keep looping
               this.crates = [];
@@ -648,6 +714,10 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
             }
             if(this.event_timer <= 0){
               this.levelUp();
+              if(!this.mute){
+                var audio = new Audio('Audio/wave_start.mp3');
+                audio.play();
+              }
             }
           }
         }
@@ -657,6 +727,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
               if(this.mouse.from_center[0] > -340 && this.mouse.from_center[0] < 340 && this.mouse.from_center[1] > 0 && this.mouse.from_center[1] < 120){
                 this.gameStart = false;
                 this.resetGame();
+                this.screenDelay = 1;
               }
             }
         }
@@ -714,12 +785,10 @@ Declare_Any_Class( "Player",
     'changeHealth': function(deltaHealth){
 	     this.health += deltaHealth;
        this.health = Math.min(this.health, this.maxHealth);
-	      if(this.health == 0 && !this.world.mute){
+	      if(this.health <= 0 && !this.dying && !this.world.mute){
             var audio = new Audio('Audio/dying.mp3');
             audio.play();
-        }
-        if(this.health <= 0){
-          this.dying = true;
+            this.dying = true;
         }
     },
     'changeAmmo': function(deltaAmmo){
@@ -733,21 +802,20 @@ Declare_Any_Class( "Player",
       this.buff_timer = 5.0;
       },
     'attack': function(){
-  // Cannot shoot if player has no ammo
-  var audio = new Audio('Audio/gunshot.mp3');
-  
-  if(this.ammo <= 0 || !this.alive )
-    return;
-	if(this.autoAttackTimer <= 0){
-	    this.world.projectiles.push(new Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
-	    this.autoAttackTimer = ATTACK_TIMER;
-      this.ammo--;
-      if (!this.world.mute)
-      {
-        var audio = new Audio('Audio/gunshot.mp3');
-        audio.play();
-      }
-	}
+      // Cannot shoot if player has no ammo
+      var audio = new Audio('Audio/gunshot.mp3');
+      if(this.ammo <= 0 || !this.alive )
+        return;
+    	if(this.autoAttackTimer <= 0){
+          this.world.projectiles.push(new Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
+          this.autoAttackTimer = ATTACK_TIMER;
+          this.ammo--;
+          if (!this.world.mute)
+          {
+            var audio = new Audio('Audio/gunshot.mp3');
+            audio.play();
+          }
+    	}
     },
     'display': function(delta_time)
       {

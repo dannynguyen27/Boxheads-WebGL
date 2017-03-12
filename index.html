@@ -10,16 +10,16 @@ index.html - The web page document containing the canvas (drawing surface), that
 <script type="text/javascript" src="enemies.js"  ></script>
 <script type="text/javascript" src="projectiles.js"  ></script>
 <script type="text/javascript" src="ammocrates.js"  ></script>
-<script type="text/javascript" src="shapes.js"        ></script>
+<script type="text/javascript" src="shapes.js"  ></script>
 <script type="text/javascript" src="subdivisionsphere.js"></script>
-<script type="text/javascript" src="shaders.js"       ></script>
+<script type="text/javascript" src="shaders.js"  ></script>
 <audio src="Audio/gunshot.mp3"></audio>
 <audio src="Audio/reload.mp3"></audio>
 <audio src="Audio/thunder.mp3"></audio>
 <audio src="Audio/dog_hurt.mp3"></audio>
-<audio src="Audio/init_dog.mp3"></audio>
 <audio src="Audio/health.mp3"></audio>
 <audio src="Audio/dying.mp3"></audio>
+<audio src="Audio/wave_start.mp3"></audio>
 
 <script type="text/javascript"> "use strict"  
   window.onload = function init()           // ********************* OUR WHOLE PROGRAM'S ENTRY POINT ********************* 
@@ -28,7 +28,7 @@ index.html - The web page document containing the canvas (drawing surface), that
           g_state = main_canvas.shared_scratchpad.graphics_state;
           
       shaders_in_use[ "Default"     ] = new Phong_or_Gouraud_Shader( g_state );    // Put all our shader programs in the GPU.
-      shaders_in_use[ "Cube" ] = new CubeMap_Shader(g_state);
+      shaders_in_use[ "Cube" ]        = new CubeMap_Shader(g_state);
                                                                                 // IMPORTANT: -- You have to include all your new images in here:
       filtered_textures_to_load.push( "text.png" );                             // Put all our texture images in the GPU.
       filtered_textures_to_load.push( "Visuals/ground_texture.jpg" );
@@ -38,7 +38,6 @@ index.html - The web page document containing the canvas (drawing surface), that
       filtered_textures_to_load.push( "Visuals/enemy_body.jpg");
       filtered_textures_to_load.push( "Visuals/devil_head.jpg");
       filtered_textures_to_load.push( "Visuals/devil_body.jpg");
-      
       
       filtered_textures_to_load.push( "Visuals/simple_outline.jpg");
       filtered_textures_to_load.push( "Visuals/portal.jpg");
@@ -50,6 +49,7 @@ index.html - The web page document containing the canvas (drawing surface), that
 
       unfiltered_textures_to_load.push( "screens/title.jpg");
       unfiltered_textures_to_load.push( "screens/end.jpg");
+      unfiltered_textures_to_load.push( "screens/wall_selection.jpg");
 
       filtered_textures_to_load.push( "Visuals/wall_bumpmap.jpg");
 
