@@ -10,16 +10,16 @@ index.html - The web page document containing the canvas (drawing surface), that
 <script type="text/javascript" src="enemies.js"  ></script>
 <script type="text/javascript" src="projectiles.js"  ></script>
 <script type="text/javascript" src="ammocrates.js"  ></script>
-<script type="text/javascript" src="shapes.js"        ></script>
+<script type="text/javascript" src="shapes.js"  ></script>
 <script type="text/javascript" src="subdivisionsphere.js"></script>
-<script type="text/javascript" src="shaders.js"       ></script>
+<script type="text/javascript" src="shaders.js"  ></script>
 <audio src="Audio/gunshot.mp3"></audio>
 <audio src="Audio/reload.mp3"></audio>
 <audio src="Audio/thunder.mp3"></audio>
 <audio src="Audio/dog_hurt.mp3"></audio>
-<audio src="Audio/init_dog.mp3"></audio>
 <audio src="Audio/health.mp3"></audio>
 <audio src="Audio/dying.mp3"></audio>
+<audio src="Audio/wave_start.mp3"></audio>
 
 <script type="text/javascript"> "use strict"  
   window.onload = function init()           // ********************* OUR WHOLE PROGRAM'S ENTRY POINT ********************* 
@@ -50,6 +50,7 @@ index.html - The web page document containing the canvas (drawing surface), that
 
       unfiltered_textures_to_load.push( "screens/title.jpg");
       unfiltered_textures_to_load.push( "screens/end.jpg");
+      unfiltered_textures_to_load.push( "screens/wall_selection.jpg");
 
       filtered_textures_to_load.push( "Visuals/wall_bumpmap.jpg");
 
