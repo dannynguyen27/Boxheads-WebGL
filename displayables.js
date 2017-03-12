@@ -156,7 +156,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
   { 'construct': function( context )
       { this.shared_scratchpad    = context.shared_scratchpad;
       	this.shared_scratchpad.animate = 1;
-      	
       	this.level = 1;
       	this.player = new Player(this);
       	this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 30;
@@ -432,8 +431,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       // *** Materials: 
       // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
       var ground = new Material( Color( 0,0,0,1 ), .4, 2, 0, 10, "Visuals/ground_texture.jpg","Visuals/wall_bumpmap.jpg" ), // Omit the final (string) parameter if you want no texture
-          portal = new Material( Color( 0.3,0.3,0.3,1 ), 0.5, 0.4, 0, 10, "Visuals/portal.jpg"),
-          placeHolder = new Material( Color(0,0,0,0), 0,0,0,0, "Blank" );
+          portal = new Material( Color( 0.3,0.3,0.3,1 ), 0.5, 0.4, 0, 10, "Visuals/portal.jpg");
 
       // Map Indexing
       /*
@@ -450,9 +448,9 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         |                     | -15
         -----------------------
       */
+	
 
-
-      this.drawWalls();    
+	this.drawWalls();    
 
         model_transform = mat4();
         model_transform = mult(model_transform, translation(0, 17, 1.5));
@@ -462,7 +460,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       if (this.pause)
         return;
       
-      //TODO: spawn new actors
+      //spawn new actors
       if(this.enemySpawnTimer < 0 && this.enemies.length < this.maxEnemies){
           // This currently spawns enemies in the corners of the map
           var XCoord, YCoord;
@@ -593,7 +591,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         graphics_state.lights = [];                    // First clear the light list each frame so we can replace & update lights.
 
 	      //One light to illuminate them all
-        graphics_state.lights.push( new Light( vec4(  0,  0,  10, 1 ), Color(1, 1, 1, 1 ), 1000 ) );
+        graphics_state.lights.push( new Light( vec4(  10,  10,  50, 1 ), Color(1, 1, 1, 1 ), 5000 ) );
 
         //change game level
         if(this.enemiesKilled >= this.enemiesNeededToLevelUp)
@@ -604,6 +602,21 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         /**********************************
         Start coding down here!!!!
         **********************************/
+
+	  shaders_in_use["Cube"].activate();
+	var skybox = new Cube(true);
+	skybox.copy_onto_graphics_card();
+	gl.enableVertexAttribArray(g_addrs.shader_attributes[0].index);
+        gl.bindBuffer( gl.ARRAY_BUFFER, skybox.graphics_card_buffers[0] );
+        gl.vertexAttribPointer( g_addrs.shader_attributes[0].index, g_addrs.shader_attributes[0].size, g_addrs.shader_attributes[0].type, g_addrs.shader_attributes[0].normalized, g_addrs.shader_attributes[0].stride, g_addrs.shader_attributes[0].pointer );
+	gl.uniform1i(g_addrs.cubeMap_loc, 0);
+	active_shader.update_uniforms(new Graphics_State(rotation(30,1,0,0), perspective(45, canvas.width/canvas.height, .1, 1000), 0 ), mult(rotation(180,0,0,1),scale(40,40,40)));
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_CUBE_MAP, textures_in_use["skybox"].id);
+	gl.disable(gl.DEPTH_TEST);
+	gl.drawArrays(gl.TRIANGLES,0,skybox.positions.length);
+	gl.enable(gl.DEPTH_TEST);
+	  shaders_in_use["Default"].activate();
         // initialize start screen
         if(!this.gameStart){
             this.renderScreen("screens/title.jpg");    

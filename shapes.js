@@ -147,8 +147,9 @@ Declare_Any_Class( "Text_Line", // Draws a rectangle textured with images of ASC
   }, Shape )
 
 Declare_Any_Class("Cube",
-   { 'populate': function()
+   { 'populate': function(invert=false)
      {
+	 this.invert=invert;
 	 this.vertices = []
 	 //push all vertices of cube; positions will later be
 	 //generated from these vertices
@@ -173,7 +174,9 @@ Declare_Any_Class("Cube",
 	 this.flat_shade();
      },
      'genFacePoints': function(a,b,c,d){
-	 var triangulationOrder = [ a,b,d,b,c,d ];
+	 var triangulationOrder;
+	 if(!this.invert) triangulationOrder = [ a,b,d,b,c,d ];
+	 else triangulationOrder = [d, c, b, d, b, a];
 	 //define the texture coordinates that correspond to each point on
 	 //a face
 	 var textureCoords = [vec2(0,0),vec2(0,1),vec2(1,0),vec2(0,1),vec2(1,1),vec2(1,0)];
