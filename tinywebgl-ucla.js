@@ -262,7 +262,7 @@ Declare_Any_Class( "Canvas_Manager",                      // This class performs
         gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
         this.controls = new Shortcut_Manager();                 // All per-canvas key controls will be stored here
         this.displayables = [];
-        this.shared_scratchpad = { animate: false, string_map: {}, graphics_state: new Graphics_State() };
+        this.shared_scratchpad = { animate: false, string_map: {}, info_map: {}, graphics_state: new Graphics_State() };
       },
     'register_display_object': function( object ) { this.displayables.unshift( object );  object.init_keys( this.controls ); },
     'render': function( time = 0 )                                                // Animate shapes based upon how much measured real time has transpired.

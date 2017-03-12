@@ -38,6 +38,7 @@ Declare_Any_Class( "AmmoCrate",
 
     if (this.world.checkPlayerCollision(this.position, 1))
     {
+      this.world.player.event_timer = 2.5;
       switch(this.type)
       {
         case AMMO_BOX:
@@ -47,6 +48,7 @@ Declare_Any_Class( "AmmoCrate",
             audio = new Audio('Audio/reload.mp3');
             audio.play();
           }
+          this.world.player.event = "Ammo Box";
           this.alive = false;
           return;
         case HEALTH_BOX:
@@ -56,6 +58,7 @@ Declare_Any_Class( "AmmoCrate",
             audio = new Audio('Audio/health.mp3');
             audio.play();
           }
+          this.world.player.event = "Health Box";
           this.alive = false;
           return;
         case SPEED_BOX:
@@ -64,13 +67,15 @@ Declare_Any_Class( "AmmoCrate",
           {
             audio = new Audio('Audio/thunder.mp3');
             audio.play();
-          } 
+          }
+          this.world.player.event = "Speed Box"; 
           this.alive = false;
           return;
         case TROLL_BOX:
           // TODO: ADD EXTRA TROLL FUNCTIONALITY
           console.log("Troll crate opened! You get:");
           randomPowerUp = Math.random()
+          this.world.player.event = "Troll Box";
           this.alive = false;
           return;
       }

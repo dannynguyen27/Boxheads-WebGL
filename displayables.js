@@ -32,7 +32,8 @@ var enemies_dead = 0;
 
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
   { 'construct': function( context )
-      { this.define_data_members( { string_map: context.shared_scratchpad.string_map, start_index: 0, tick: 0, visible: false, graphicsState: new Graphics_State() } );
+      { this.define_data_members( { string_map: context.shared_scratchpad.string_map, info_map: context.shared_scratchpad.info_map,
+        start_index: 0, tick: 0, visible: false, graphicsState: new Graphics_State() } );
         shapes_in_use.debug_text = new Text_Line( 35 );
       },
     'init_keys': function( controls )
@@ -46,14 +47,31 @@ Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayabl
         debug_screen_object.string_map["text_scroll_index"] = "Text scroll index: " + this.start_index;
       },
     'display': function( time )
-      { if( !this.visible ) return;
-
+      { 
         shaders_in_use["Default"].activate();
-        gl.uniform4fv( g_addrs.shapeColor_loc, Color( .8, .8, .8, 1 ) );
+        gl.uniform4fv( g_addrs.shapeColor_loc, Color( 1, 1, 1, 1 ) );
 
         var font_scale = scale( .02, .04, 1 ),
-            model_transform = mult( translation( -.95, -.9, 0 ), font_scale ),
             strings = Object.keys( this.string_map );
+            info = Object.keys( this.info_map );
+
+        model_transform = mult( translation(-.95, .9, 0), font_scale );
+        shapes_in_use.debug_text.set_string( this.info_map["ammo"] );
+        shapes_in_use.debug_text.draw( this.graphicsState, model_transform, true, vec4(0,0,0,1) );  // Draw some UI text (strings)
+
+        model_transform = mult( translation(-.2, .9, 0), font_scale );
+        shapes_in_use.debug_text.set_string( this.info_map["score"] );
+        shapes_in_use.debug_text.draw( this.graphicsState, model_transform, true, vec4(0,0,0,1) );
+
+        model_transform = mult( translation(-.3, -.7, 0), font_scale );
+        shapes_in_use.debug_text.set_string( this.info_map["event"] );
+        shapes_in_use.debug_text.draw( this.graphicsState, model_transform, true, vec4(0,0,0,1) );
+
+
+
+        model_transform = mult( translation( -.95, -.9, 0 ), font_scale );
+
+        if( !this.visible ) return;        
 
         for( var i = 0, idx = this.start_index; i < 4 && i < strings.length; i++, idx = (idx + 1) % strings.length )
         {
@@ -271,6 +289,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         shapes_in_use.oriented_cube = new Oriented_Cube();      
         shapes_in_use.square = new Square();
         shapes_in_use.flat_square           = Square.prototype.auto_flat_shaded_version();
+        shapes_in_use.event_text = new Text_Line( 35 );
 
         // *** Mouse controls: ***
         this.mouse = { "from_center": vec2() };
@@ -302,6 +321,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
+        this.player.update_strings( user_interface_string_manager );
         user_interface_string_manager.string_map["time"]    = "Animation Time: " + Math.round( this.shared_scratchpad.graphics_state.animation_time )/1000 + "s";
         user_interface_string_manager.string_map["animate"] = "Animation " + (this.shared_scratchpad.animate ? "on" : "off") ;
       },
@@ -426,7 +446,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         shapes_in_use.cube.draw(graphics_state, model_transform, wall);
       }
 
-
       this.drawWalls();    
 
         model_transform = mat4();
@@ -546,7 +565,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
     'resetGame': function()
     {
         this.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-12), rotation(-50,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
-        //this.graphics_state.camera_transform = mat4();
         this.shared_scratchpad.animate = 1;
         this.level = 1;
         this.player = new Player(this);
@@ -570,7 +588,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 
         /**********************************
         Start coding down here!!!!
-        **********************************/ 
+        **********************************/
         // initialize start screen
         if(!this.gameStart){
             this.renderScreen("screens/title.jpg");    
@@ -603,7 +621,7 @@ Declare_Any_Class( "Player",
           heading:vec4(0,1,0,0), velocity: vec4(0,0,0,0),
 				  bool_reverseAnimate:false, limbAngle:0,moveSpeed: 4, defaultSpeed: 4, dying: false, alive: true, 
           health:initHealth, maxHealth:initHealth, autoAttackTimer:0.0, ammo: START_AMMO, materials:{},
-          lowHPThres: 0.4, midHPThres: 0.6, buff_timer: 0.0, fallAngle: 0, fadeTimer: 1, fadeRate: 0, 
+          lowHPThres: 0.4, midHPThres: 0.6, buff_timer: 0.0, event_timer: 0.0, event: "", deltaTime: 0, fallAngle: 0, fadeTimer: 1, fadeRate: 0, 
         });
     this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/player_head.jpg");
     this.materials.body = new Material(Color(0,0,0,1),0.8,.4,0,10, "Visuals/player_body.jpg");
@@ -615,9 +633,17 @@ Declare_Any_Class( "Player",
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
-	  //TODO: may want to update UI with player info later on
-        /*user_interface_string_manager.string_map["time"]    = "Animation Time: " + Math.round( this.shared_scratchpad.graphics_state.animation_time )/1000 + "s";
-        user_interface_string_manager.string_map["animate"] = "Animation " + (this.shared_scratchpad.animate ? "on" : "off") ;*/
+  	  //TODO: may want to update UI with player info later on
+        user_interface_string_manager.info_map["ammo"]  = "Ammo: " + this.ammo;
+        user_interface_string_manager.info_map["score"] = "Score: 00000000";
+        if(this.event_timer > 0){
+          user_interface_string_manager.info_map["event"] = "Picked up: " + this.event;
+          this.event_timer -= this.delta_time/1000;
+        }
+        else{
+         user_interface_string_manager.info_map["event"] = ""; 
+         this.event_timer = 0;
+        }
       },
     //begin navigation interface
     'moveForward': function(newState){
@@ -673,6 +699,8 @@ Declare_Any_Class( "Player",
     'display': function(delta_time)
       {
 	  
+    this.delta_time = delta_time;
+
     if(!this.alive){ 
       return;
     }
