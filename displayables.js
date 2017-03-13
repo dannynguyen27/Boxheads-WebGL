@@ -185,13 +185,13 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         this.screenDelay = 0.0;
         this.mapNumber = 0;
 
+        // For determining how long the game has been running
+        this.timeBegin = Date.now();
+
         // Mute Option 
         this.mute = false;
         // Pause Option
         this.pause = false;
-
-        // Checks to see if help page has been opened since starting game
-        this.hasOpenedHelpPage = false;
 
         // Set up all other data members
         this.setGame();
@@ -216,6 +216,12 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         canvas.addEventListener( "mousemove", ( function(self) { return function(e) { e = e || window.event;    self.mouse.from_center = mouse_position(e); } } ) (this), false );
         canvas.addEventListener( "mouseout",  ( function(self) { return function(e) { self.mouse.from_center = vec2(); }; } ) (this), false );    // Stop steering if the mouse leaves the canvas.
     },
+      'millisToMinutesAndSeconds': function(mil) 
+      {
+        var minutes = Math.floor(mil / 60000);
+        var seconds = ((mil % 60000) / 1000).toFixed(0);
+        return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+      },
     'levelUp': function()
     {
       this.level++;
@@ -629,6 +635,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           else{
             this.enemies.splice(i,1);
             this.waveDeathCount++;
+            this.enemiesKilled++;
           }
       }
       for (var i=0;i<this.projectiles.length;i++){
@@ -663,6 +670,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         this.shared_scratchpad.animate = 1;
         this.waveSpawnCount = 0;
         this.waveDeathCount = 0;
+        this.enemiesKilled = 0;
         this.screenIndex = 0;
         this.level = 0;
         this.player = new Player(this);
@@ -736,13 +744,9 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
                       this.screenDelay = 1;
                     }
                     else if (this.mouse.from_center[0] > -220 && this.mouse.from_center[0] < 234 && this.mouse.from_center[1] < 174 && this.mouse.from_center[1] > 86) {
-                      if (!this.hasOpenedHelpPage)
-                      {
                         window.open('GameHelp.html');
-                        this.hasOpenedHelpPage = true;
-                        this.mouse.anchor = false;
-                      }
                     }
+                    this.mouse.anchor = false;
                 }
                 break;
               case 1:
@@ -764,6 +768,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
                     this.update_walls(2);
                     this.gameStart = true;
                   }
+                  this.mouse.anchor = false;
                     //  this.gameStart = true;
                 }
                 break;
@@ -798,11 +803,25 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         else{
             this.renderScreen("screens/end.jpg");
             if(this.mouse.anchor){
+              console.log(this.mouse.from_center);
               if(this.mouse.from_center[0] > -340 && this.mouse.from_center[0] < 340 && this.mouse.from_center[1] > 0 && this.mouse.from_center[1] < 120){
                 this.gameStart = false;
                 this.setGame();
                 this.screenDelay = 1;
               }
+              else if (this.mouse.from_center[0] > -236 && this.mouse.from_center[0] < 246 && this.mouse.from_center[1] < 196 && this.mouse.from_center[1] > 115)
+              {
+
+                console.log("Begin Time: " + this.timeBegin);
+                var timeNow = Date.now();
+                console.log("End Time: " + timeNow);
+
+                var timeDiff = timeNow - this.timeBegin;
+                alert("You have been playing for " + this.millisToMinutesAndSeconds(timeDiff) + " minutes. " + "\n" +
+                      "Your score was " + this.score + ".\n" + 
+                      "You killed " + this.enemiesKilled + " enemies.\n");
+              }
+              this.mouse.anchor = false;
             }
         }
         
