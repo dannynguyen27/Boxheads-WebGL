@@ -12,7 +12,7 @@ Declare_Any_Class( "AmmoCrate",
     this.materials.ammo = new Material(Color(0,0,0,1),0.8,.4,0,10, "Visuals/Crates/ammo.jpg");
     this.materials.health = new Material(Color(0,0,0,1),0.8,.4,0,10, "Visuals/Crates/health.jpg");
     this.materials.speed = new Material(Color(0,0,0,1),0.8,.4,0,10, "Visuals/Crates/speed.jpg");
-    this.materials.troll = new Material(Color(0,0,0,1),0.8,.4,0,10, "Memes/Troll_Lose_Ammo.jpg");
+    //this.materials.troll = new Material(Color(0,0,0,1),0.8,.4,0,10, "Memes/Troll_Lose_Ammo.jpg");
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -71,6 +71,7 @@ Declare_Any_Class( "AmmoCrate",
           this.world.event = "Picked up: Speed Box"; 
           this.alive = false;
           return;
+        /*
         case TROLL_BOX:
           // TODO: ADD EXTRA TROLL FUNCTIONALITY
           console.log("Troll crate opened! You get:");
@@ -78,6 +79,7 @@ Declare_Any_Class( "AmmoCrate",
           this.world.event = "Picked up: Troll Box";
           this.alive = false;
           return;
+        */
       }
 
     }
@@ -101,9 +103,11 @@ Declare_Any_Class( "AmmoCrate",
       case SPEED_BOX:
         shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.speed);
         break;
+      /*
       case TROLL_BOX:
         shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.troll);
         break;
+      */
     }
       }
   });

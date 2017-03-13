@@ -30,11 +30,11 @@ const MAX_AMMO_CRATES = 10;
 const AMMO_SPAWN_RADIUS = 15;
 const CRATE_DESPAWN_TIMER = 15;
 
-const NUM_TYPES_OF_CRATES = 4; // Specifies the different types of crates possible
+const NUM_TYPES_OF_CRATES = 3; // Specifies the different types of crates possible
 const AMMO_BOX = 0;
 const HEALTH_BOX = 1;
 const SPEED_BOX = 2;
-const TROLL_BOX = 3;
+/*const TROLL_BOX = 3;*/
 
 /********** DECLARE ALL CONSTANTS HERE **********/
 
