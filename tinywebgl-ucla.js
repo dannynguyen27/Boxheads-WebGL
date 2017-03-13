@@ -61,6 +61,13 @@ Declare_Any_Class( "Shape",
       { if( !this.sent_to_GPU ) throw "This shape's arrays are not copied over to graphics card yet.";  // these calls produce different results by varying which
         active_shader.update_uniforms( graphics_state, model_transform, material );                     // vertex list in the GPU we consult.
 
+	if(active_shader == shaders_in_use["Shadow"]){
+	    var it = g_addrs.shader_attributes[0];
+	    gl.enableVertexAttribArray( it.index );
+            gl.bindBuffer( gl.ARRAY_BUFFER, this.graphics_card_buffers[0] );
+            gl.vertexAttribPointer( it.index, it.size, it.type, it.normalized, it.stride, it.pointer );
+	}
+	else{
         if( material.texture_filename )  // Omit the texture string parameter from Material's constructor to signal not to draw a texture.
         { g_addrs.shader_attributes[2].enabled = true;
           gl.uniform1f ( g_addrs.USE_TEXTURE_loc, 1 );
@@ -86,7 +93,7 @@ Declare_Any_Class( "Shape",
             gl.vertexAttribPointer( it.index, it.size, it.type, it.normalized, it.stride, it.pointer );
           }
           else  gl.disableVertexAttribArray( it.index );
-
+	}
         if( this.indexed )
         { gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, this.index_buffer );
           gl.drawElements( gl.TRIANGLES, this.indices.length, gl.UNSIGNED_INT, 0 );

@@ -37,45 +37,45 @@ Declare_Any_Class( "Projectile",
     {
     	// Leave this empty, as it will be determined by subclasses
     },
-    //end navigation interface
+    'updateState': function(delta_time){
+	var displacement = scale_vec(delta_time/1000, this.velocity);
+
+	var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
+
+	var hasBulletHit = this.hasHitActor();
+
+	if (hasBulletHit) 
+	{
+	    this.alive = false;
+	}
+	else if (this.world.collidesWithWall(newPosition, 0.5))
+	{
+	    this.alive = false;
+	}
+	else if (this.world.checkBounds(newPosition))
+	{
+	    this.position=newPosition;
+	    this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
+	}
+	else {
+	    this.alive=false;
+	}
+    },
     'display': function(delta_time)
 	{
-		if(!this.alive) return;
-		var graphics_state = this.world.shared_scratchpad.graphics_state;
-		var displacement = scale_vec(delta_time/1000, this.velocity);
+	    if(!this.alive) return;
+	    //the member variable modelTransMat ONLY represents the (x,y) coordinates.
+	    var graphics_state = this.world.shared_scratchpad.graphics_state;
+	    var model_transform = this.model_transform; 
+	    model_transform = mult(model_transform, translation(0,0,0.5));
 
-		var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
+	    model_transform = mult(model_transform, rotation(this.headingAngle,0,0,1));
 
-		var hasBulletHit = this.hasHitActor();
+	    model_transform = mult(model_transform, scale(0.05,0.15,0.1));
 
-		if (hasBulletHit) 
-		{
-			this.alive = false;
-		}
-		else if (this.world.collidesWithWall(newPosition, 0.5))
-		{
-			this.alive = false;
-		}
-		else if (this.world.checkBounds(newPosition))
-		{
-			this.position=newPosition;
-			this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
-		}
-		else {
-			this.alive=false;
-		}
-		//the member variable modelTransMat ONLY represents the (x,y) coordinates.
-		
-		var model_transform = this.model_transform; 
-		model_transform = mult(model_transform, translation(0,0,0.5));
+	    //model_transform = mult(mult(model_transform, translation(0,0,1.5)),rotation(headingAngle,0,0,1));
 
-		model_transform = mult(model_transform, rotation(this.headingAngle,0,0,1));
-
-		model_transform = mult(model_transform, scale(0.05,0.15,0.1));
-
-		//model_transform = mult(mult(model_transform, translation(0,0,1.5)),rotation(headingAngle,0,0,1));
-
-		shapes_in_use.sphere.draw(graphics_state, model_transform, this.materials.body);
+	    shapes_in_use.sphere.draw(graphics_state, model_transform, this.materials.body);
 	}
 });
 

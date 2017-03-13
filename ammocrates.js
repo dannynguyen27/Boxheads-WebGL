@@ -20,90 +20,91 @@ Declare_Any_Class( "AmmoCrate",
         /*user_interface_string_manager.string_map["time"]    = "Animation Time: " + Math.round( this.shared_scratchpad.graphics_state.animation_time )/1000 + "s";
         user_interface_string_manager.string_map["animate"] = "Animation " + (this.shared_scratchpad.animate ? "on" : "off") ;*/
       },
-    'display': function(delta_time)
-      {
-    if(!this.alive) return;
+    'updateState':function(delta_time){
+	// This regulates how long a crate stays on the screen
+	if (this.timeAlive >= CRATE_DESPAWN_TIMER)
+	{
+	    this.alive = false;
+	    return;
+	}
+	else
+	    this.timeAlive += delta_time/1000;
 
-    // This regulates how long a crate stays on the screen
-    if (this.timeAlive >= CRATE_DESPAWN_TIMER)
-    {
-      this.alive = false;
-      return;
-    }
-    else
-      this.timeAlive += delta_time/1000;
+	var audio;
 
-    var graphics_state = this.world.shared_scratchpad.graphics_state;
-    var audio;
-
-    if (this.world.checkPlayerCollision(this.position, 1))
-    {
-      this.world.event_timer = 2.5;
-      switch(this.type)
-      {
-        case AMMO_BOX:
-          this.world.player.changeAmmo(AMMO_PER_CRATE);
-          if (!this.world.mute)
-          {
-            audio = new Audio('Audio/reload.mp3');
-            audio.play();
-          }
-          this.world.event = "Picked up: Ammo Box";
-          this.alive = false;
-          return;
-        case HEALTH_BOX:
-          this.world.player.changeHealth(20);
-          if (!this.world.mute)
-          {
-            audio = new Audio('Audio/health.mp3');
-            audio.play();
-          }
-          this.world.event = "Picked up: Health Box";
-          this.alive = false;
-          return;
-        case SPEED_BOX:
-          this.world.player.boostSpeed(2);
-          if (!this.world.mute)
-          {
-            audio = new Audio('Audio/thunder.mp3');
-            audio.play();
-          }
-          this.world.event = "Picked up: Speed Box"; 
-          this.alive = false;
-          return;
-        case TROLL_BOX:
-          // TODO: ADD EXTRA TROLL FUNCTIONALITY
-          console.log("Troll crate opened! You get:");
-          randomPowerUp = Math.random()
-          this.world.event = "Picked up: Troll Box";
-          this.alive = false;
-          return;
-      }
+	if (this.world.checkPlayerCollision(this.position, 1))
+	{
+	    this.world.event_timer = 2.5;
+	    switch(this.type)
+	    {
+            case AMMO_BOX:
+		this.world.player.changeAmmo(AMMO_PER_CRATE);
+		if (!this.world.mute)
+		{
+		    audio = new Audio('Audio/reload.mp3');
+		    audio.play();
+		}
+		this.world.event = "Picked up: Ammo Box";
+		this.alive = false;
+		return;
+            case HEALTH_BOX:
+		this.world.player.changeHealth(20);
+		if (!this.world.mute)
+		{
+		    audio = new Audio('Audio/health.mp3');
+		    audio.play();
+		}
+		this.world.event = "Picked up: Health Box";
+		this.alive = false;
+		return;
+            case SPEED_BOX:
+		this.world.player.boostSpeed(2);
+		if (!this.world.mute)
+		{
+		    audio = new Audio('Audio/thunder.mp3');
+		    audio.play();
+		}
+		this.world.event = "Picked up: Speed Box"; 
+		this.alive = false;
+		return;
+            case TROLL_BOX:
+		// TODO: ADD EXTRA TROLL FUNCTIONALITY
+		console.log("Troll crate opened! You get:");
+		randomPowerUp = Math.random()
+		this.world.event = "Picked up: Troll Box";
+		this.alive = false;
+		return;
+	    }
 
     }
 
     this.rotationSpeed+=(36*delta_time/1000);
 
-    //the member variable modelTransMat ONLY represents the (x,y) coordinates.
-    var model_transform = this.model_transform; 
-    model_transform = mult(model_transform, translation(0, 0, 1));
-    model_transform = mult(model_transform, scale(0.75, 0.75, 0.75));
-    model_transform = mult(model_transform, rotation(this.rotationSpeed, 0, 0, 1));
+    },
+    'display': function(delta_time)
+      {
+    if(!this.alive) return;
+	  var graphics_state = this.world.shared_scratchpad.graphics_state;
+	  //the member variable modelTransMat ONLY represents the (x,y) coordinates.
+	  var model_transform = this.model_transform; 
+	  model_transform = mult(model_transform, translation(0, 0, 1));
+	  model_transform = mult(model_transform, scale(0.75, 0.75, 0.75));
+	  model_transform = mult(model_transform, rotation(this.rotationSpeed, 0, 0, 1));
 
-    switch(this.type)
-    {
-      case AMMO_BOX:
-        shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.ammo);
-        break;
-      case HEALTH_BOX:
-        shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.health);
-        break;
-      case SPEED_BOX:
-        shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.speed);
-        break;
-      case TROLL_BOX:
-        shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.troll);
-        break;
-    }
+	  switch(this.type)
+	  {
+	  case AMMO_BOX:
+              shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.ammo);
+              break;
+	  case HEALTH_BOX:
+              shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.health);
+              break;
+	  case SPEED_BOX:
+              shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.speed);
+              break;
+	  case TROLL_BOX:
+              shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.troll);
+              break;
+	  }
       }
   });

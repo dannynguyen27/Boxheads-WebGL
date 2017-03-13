@@ -10,11 +10,13 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
           PCM            = mult( P, CM ),                               // Send the current matrices to the shader.  Go ahead and pre-compute the products
           inv_trans_CM   = toMat3( transpose( inverse( CM ) ) );        // we'll need of the of the three special matrices and just send those, since these
                                                                         // will be the same throughout this draw call & across each instance of the vertex shader.
+        gl.uniformMatrix4fv( g_addrs.model_transform_loc,                  false, flatten(  M  ) );
         gl.uniformMatrix4fv( g_addrs.camera_transform_loc,                  false, flatten(  C  ) );
         gl.uniformMatrix4fv( g_addrs.camera_model_transform_loc,            false, flatten(  CM ) );
         gl.uniformMatrix4fv( g_addrs.projection_camera_model_transform_loc, false, flatten( PCM ) );
         gl.uniformMatrix3fv( g_addrs.camera_model_transform_normal_loc,     false, flatten( inv_trans_CM ) );
-
+	if(g_state.lightViewTrans) gl.uniformMatrix4fv( g_addrs.lightViewTrans_loc,              false, flatten(g_state.lightViewTrans));  
+	if(g_state.lightProjTrans) gl.uniformMatrix4fv( g_addrs.lightProjTrans_loc,              false, flatten(g_state.lightProjTrans)); 
         if( g_state.gouraud === undefined ) { g_state.gouraud = g_state.color_normals = false; }    // Keep the flags seen by the shader program
         gl.uniform4fv( g_addrs.shapeColor_loc,     material.color       );    // Send a desired shape-wide color to the graphics card
         gl.uniform1f ( g_addrs.ambient_loc,        material.ambient     );
@@ -46,16 +48,18 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
           attribute vec2 vTexCoord;
           varying vec2 fTexCoord;
           varying vec3 N, E, R, pos;
+	  varying vec3 posInLightCoords;
 
           uniform float ambient, diffusivity, shininess, smoothness, animation_time, attenuation_factor[N_LIGHTS];
-          uniform bool BUMP_MAP;    // Flags for alternate shading methods
+          uniform bool BUMP_MAP, SHADOW;    // Flags for alternate shading methods
 
           uniform vec4 lightPosition[N_LIGHTS], lightColor[N_LIGHTS], shapeColor;
           varying vec4 VERTEX_COLOR;
           varying vec3 L[N_LIGHTS], H[N_LIGHTS];
           varying float dist[N_LIGHTS];
 
-          uniform mat4 camera_transform, camera_model_transform, projection_camera_model_transform;
+          uniform mat4 camera_transform, camera_model_transform, model_transform, projection_camera_model_transform;
+	  uniform mat4 lightViewTrans, lightProjTrans;
           uniform mat3 camera_model_transform_normal;
 
           void main()
@@ -67,14 +71,17 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
 		T = normalize( camera_model_transform_normal * vTangent);
 		B = cross(N, T);
 	    }
-
             vec4 object_space_pos = vec4(vPosition, 1.0);
             gl_Position = projection_camera_model_transform * object_space_pos;
             fTexCoord = vTexCoord;
 
+	      vec4 homogenousPosInLightCoords = lightProjTrans * lightViewTrans * model_transform* object_space_pos;
+	      posInLightCoords = homogenousPosInLightCoords.xyz / homogenousPosInLightCoords.w;
+	      posInLightCoords = vec3(0.5,0.5,0.5)+posInLightCoords*0.5;
+
             pos = ( camera_model_transform * object_space_pos ).xyz;
             E = normalize( -pos );
-
+	      
             for( int i = 0; i < N_LIGHTS; i++ )
             {
 		if(BUMP_MAP){
@@ -111,14 +118,23 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
 
           varying vec2 fTexCoord;   // per-fragment interpolated values from the vertex shader
           varying vec3 N, E, R, pos;
+	  varying vec3 posInLightCoords;
 
           uniform sampler2D texture;
 	  uniform sampler2D bumpTexture;
 	  uniform samplerCube cubeMap;
-          uniform bool BUMP_MAP, USE_TEXTURE;
+	  uniform sampler2D shadowMap;
+          uniform bool BUMP_MAP, USE_TEXTURE, SHADOW;
 
           void main()
           {	      
+	      float shadow = 0.0;
+	      if(SHADOW){
+		  vec4 shadowMapColor = texture2D(shadowMap, posInLightCoords.xy);
+		  if(shadowMapColor.x + 0.025 < posInLightCoords.z)
+		      shadow=1.0;
+	      }
+
             vec4 tex_color = texture2D( texture, fTexCoord );
             gl_FragColor = tex_color * ( USE_TEXTURE ? ambient : 0.0 ) + vec4( shapeColor.xyz * ambient, USE_TEXTURE ? shapeColor.w * tex_color.w : shapeColor.w ) ;
             for( int i = 0; i < N_LIGHTS; i++ )
@@ -141,7 +157,7 @@ Declare_Any_Class( "Phong_or_Gouraud_Shader",
 		    //use the angle between the halfway vector and the normal (Blinn-Phong model) to calculate the specular lighting intensity
 		    specular = pow(max(dot(H[i],N),0.0),smoothness);
 		}
-		gl_FragColor.xyz += attenuation_multiplier * (tex_color.xyz * diffusivity * diffuse  + lightColor[i].xyz * shininess * specular );
+		gl_FragColor.xyz += attenuation_multiplier * (tex_color.xyz * diffusivity * diffuse*(1.0-shadow)  + lightColor[i].xyz * shininess * specular*(1.0-shadow) );
             }
             gl_FragColor.a = gl_FragColor.w;
           }`;
@@ -205,6 +221,50 @@ Declare_Any_Class( "CubeMap_Shader",
           {	      
 	      vec4 texColor = textureCube(cubeMap,R); 
 	      gl_FragColor = texColor;
+          }`;
+      }
+  }, Shader );
+
+Declare_Any_Class( "ShadowMap_Shader",
+  { 'update_uniforms'          : function( g_state, model_transform )     // Send javascrpt's variables to the GPU to update its overall state.
+      {
+          let [ P, C, M ]  = [ g_state.projection_transform, g_state.camera_transform, model_transform ],   // PCM will mean Projection * Camera * Model
+          CM             = mult( C,  M ),
+          PCM            = mult( P, CM );                               
+        gl.uniformMatrix4fv( g_addrs.projection_camera_model_transform_loc, false, flatten( PCM ) );
+      },
+    'vertex_glsl_code_string'  : function()           // ********* VERTEX SHADER *********
+      { return `
+          // The following string is loaded by our javascript and then used as the Vertex Shader program.  Our javascript sends this code to the graphics card at runtime, where on each run it gets
+          // compiled and linked there.  Thereafter, all of your calls to draw shapes will launch the vertex shader program once per vertex in the shape (three times per triangle), sending results on
+          // to the next phase.  The purpose of this program is to calculate the final resting place of vertices in screen coordinates; each of them starts out in local object coordinates.
+
+          precision mediump float;
+
+          attribute vec3 vPosition;
+	  varying float depth;
+          uniform mat4 projection_camera_model_transform;
+
+          void main()
+          {
+	      gl_Position = projection_camera_model_transform * vec4(vPosition, 1.0);	      
+	      depth = gl_Position.z/gl_Position.w;
+	      depth = 0.5 + depth*0.5;
+          }`;
+      },
+    'fragment_glsl_code_string': function()           // ********* FRAGMENT SHADER *********
+      { return `
+          // Likewise, the following string is loaded by our javascript and then used as the Fragment Shader program, which gets sent to the graphics card at runtime.  The fragment shader runs
+          // once all vertices in a triangle / element finish their vertex shader programs, and thus have finished finding out where they land on the screen.  The fragment shader fills in (shades)
+          // every pixel (fragment) overlapping where the triangle landed.  At each pixel it interpolates different values from the three extreme points of the triangle, and uses them in formulas
+          // to determine color.
+
+          precision mediump float;
+	  varying float depth;
+
+          void main()
+          {	   
+	      gl_FragColor = vec4(depth,depth,depth,1);
           }`;
       }
   }, Shader );
