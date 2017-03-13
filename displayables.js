@@ -1000,10 +1000,10 @@ Declare_Any_Class( "Player",
        this.health = Math.min(this.health, this.maxHealth);
 	      if(this.health <= 0 && !this.dying){
             this.dying = true;
-        }
-        if(this.dying && !this.world.mute){
-            var audio = new Audio('Audio/dying.mp3');
-            audio.play();
+            if(!this.world.mute){
+              var audio = new Audio('Audio/dying.mp3');
+              audio.play();
+            }
         }
     },
     'changeAmmo': function(ammoIndex, deltaAmmo){
