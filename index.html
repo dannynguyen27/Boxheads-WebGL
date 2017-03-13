@@ -13,6 +13,8 @@ index.html - The web page document containing the canvas (drawing surface), that
 <script type="text/javascript" src="shapes.js"  ></script>
 <script type="text/javascript" src="subdivisionsphere.js"></script>
 <script type="text/javascript" src="shaders.js"  ></script>
+<script type="text/javascript" src="particle.js"  ></script>
+
 <audio src="Audio/gunshot.mp3"></audio>
 <audio src="Audio/reload.mp3"></audio>
 <audio src="Audio/thunder.mp3"></audio>
@@ -70,8 +72,8 @@ index.html - The web page document containing the canvas (drawing surface), that
       function( callback, element) { window.setTimeout(callback, 1000/60);  };
     })();
 </script>
-</head><body>
-<canvas id="gl-canvas" width="1024" height="768"></canvas><p>
+</head><body> 
+<canvas id="gl-canvas" width="1280" height="768"></canvas><p>
 <a href="#" onclick='document.getElementById( "instructions" ).style = "display:block"; this.style = "display:none";'> Click for instructions </a><div id="instructions" style = "display:none">
 Controlling this Graphics Object: 
 <ul><li>Animation is paused when this program starts, so first you should press ALT+a to play or pause animation. <li>
