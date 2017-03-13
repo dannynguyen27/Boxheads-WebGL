@@ -84,7 +84,6 @@ Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayabl
         shapes_in_use.debug_text.draw( this.graphicsState, model_transform, true, vec4(0,0,0,1) );
 
         model_transform = mult( translation( -.95, -.9, 0 ), font_scale );
-
         if( !this.visible ) return;        
 
         for( var i = 0, idx = this.start_index; i < 4 && i < strings.length; i++, idx = (idx + 1) % strings.length )
@@ -172,6 +171,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
   { 'construct': function( context )
       { this.shared_scratchpad    = context.shared_scratchpad;
       	this.shared_scratchpad.animate = 1;
+	this.shadow = false;
         this.skyboxLoaded = false;
         this.numDevils = 0;
 
@@ -291,6 +291,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
             });        
         
       	  controls.add( "space", this, function() {this.player.attack(); } ); 
+          controls.add( "i", this, function() { this.shadow = !this.shadow;});        
+
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -469,66 +471,40 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	     newPosition[1]>=this.yMin && newPosition[1]<=this.yMax
     },
     'drawWalls': function(){
-
-      wall = new Material( Color( 0,0,0,1 ), 0.3, 0.5, 0, 10, "Visuals/simple_outline.jpg")//,"Visuals/wall_bumpmap.jpg");
+	var graphics_state = this.shared_scratchpad.graphics_state;
+      var wall = new Material( Color( 0,0,0,1 ), 0.3, 0.5, 0, 10, "Visuals/simple_outline.jpg"),
+        portal = new Material( Color( 0.3,0.3,0.3,1 ), 0.5, 0.4, 0, 10, "Visuals/portal.jpg");//,"Visuals/wall_bumpmap.jpg");
 
       for(var i = this.xMin-1; i < this.xMax+2; i++){
         if(i > -2 && i < 2)           //  opening for enemies to walk through
           continue;
         model_transform = mult(translation(this.xMin-1, i, 1),scale(0.8, 1, 2.5)) ;      // initialize walls for left side
-        shapes_in_use.cube.draw(this.shared_scratchpad.graphics_state, model_transform, wall);
+        shapes_in_use.cube.draw(graphics_state, model_transform, wall);
       }
       for(var i = this.yMin; i < this.yMax+2; i++){                                          // front side
         if(i > -2 && i < 2)
           continue;
         model_transform = mult(translation(i, this.yMin-1, 1), scale(1, 0.8, 2.5));
-        shapes_in_use.cube.draw(this.shared_scratchpad.graphics_state, model_transform, wall);
+        shapes_in_use.cube.draw(graphics_state, model_transform, wall);
       }
       for(var i = this.xMin; i < this.xMax+1; i++){                                          // right side
         if(i > -2 && i < 2)
           continue;
         model_transform = mult(translation(this.xMax+1, i, 1), scale(0.8, 1, 2.5));
-        shapes_in_use.cube.draw(this.shared_scratchpad.graphics_state, model_transform, wall);
+        shapes_in_use.cube.draw(graphics_state, model_transform, wall);
       }
       for(var i = this.yMin; i < this.yMax+2; i++){                                          // back side
         if(i > -2 && i < 2)
           continue;
         model_transform = mult(translation(i, this.yMax+1, 1),scale(1, 0.8, 2.5));
-        shapes_in_use.cube.draw(this.shared_scratchpad.graphics_state, model_transform, wall);
+        shapes_in_use.cube.draw(graphics_state, model_transform, wall);
       }
 
       for(var i = 0; i < this.wallsArray.length; i++){
         model_transform = translation(this.wallsArray[i][0], this.wallsArray[i][1], 1);
         model_transform = mult(model_transform, scale(1, 1, 2.5));
-        shapes_in_use.cube.draw(this.shared_scratchpad.graphics_state, model_transform, wall);
+        shapes_in_use.cube.draw(graphics_state, model_transform, wall);
       }
-    },
-    'animateGame': function(time){   
-      var graphics_state  = this.shared_scratchpad.graphics_state,
-          model_transform = mat4(); 
-
-      // *** Materials: 
-      // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
-      var ground = new Material( Color( 0,0,0.4,1 ), .4, 2, 0, 10, "Visuals/ground_texture.jpg","Visuals/wall_bumpmap.jpg" ), // Omit the final (string) parameter if you want no texture
-          portal = new Material( Color( 0.3,0.3,0.3,1 ), 0.5, 0.4, 0, 10, "Visuals/portal.jpg");
-
-      // Map Indexing
-      /*
-
-           -16 <--0--> +16
-        -----------------------
-        |                     | 16
-        |                     | +
-        |                     | ^
-        |                     | |
-        |                     | 0
-        |                     | |
-        |                     | v
-        |                     | -16
-        -----------------------
-      */
-	
-	    this.drawWalls();    
       model_transform = mat4();
       model_transform = mult(model_transform, translation(0, 17, 0.8));
       model_transform = mult(model_transform, rotation(90, 1, 0, 0));
@@ -555,12 +531,10 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       model_transform = mult(model_transform, scale(1.5, 1.5, 1));
       shapes_in_use.square.draw(graphics_state, model_transform, portal);
 
-      if (this.pause){
-        this.event_timer = 0.1;
-        this.event = "       Paused";
-        return;
-      }
 
+    },
+    'spawnObjects': function(){
+	var graphics_state = this.shared_scratchpad.graphics_state;
       // spawn new actors
       if(this.enemySpawnTimer < 0 && this.waveSpawnCount < this.maxEnemies){
           // This currently spawns enemies in the corners of the map
@@ -622,35 +596,170 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       else{
           this.crateSpawnTimer -= graphics_state.animation_delta_time/1000;
       }   
+    },
+    'animateGame': function(time){   
+      var graphics_state  = this.shared_scratchpad.graphics_state,
+          model_transform = mat4(); 
 
-      //draw the ground
-      shapes_in_use.groundPlane.draw(graphics_state, scale(17,17,1), ground);
+      // *** Materials: 
+      // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
+      var ground = new Material( Color( 0,0,0,1 ), .4, 2, 0, 10, "Visuals/ground_texture.jpg","Visuals/wall_bumpmap.jpg" ); // Omit the final (string) parameter if you want no texture
 
-      //let player + each actor do their thing
-      this.player.display(graphics_state.animation_delta_time);
-      for (var i=0;i<this.enemies.length;i++){
-          if(this.enemies[i].alive){
-          this.enemies[i].display(graphics_state.animation_delta_time);
-          }
-          else{
-            this.enemies.splice(i,1);
-            this.waveDeathCount++;
-            this.enemiesKilled++;
-          }
-      }
-      for (var i=0;i<this.projectiles.length;i++){
-          if(this.projectiles[i].alive){
-          this.projectiles[i].display(graphics_state.animation_delta_time);
-          }
-          else this.projectiles.splice(i,1);
-      }
-      for (var i = 0; i < this.crates.length; i++){
-        if(this.crates[i].alive){
-          this.crates[i].display(graphics_state.animation_delta_time);
-        }
-        else this.crates.splice(i,1);
-      }
 
+      // Map Indexing
+      /*
+
+           -16 <--0--> +16
+        -----------------------
+        |                     | 16
+        |                     | +
+        |                     | ^
+        |                     | |
+        |                     | 0
+        |                     | |
+        |                     | v
+        |                     | -16
+        -----------------------
+      */
+
+
+      if (this.pause){
+        this.event_timer = 0.1;
+        this.event = "       Paused";
+        return;
+      }
+	//let each player+actor update state
+	this.spawnObjects();
+	this.player.updateState(graphics_state.animation_delta_time);
+	for (var i=0;i<this.enemies.length;i++){
+            if(this.enemies[i].alive){
+		this.enemies[i].updateState(graphics_state.animation_delta_time);
+            }
+            else{
+		this.enemies.splice(i,1);
+		this.waveDeathCount++;
+		this.enemiesKilled++;
+            }
+	}
+	for (var i=0;i<this.projectiles.length;i++){
+            if(this.projectiles[i].alive){
+		this.projectiles[i].updateState(graphics_state.animation_delta_time);
+            }
+            else this.projectiles.splice(i,1);
+	}
+	for (var i = 0; i < this.crates.length; i++){
+            if(this.crates[i].alive){
+		this.crates[i].updateState(graphics_state.animation_delta_time);
+            }
+            else this.crates.splice(i,1);
+	}
+
+	if(this.shadow){
+	    //prepare for first pass render
+	    var frameBuffer = gl.createFramebuffer();
+	    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+	    var renderBuffer = gl.createRenderbuffer();
+	    gl.bindRenderbuffer(gl.RENDERBUFFER,renderBuffer);
+	    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, 1024,1024);
+	    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderBuffer);
+	    
+	    var shadowTexture = gl.createTexture();
+	    gl.bindTexture(gl.TEXTURE_2D, shadowTexture);
+	    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1024, 1024, 0,
+			  gl.RGBA, gl.UNSIGNED_BYTE, null);
+	    gl.generateMipmap(gl.TEXTURE_2D);
+	    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
+			     gl.LINEAR_MIPMAP_LINEAR);
+	    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER,
+			     gl.LINEAR);
+	    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
+	    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
+	    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+				    gl.TEXTURE_2D, shadowTexture, 0);
+
+	    //first pass render
+	    gl.viewport(0.0,0.0,1024,1024);
+	    shaders_in_use["Shadow"].activate();
+	    var oldGS = graphics_state;
+	    var lightViewTrans = lookAt(vec3(-10,-10,20),vec3(0,0,0),vec3(0,0,1));//mult(translation(0,0,-25),rotation(-40,1,0,0));
+	    var lightProjTrans = ortho(-40,40,-40,40,0,70);
+
+	    gl.clear(gl.DEPTH_BUFFER_BIT);
+	    oldGS.lightViewTrans = lightViewTrans;
+	    oldGS.lightProjTrans = lightProjTrans;
+	    this.shared_scratchpad.graphics_state = new Graphics_State( lightViewTrans, lightProjTrans, 0 ); 
+	    
+	    this.drawWalls();    
+	    //draw the ground
+	    shapes_in_use.groundPlane.draw(this.shared_scratchpad.graphics_state, scale(17,17,1), ground);    
+
+	    //let player + each actor do their thing
+	    this.player.display(graphics_state.animation_delta_time);
+	    for (var i=0;i<this.enemies.length;i++){
+		if(this.enemies[i].alive){
+		    this.enemies[i].display(graphics_state.animation_delta_time);
+		}
+		else{
+		    this.enemies.splice(i,1);
+		    this.waveDeathCount++;
+		}
+	    }
+	    for (var i=0;i<this.projectiles.length;i++){
+		if(this.projectiles[i].alive){
+		    this.projectiles[i].display(graphics_state.animation_delta_time);
+		}
+		else this.projectiles.splice(i,1);
+	    }
+	    for (var i = 0; i < this.crates.length; i++){
+		if(this.crates[i].alive){
+		    this.crates[i].display(graphics_state.animation_delta_time);
+		}
+		else this.crates.splice(i,1);
+	    }
+
+	    gl.bindTexture(gl.TEXTURE_2D,null);
+	    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+	    this.shared_scratchpad.graphics_state = oldGS;
+
+	}
+	//second pass render
+	shaders_in_use["Default"].activate();
+	gl.viewport(0.0,0.0,canvas.width,canvas.height);
+	if(this.shadow){
+	    gl.uniform1i(g_addrs.shadowMap_loc, 3);
+	    gl.activeTexture(gl.TEXTURE3);
+	    gl.bindTexture(gl.TEXTURE_2D, shadowTexture);
+	    gl.uniform1f ( g_addrs.SHADOW_loc,    1);
+	}
+        else gl.uniform1f ( g_addrs.SHADOW_loc,    0);
+	this.drawWalls();    
+	//draw the ground
+	shapes_in_use.groundPlane.draw(graphics_state, scale(17,17,1), ground);    
+
+	//let player + each actor do their thing
+	this.player.display(graphics_state.animation_delta_time);
+	for (var i=0;i<this.enemies.length;i++){
+            if(this.enemies[i].alive){
+		this.enemies[i].display(graphics_state.animation_delta_time);
+            }
+            else{
+		this.enemies.splice(i,1);
+		this.waveDeathCount++;
+            }
+	}
+	for (var i=0;i<this.projectiles.length;i++){
+            if(this.projectiles[i].alive){
+		this.projectiles[i].display(graphics_state.animation_delta_time);
+            }
+            else this.projectiles.splice(i,1);
+	}
+	for (var i = 0; i < this.crates.length; i++){
+            if(this.crates[i].alive){
+		this.crates[i].display(graphics_state.animation_delta_time);
+            }
+            else this.crates.splice(i,1);
+	}
+        gl.uniform1f ( g_addrs.SHADOW_loc,0);
     },
     'renderScreen': function(title)
       {
@@ -689,7 +798,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         graphics_state.lights = [];                    // First clear the light list each frame so we can replace & update lights.
 
 	      //One light to illuminate them all
-        graphics_state.lights.push( new Light( vec4(  10,  10,  50, 1 ), Color(1, 1, 1, 1 ), 5000 ) );
+        graphics_state.lights.push( new Light( vec4(  0,  -10, 50, 1 ), Color(1, 1, 1, 1 ), 5000 ) );
 
         /**********************************
         Start coding down here!!!!
@@ -702,32 +811,31 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           bg_music.play();
         }
 
+	if(!this.skyboxLoaded){
+	    var trueCount = 0;
+	    for(i=0;i<6;i++){
+		if(textures_in_use["skybox"].loaded[i])
+		trueCount++;
+	    }
+	    if (trueCount == 6)
+		this.skyboxLoaded = true;
+	}
+	else{
+	    shaders_in_use["Cube"].activate();
+      	    var skybox = new Cube(true);
+      	    skybox.copy_onto_graphics_card();
+      	    gl.enableVertexAttribArray(g_addrs.shader_attributes[0].index);
+            gl.bindBuffer( gl.ARRAY_BUFFER, skybox.graphics_card_buffers[0] );
+            gl.vertexAttribPointer( g_addrs.shader_attributes[0].index, g_addrs.shader_attributes[0].size, g_addrs.shader_attributes[0].type, g_addrs.shader_attributes[0].normalized, g_addrs.shader_attributes[0].stride, g_addrs.shader_attributes[0].pointer );
+      	    gl.uniform1i(g_addrs.cubeMap_loc, 0);
+      	    active_shader.update_uniforms(new Graphics_State(rotation(30,1,0,0), perspective(45, canvas.width/canvas.height, .1, 1000), 0 ), mult(rotation(180,0,0,1),scale(40,40,40)));
+      	    gl.activeTexture(gl.TEXTURE0);
+      	    gl.bindTexture(gl.TEXTURE_CUBE_MAP, textures_in_use["skybox"].id);
+      	    gl.disable(gl.DEPTH_TEST);
+      	    gl.drawArrays(gl.TRIANGLES,0,skybox.positions.length);
+      	    gl.enable(gl.DEPTH_TEST);
+	}
 
-  	if(!this.skyboxLoaded){
-  	    var trueCount = 0;
-  	    for(i=0;i<6;i++){
-  		if(textures_in_use["skybox"].loaded[i])
-  		trueCount++;
-  	    }
-  	    if (trueCount == 6)
-  		this.skyboxLoaded = true;
-  	}
-  	else{
-  	    shaders_in_use["Cube"].activate();
-        	    var skybox = new Cube(true);
-        	    skybox.copy_onto_graphics_card();
-        	    gl.enableVertexAttribArray(g_addrs.shader_attributes[0].index);
-              gl.bindBuffer( gl.ARRAY_BUFFER, skybox.graphics_card_buffers[0] );
-              gl.vertexAttribPointer( g_addrs.shader_attributes[0].index, g_addrs.shader_attributes[0].size, g_addrs.shader_attributes[0].type, g_addrs.shader_attributes[0].normalized, g_addrs.shader_attributes[0].stride, g_addrs.shader_attributes[0].pointer );
-        	    gl.uniform1i(g_addrs.cubeMap_loc, 0);
-        	    active_shader.update_uniforms(new Graphics_State(rotation(30,1,0,0), perspective(45, canvas.width/canvas.height, .1, 1000), 0 ), mult(rotation(180,0,0,1),scale(40,40,40)));
-        	    gl.activeTexture(gl.TEXTURE0);
-        	    gl.bindTexture(gl.TEXTURE_CUBE_MAP, textures_in_use["skybox"].id);
-        	    gl.disable(gl.DEPTH_TEST);
-        	    gl.drawArrays(gl.TRIANGLES,0,skybox.positions.length);
-        	    gl.enable(gl.DEPTH_TEST);
-  	}
-        
 	  shaders_in_use["Default"].activate();
         // initialize start screen
         if(!this.gameStart){
@@ -1002,20 +1110,13 @@ Declare_Any_Class( "Player",
         }
       }
     },
-    'display': function(delta_time)
-      {
-	  
-    this.delta_time = delta_time;
-
-    if(!this.alive){ 
-      return;
-    }
-    
-	  var graphics_state = this.world.shared_scratchpad.graphics_state;
+    'updateState' : function(delta_time){
+	var graphics_state = this.world.shared_scratchpad.graphics_state;
+	  this.delta_time = delta_time;
 	  var displacement = scale_vec(delta_time/1000, this.velocity);
 	  if(this.dying) {
-      displacement[0]=0; displacement[1]=0;
-    }
+	      displacement[0]=0; displacement[1]=0;
+	  }
 	  this.autoAttackTimer -= delta_time/1000;
 
 	  //change heading of player
@@ -1045,20 +1146,18 @@ Declare_Any_Class( "Player",
         this.moveSpeed = this.defaultSpeed;
         this.buff_timer = 0;
     }
-	  //the member variable modelTransMat ONLY represents the (x,y) coordinates.
-	  //must still build compound shapes using it as a basis (i.e. from the ground up)
-	  var model_transform = this.model_transform; 
-	  var headingAngle = Math.acos(dot(this.heading,vec4(0,1,0,0))) * 180/Math.PI * (this.heading[0]>0?-1:1);
 
     //if the player is dying, just fall back without any movement
     if(this.dying) 
     {
-      if(this.fallAngle < 90)
-      this.fallAngle+=10;
+      if(this.fallAngle < 90){
+	  this.fallAngle+=10;
+          this.model_transform = mult(this.model_transform, rotation(-10, -this.heading[1], this.heading[0],0));   
+      }
       if (this.fallAngle == 90 && this.fadeTimer > 0) 
       {
         this.fadeRate += 0.01;
-        model_transform = mult(model_transform, translation(0, 0, -this.fadeRate));  
+	  this.model_transform = mult(translation(0, 0,-0.01), this.model_transform);  
         this.fadeTimer -= delta_time/1000 ;
       }
       else if(this.fadeTimer <= 0)
@@ -1066,22 +1165,7 @@ Declare_Any_Class( "Player",
         this.alive = false;
         return;
       }                         // -y, x gives us the axis where the enemy will fall in its normal's direction
-        model_transform = mult(model_transform, rotation(-this.fallAngle, -this.heading[1], this.heading[0],0));   
     }
-
-	  //get body center and turn by heading angle
-	  var body_center = model_transform = mult(mult(model_transform, translation(0,0,1.5)),rotation(headingAngle,0,0,1));
-
-	  //body
-	  model_transform = mult(model_transform, scale(0.7, 0.6, 0.8));
-	  shapes_in_use.oriented_cube.draw(graphics_state, model_transform, this.materials.body);
-	  
-	  model_transform = body_center;
-	  
-	  //head
-	  model_transform = mult(model_transform, translation(0,0,0.8));
-	  model_transform = mult(model_transform, scale(0.4,0.4,0.4));    
-	  shapes_in_use.oriented_cube.draw(graphics_state, model_transform, this.materials.head);
 
 	  //get angle offsets for leg animation
 	  var maxLimbAngle=30;
@@ -1102,10 +1186,37 @@ Declare_Any_Class( "Player",
 	  else
 	      this.limbAngle=0;
 
+	
+    },
+    'display': function()
+      {
+	  if(!this.alive){ 
+	      return;
+	  }
+	  var graphics_state = this.world.shared_scratchpad.graphics_state;
+	  //the member variable modelTransMat ONLY represents the (x,y) coordinates.
+	  //must still build compound shapes using it as a basis (i.e. from the ground up)
+	  var model_transform = this.model_transform; 
+	  var headingAngle = Math.acos(dot(this.heading,vec4(0,1,0,0))) * 180/Math.PI * (this.heading[0]>0?-1:1);
+
+	  //get body center and turn by heading angle
+	  var body_center = model_transform = mult(mult(model_transform, translation(0,0,1.5)),rotation(headingAngle,0,0,1));
+
+	  //body
+	  model_transform = mult(model_transform, scale(0.7, 0.6, 0.8));
+	  shapes_in_use.oriented_cube.draw(graphics_state, model_transform, this.materials.body);
+	  
+	  model_transform = body_center;
+	  
+	  //head
+	  model_transform = mult(model_transform, translation(0,0,0.8));
+	  model_transform = mult(model_transform, scale(0.4,0.4,0.4));    
+	  shapes_in_use.oriented_cube.draw(graphics_state, model_transform, this.materials.head);
+
 	  // right leg	  
 	  model_transform = body_center;
 	  model_transform = mult(model_transform, translation(0.2,0,-0.7));               
-    model_transform = mult(model_transform, rotation(-this.limbAngle, 1, 0, 0));
+	  model_transform = mult(model_transform, rotation(-this.limbAngle, 1, 0, 0));
 	  model_transform = mult(model_transform, translation(0,0,-0.3));
 	  //always scale at end
 	  model_transform = mult(model_transform, scale(0.15,0.15,0.8));	  
