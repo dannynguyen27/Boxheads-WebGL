@@ -6,7 +6,10 @@ Advanced Features
 	Particle Effects
 
 Requests For Grading
-	
+	 
+	 We occasionaly come across loading errors. Please host this using python -m
+	 SimpleHTTPServer and run using Chrome's Incognito Mode. This seemed to reduce
+	 the number of times that our game failed to load.
 
 Group Members
 	Allan Chen, Jonathan Lin, Prateek Singh, Danny Nguyen

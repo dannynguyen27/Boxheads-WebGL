@@ -11,7 +11,6 @@ Declare_Any_Class( "Particle",
 		this.size = size;
 		
 		var orientation = Math.acos(dot(this.owner.heading,vec4(0,1,0,0))) * 180/Math.PI * (this.owner.heading[0]>0?-1:1);
-		console.log(orientation);
 
 		var thetaInRadians = (theta+orientation) * Math.PI / 180;
 		//var phiInRadians = phi * Math.PI / 180;
