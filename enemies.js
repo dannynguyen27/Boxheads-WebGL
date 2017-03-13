@@ -134,96 +134,116 @@ Declare_Any_Class( "Enemy",
     'updateScore': function() {
 		// This is empty as it will be overridden
     },
+      'updateState': function(delta_time){
+	  if(this.restTimer > 0) {
+	      this.restTimer -= delta_time/1000;
+	  }
+    	  else if (this.canAttack(delta_time) && !this.dying)
+    	  {
+	      this.heading = normalize(subtract(this.world.player.position,this.position));
+    	      this.attack(delta_time);
+	  }
+          else if (this.world.checkPlayerLineOfSight(this.position)){
+	      this.velocity = scale_vec(this.moveSpeed,normalize(subtract(this.world.player.position,this.position)));    
+	  }
+	  else { //get vector to player
+	      if(this.bfsTimer <= 0){
+		  var vec2Player = this.getVecToPlayer();
+		  this.bfsTimer = .5;
+		  if(length(vec2Player) != 0){
+		      this.velocity = scale_vec(this.moveSpeed,normalize(vec2Player));
+		  }
+		  else{
+		      this.restTimer = 0.5;
+		      this.velocity = scale_vec(this.moveSpeed,mult_vec(rotation(Math.random()*360, 0,0,1), vec4(1,0,0,0)));
+		  }
+	      }
+	      else{
+		  this.bfsTimer -= delta_time/1000;
+	      }
+	  }
+
+	  this.displacement = scale_vec(delta_time/1000, this.velocity);
+	  if(this.dying) {
+	      this.displacement[0]=0; this.displacement[1]=0;
+	  }
+
+	  //change heading of this enemy
+	  if(length(this.displacement) != 0 && !this.dying) {
+	      this.heading = normalize(this.displacement.slice(0));
+	  }
+
+	  //calculate new position
+	  var newPosition = add(vec4(this.displacement[0],this.displacement[1],0,0),this.position);
+
+	  //make sure new position is valid; rest a few ticks if not, then try with a slightly different angle
+	  if(this.world.checkEnemyCollision(this,newPosition,1.2)!= -1 || this.world.collidesWithWall(newPosition,1.1) || !this.world.checkBounds(newPosition))
+	  {
+	      if(this.restTimer <=0){
+		  this.velocity = scale_vec(this.moveSpeed,mult_vec(rotation(Math.random()*360, 0,0,1), vec4(1,0,0,0)));
+		  restTimer = 0.6;
+	      }
+	      this.displacement=vec4(0,0,0,0);
+	      //this.velocity=mult_vec(rotation(45,0,0,1), this.velocity);
+	      //displacement = scale_vec(delta_time/1000, this.velocity);
+	      //newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
+	  }
+	  else {
+	      this.position=newPosition;
+	      this.model_transform = mult(translation(this.displacement[0],this.displacement[1],0),this.model_transform);
+	  }
+	  
+	  this.headingAngle = Math.acos(dot(this.heading,vec4(0,1,0,0))) * 180/Math.PI * (this.heading[0]>0?-1:1);
+
+	  if(this.dying) 
+	  {
+	      if(this.fallAngle < 90){
+		  this.fallAngle+=10;
+		  this.model_transform = mult(this.model_transform, rotation(-10, -this.heading[1], this.heading[0],0));   
+	      }
+	      if (this.fallAngle == 90 && this.fadeTimer > 0) 
+	      {
+		  this.fadeRate += 0.01;
+		  this.model_transform = mult(translation(0, 0,-0.01), this.model_transform);  
+		  this.fadeTimer -= delta_time/1000 ;
+	      }
+	      else if(this.fadeTimer <= 0)
+	      {
+		  this.alive = false;
+		  return;
+	      }                         // -y, x gives us the axis where the enemy will fall in its normal's direction
+	  }
+
+	  //get angle offsets for leg animation
+	  var maxLegAngle = 30;
+	  if (length(this.displacement) > 0) 
+	  {
+	      if (this.bool_reverseAnimate) 
+	      {
+		  //angle rate of change calculated based on movement speed
+		  this.legAngle += this.moveSpeed/0.7*180/Math.PI*delta_time/1000
+		  if (this.legAngle > maxLegAngle)
+		      this.bool_reverseAnimate = !this.bool_reverseAnimate;
+	      }
+	      else 
+	      {
+		  this.legAngle -= this.moveSpeed/0.7*180/Math.PI*delta_time/1000
+		  if(this.legAngle < -maxLegAngle) 
+		  {
+		      this.bool_reverseAnimate = !this.bool_reverseAnimate;
+		  }
+	      }
+	      this.armAngle = this.legAngle;
+	  }
+      },
     'display': function(delta_time)
     {
 		if(!this.alive) return;
 
 		var graphics_state = this.world.shared_scratchpad.graphics_state;
-
-		if(this.restTimer > 0) {
-			this.restTimer -= delta_time/1000;
-	  	}
-    	else if (this.canAttack(delta_time) && !this.dying)
-    	{
-	    	this.heading = normalize(subtract(this.world.player.position,this.position));
-    		this.attack(delta_time);
-	  	}
-                else if (this.world.checkPlayerLineOfSight(this.position)){
-		    this.velocity = scale_vec(this.moveSpeed,normalize(subtract(this.world.player.position,this.position)));    
-		}
-	  	else { //get vector to player
-		    if(this.bfsTimer <= 0){
-			var vec2Player = this.getVecToPlayer();
-			this.bfsTimer = .5;
-			if(length(vec2Player) != 0){
-			    this.velocity = scale_vec(this.moveSpeed,normalize(vec2Player));
-			}
-			else{
-			    this.restTimer = 0.5;
-			    this.velocity = scale_vec(this.moveSpeed,mult_vec(rotation(Math.random()*360, 0,0,1), vec4(1,0,0,0)));
-			}
-		    }
-		    else{
-			this.bfsTimer -= delta_time/1000;
-		    }
-	  	}
-
-		var displacement = scale_vec(delta_time/1000, this.velocity);
-		if(this.dying) {
-			displacement[0]=0; displacement[1]=0;
-		}
-
-		//change heading of this enemy
-		if(length(displacement) != 0 && !this.dying) {
-			this.heading = normalize(displacement.slice(0));
-		}
-
-		//calculate new position
-		var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
-
-		//make sure new position is valid; rest a few ticks if not, then try with a slightly different angle
-		if(this.world.checkEnemyCollision(this,newPosition,1.2)!= -1 || this.world.collidesWithWall(newPosition,1.1) || !this.world.checkBounds(newPosition))
-		{
-		    if(this.restTimer <=0){
-			this.velocity = scale_vec(this.moveSpeed,mult_vec(rotation(Math.random()*360, 0,0,1), vec4(1,0,0,0)));
-			restTimer = 0.6;
-		    }
-		    displacement=vec4(0,0,0,0);
-			//this.velocity=mult_vec(rotation(45,0,0,1), this.velocity);
-			//displacement = scale_vec(delta_time/1000, this.velocity);
-			//newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
-		}
-	        else {
-			this.position=newPosition;
-			this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
-		}
-	  
-		//the member variable modelTransMat ONLY represents the (x,y) coordinates.
-		//must still build compound shapes using it as a basis (i.e. from the ground up)
-		var model_transform = this.model_transform; 
-
-		var headingAngle = Math.acos(dot(this.heading,vec4(0,1,0,0))) * 180/Math.PI * (this.heading[0]>0?-1:1);
-
-		if(this.dying) 
-		{
-			if(this.fallAngle < 90)
-			this.fallAngle+=10;
-			if (this.fallAngle == 90 && this.fadeTimer > 0) 
-			{
-				this.fadeRate += 0.01;
-				model_transform = mult(model_transform, translation(0, 0, -this.fadeRate));  
-				this.fadeTimer -= delta_time/1000 ;
-			}
-			else if(this.fadeTimer <= 0)
-			{
-				this.alive = false;
-				return;
-			}                         // -y, x gives us the axis where the enemy will fall in its normal's direction
-			model_transform = mult(model_transform, rotation(-this.fallAngle, -this.heading[1], this.heading[0],0));   
-		}
-
+	        var model_transform = this.model_transform;
 		//get body center and turn by heading angle
-	  	var body_center = model_transform = mult(mult(model_transform, translation(0,0,1.5)),rotation(headingAngle,0,0,1));
+	  	var body_center = model_transform = mult(mult(model_transform, translation(0,0,1.5)),rotation(this.headingAngle,0,0,1));
 
 		//body
 		model_transform = mult(model_transform, scale(0.6, 0.55, 1));
@@ -236,28 +256,6 @@ Declare_Any_Class( "Enemy",
 		model_transform = mult(model_transform, scale(0.35,0.35,0.35));    
 		shapes_in_use.oriented_cube.draw(graphics_state, model_transform, this.materials.head);
 	  
-		//get angle offsets for leg animation
-		var maxLegAngle = 30;
-		if (length(displacement) > 0) 
-		{
-			if (this.bool_reverseAnimate) 
-			{
-				//angle rate of change calculated based on movement speed
-				this.legAngle += this.moveSpeed/0.7*180/Math.PI*delta_time/1000
-				if (this.legAngle > maxLegAngle)
-				this.bool_reverseAnimate = !this.bool_reverseAnimate;
-			}
-			else 
-			{
-				this.legAngle -= this.moveSpeed/0.7*180/Math.PI*delta_time/1000
-				if(this.legAngle < -maxLegAngle) 
-				{
-					this.bool_reverseAnimate = !this.bool_reverseAnimate;
-				}
-			}
-			this.armAngle = this.legAngle;
-		}
-
 		// right leg	  
 		model_transform = body_center;
 		model_transform = mult(model_transform, translation(0.2,0,-0.7));               
@@ -281,7 +279,7 @@ Declare_Any_Class( "Enemy",
 		// left arm
 		model_transform = body_center;  
 		model_transform = mult(model_transform, translation(-0.5,0,0.2));
-		if (length(displacement) > 0) 
+		if (length(this.displacement) > 0) 
 			model_transform = mult(model_transform, rotation(-this.armAngle, 1, 0, 0));		// fling back if walking
 		else
 			model_transform = mult(model_transform, rotation(this.armAngle, 1, 0, 0));		// only swing forward if attacking
