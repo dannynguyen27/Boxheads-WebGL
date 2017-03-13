@@ -707,7 +707,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
                   return;
                 }
                 if(this.mouse.anchor){
-                  console.log(this.mouse.from_center);
                     if(this.mouse.from_center[0] > -310 && this.mouse.from_center[0] < 320 && this.mouse.from_center[1] > -50 && this.mouse.from_center[1] < 70){
                       this.screenIndex = 1;
                       this.screenDelay = 1;
@@ -810,11 +809,11 @@ Declare_Any_Class( "Player",
       {
   	  //
         if (this.usingGun[PISTOL])
-          user_interface_string_manager.info_map["ammo"]  = "pistol ammo: " + this.pistolAmmo;
+          user_interface_string_manager.info_map["ammo"]  = "Pistol Ammo: " + this.pistolAmmo;
         else if (this.usingGun[UZI])
-          user_interface_string_manager.info_map["ammo"]  = "uzi ammo: " + this.uziAmmo;
+          user_interface_string_manager.info_map["ammo"]  = "Uzi Ammo: " + this.uziAmmo;
         else if (this.usingGun[SHOTGUN])
-          user_interface_string_manager.info_map["ammo"]  = "shotgun ammo: " + this.shotgunAmmo;
+          user_interface_string_manager.info_map["ammo"]  = "Shotgun Ammo: " + this.shotgunAmmo;
 
         user_interface_string_manager.info_map["wave"]  = "Enemies Left: " + (this.world.maxEnemies - this.world.waveDeathCount);
         user_interface_string_manager.info_map["score"] = "Score: " + this.world.score;
