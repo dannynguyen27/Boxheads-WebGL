@@ -702,6 +702,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 		else{
 		    this.enemies.splice(i,1);
 		    this.waveDeathCount++;
+        this.enemiesKilled++;
 		}
 	    }
 	    for (var i=0;i<this.projectiles.length;i++){
@@ -745,6 +746,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
             else{
 		this.enemies.splice(i,1);
 		this.waveDeathCount++;
+    this.enemiesKilled++;
             }
 	}
 	for (var i=0;i<this.projectiles.length;i++){

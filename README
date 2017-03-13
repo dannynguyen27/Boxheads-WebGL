@@ -4,7 +4,7 @@ The idea behind our game stems from the desire to create a game that was simple,
 
 The way the game works is you first enter the title screen, move to the map selection screen and then the actual game begins. You have a plethora of weapons at your disposal and you have the ability to cycle through weapons as you will. You can make use of these tools in your assenal to battle two different types of opponents, Doges, which are melee enemies, and Cates, which are ranged. There will be successive waves with increasing difficulty but you will also have a variety of crates that you can use to boost your health, speed, etc. The game can run infinitely until you die, and afterwards, you can check your stats to see how long you lasted.
 
-Some of the advanced features that we implemented are: bump mapping, collision detection, and particle effects.
+Some of the advanced features that we implemented are: bump mapping (ground), collision detection, shadows (toggle with "i" key), and particle effects.
 
 Some additional info for grading:
 We occasionally come across loading errors. Please host this using python -m SimpleHTTPServer and run using Chrome's Incognito Mode. This seemed to reduce the number of times that our game failed to load.
