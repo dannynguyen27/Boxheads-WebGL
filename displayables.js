@@ -192,9 +192,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         // Pause Option
         this.pause = false;
 
-        // Checks to see if help page has been opened since starting game
-        this.hasOpenedHelpPage = false;
-
         // Set up all other data members
         this.setGame();
 
@@ -738,11 +735,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
                       this.screenDelay = 1;
                     }
                     else if (this.mouse.from_center[0] > -220 && this.mouse.from_center[0] < 234 && this.mouse.from_center[1] < 174 && this.mouse.from_center[1] > 86) {
-                      if (!this.hasOpenedHelpPage)
-                      {
                         window.open('GameHelp.html');
-                        this.hasOpenedHelpPage = true;
-                      }
                     }
                     this.mouse.anchor = false;
                 }
