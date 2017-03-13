@@ -198,6 +198,11 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         // Set up all other data members
         this.setGame();
 
+        if(!this.mute){
+          var audio = new Audio("Audio/bg_music.mp3");
+          audio.play();
+        }
+
       	shapes_in_use.cube = new Cube();
       	shapes_in_use.sphere = new Subdivision_Sphere(3);
         shapes_in_use.oriented_cube = new Oriented_Cube();      
@@ -251,7 +256,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           controls.add( ",", this, function() 
             { 
               if(!this.mute){
-                var audio = new Audio('Audio/cycle_weapon.mp3');
+                var audio = new Audio("Audio/cycle_weapon.mp3");
                 audio.play();
               }
               this.player.gunIndex--; 
@@ -507,7 +512,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 
       // *** Materials: 
       // 1st parameter:  Color (4 floats in RGBA format), 2nd: Ambient light, 3rd: Diffuse reflectivity, 4th: Specular reflectivity, 5th: Smoothness exponent, 6th: Texture image.
-      var ground = new Material( Color( 0,0,0,1 ), .4, 2, 0, 10, "Visuals/ground_texture.jpg","Visuals/wall_bumpmap.jpg" ), // Omit the final (string) parameter if you want no texture
+      var ground = new Material( Color( 0,0,0.4,1 ), .4, 2, 0, 10, "Visuals/ground_texture.jpg","Visuals/wall_bumpmap.jpg" ), // Omit the final (string) parameter if you want no texture
           portal = new Material( Color( 0.3,0.3,0.3,1 ), 0.5, 0.4, 0, 10, "Visuals/portal.jpg");
 
       // Map Indexing
@@ -692,30 +697,30 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         /**********************************
         Start coding down here!!!!
         **********************************/
-	if(!this.skyboxLoaded){
-	    var trueCount = 0;
-	    for(i=0;i<6;i++){
-		if(textures_in_use["skybox"].loaded[i])
-		trueCount++;
-	    }
-	    if (trueCount == 6)
-		this.skyboxLoaded = true;
-	}
-	else{
-	    shaders_in_use["Cube"].activate();
-      	    var skybox = new Cube(true);
-      	    skybox.copy_onto_graphics_card();
-      	    gl.enableVertexAttribArray(g_addrs.shader_attributes[0].index);
-            gl.bindBuffer( gl.ARRAY_BUFFER, skybox.graphics_card_buffers[0] );
-            gl.vertexAttribPointer( g_addrs.shader_attributes[0].index, g_addrs.shader_attributes[0].size, g_addrs.shader_attributes[0].type, g_addrs.shader_attributes[0].normalized, g_addrs.shader_attributes[0].stride, g_addrs.shader_attributes[0].pointer );
-      	    gl.uniform1i(g_addrs.cubeMap_loc, 0);
-      	    active_shader.update_uniforms(new Graphics_State(rotation(30,1,0,0), perspective(45, canvas.width/canvas.height, .1, 1000), 0 ), mult(rotation(180,0,0,1),scale(40,40,40)));
-      	    gl.activeTexture(gl.TEXTURE0);
-      	    gl.bindTexture(gl.TEXTURE_CUBE_MAP, textures_in_use["skybox"].id);
-      	    gl.disable(gl.DEPTH_TEST);
-      	    gl.drawArrays(gl.TRIANGLES,0,skybox.positions.length);
-      	    gl.enable(gl.DEPTH_TEST);
-	}
+  	if(!this.skyboxLoaded){
+  	    var trueCount = 0;
+  	    for(i=0;i<6;i++){
+  		if(textures_in_use["skybox"].loaded[i])
+  		trueCount++;
+  	    }
+  	    if (trueCount == 6)
+  		this.skyboxLoaded = true;
+  	}
+  	else{
+  	    shaders_in_use["Cube"].activate();
+        	    var skybox = new Cube(true);
+        	    skybox.copy_onto_graphics_card();
+        	    gl.enableVertexAttribArray(g_addrs.shader_attributes[0].index);
+              gl.bindBuffer( gl.ARRAY_BUFFER, skybox.graphics_card_buffers[0] );
+              gl.vertexAttribPointer( g_addrs.shader_attributes[0].index, g_addrs.shader_attributes[0].size, g_addrs.shader_attributes[0].type, g_addrs.shader_attributes[0].normalized, g_addrs.shader_attributes[0].stride, g_addrs.shader_attributes[0].pointer );
+        	    gl.uniform1i(g_addrs.cubeMap_loc, 0);
+        	    active_shader.update_uniforms(new Graphics_State(rotation(30,1,0,0), perspective(45, canvas.width/canvas.height, .1, 1000), 0 ), mult(rotation(180,0,0,1),scale(40,40,40)));
+        	    gl.activeTexture(gl.TEXTURE0);
+        	    gl.bindTexture(gl.TEXTURE_CUBE_MAP, textures_in_use["skybox"].id);
+        	    gl.disable(gl.DEPTH_TEST);
+        	    gl.drawArrays(gl.TRIANGLES,0,skybox.positions.length);
+        	    gl.enable(gl.DEPTH_TEST);
+  	}
         
 	  shaders_in_use["Default"].activate();
         // initialize start screen
@@ -730,7 +735,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
                 if(this.mouse.anchor){
                     if(this.mouse.from_center[0] > -310 && this.mouse.from_center[0] < 320 && this.mouse.from_center[1] > -50 && this.mouse.from_center[1] < 70){
                       this.screenIndex = 1;
-                      this.screenDelay = 0.5;
+                      this.screenDelay = 1;
                     }
                     else if (this.mouse.from_center[0] > -220 && this.mouse.from_center[0] < 234 && this.mouse.from_center[1] < 174 && this.mouse.from_center[1] > 86) {
                       if (!this.hasOpenedHelpPage)
@@ -800,7 +805,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
               if(this.mouse.from_center[0] > -340 && this.mouse.from_center[0] < 340 && this.mouse.from_center[1] > 0 && this.mouse.from_center[1] < 120){
                 this.gameStart = false;
                 this.setGame();
-                this.screenDelay = 0.5;
+                this.screenDelay = 1;
               }
               else if (this.mouse.from_center[0] > -236 && this.mouse.from_center[0] < 246 && this.mouse.from_center[1] < 196 && this.mouse.from_center[1] > 115)
               {
