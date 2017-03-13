@@ -39,16 +39,29 @@ Declare_Any_Class( "AmmoCrate",
     if (this.world.checkPlayerCollision(this.position, 1))
     {
       this.world.event_timer = 2.5;
+
+      var ammoIndex = Math.floor(Math.random() * NUM_GUNS);
       switch(this.type)
       {
         case AMMO_BOX:
-          this.world.player.changeAmmo(AMMO_PER_CRATE);
+          this.world.player.changeAmmo(ammoIndex, AMMO_PER_CRATE);
           if (!this.world.mute)
           {
             audio = new Audio('Audio/reload.mp3');
             audio.play();
           }
-          this.world.event = "Picked up: Ammo Box";
+          switch(ammoIndex)
+          {
+            case 0:
+              this.world.event = "Picked up: Pistol Crate";
+              break;
+            case 1:
+              this.world.event = "Picked up: UZI Crate";
+              break;
+            case 2:
+              this.world.event = "Picked up: Shotgun Crate";
+              break;
+          }
           this.alive = false;
           return;
         case HEALTH_BOX:
@@ -58,7 +71,7 @@ Declare_Any_Class( "AmmoCrate",
             audio = new Audio('Audio/health.mp3');
             audio.play();
           }
-          this.world.event = "Picked up: Health Box";
+          this.world.event = "Picked up: Health Crate";
           this.alive = false;
           return;
         case SPEED_BOX:
@@ -68,7 +81,7 @@ Declare_Any_Class( "AmmoCrate",
             audio = new Audio('Audio/thunder.mp3');
             audio.play();
           }
-          this.world.event = "Picked up: Speed Box"; 
+          this.world.event = "Picked up: Speed Crate"; 
           this.alive = false;
           return;
         /*

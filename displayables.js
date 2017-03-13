@@ -858,9 +858,8 @@ Declare_Any_Class( "Player",
             this.dying = true;
         }
     },
-    'changeAmmo': function(deltaAmmo){
+    'changeAmmo': function(ammoIndex, deltaAmmo){
       
-      var ammoIndex = Math.floor(Math.random() * NUM_GUNS);
       if(ammoIndex == 0)
       {
         this.pistolAmmo += deltaAmmo;

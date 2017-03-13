@@ -275,6 +275,73 @@ Declare_Any_Class( "Shotgun_Bullet",
 	}
 }, Projectile);
 
+Declare_Any_Class( "Rocket", 
+{
+	'hasHitActor': function()
+	{
+		var enemyID = this.world.checkEnemyCollision(this, this.position, PROJECTILE_HITBOX);
+
+		if (enemyID != -1)
+		{
+			this.world.enemies[enemyID].changeHealth(-1);
+			this.world.enemies[enemyID].recoil();
+			if (!this.world.mute)
+			{
+				if(this.world.enemies[enemyID].isDevil && (this.world.enemies[enemyID].health+1) % 5 == 0) {
+					var audio = new Audio('Audio/cat_hurt.mp3');
+					audio.play();
+				}
+				else if(!this.world.enemies[enemyID].isDevil){
+					var audio = new Audio('Audio/dog_hurt.mp3');
+					audio.play();
+				}
+			}
+			return true;
+		}
+		return false;
+	},
+	'display': function(delta_time)
+	{
+		if(!this.alive) return;
+		var graphics_state = this.world.shared_scratchpad.graphics_state;
+		var displacement = scale_vec(delta_time/1000, this.velocity);
+
+		var newPosition = add(vec4(displacement[0],displacement[1],0,0),this.position);
+
+		var hasBulletHit = this.hasHitActor();
+
+		if (hasBulletHit) 
+		{
+			this.alive = false;
+		}
+		else if (this.world.collidesWithWall(newPosition, 0.5))
+		{
+			this.alive = false;
+		}
+		else if (this.world.checkBounds(newPosition))
+		{
+			this.position=newPosition;
+			this.model_transform = mult(translation(displacement[0],displacement[1],0),this.model_transform);
+		}
+		else {
+			this.alive=false;
+		}
+		//the member variable modelTransMat ONLY represents the (x,y) coordinates.
+		
+		var model_transform = this.model_transform; 
+		model_transform = mult(model_transform, translation(0,0,0.5));
+		model_transform = mult(model_transform, rotation(this.headingAngle,0,0,1));
+		model_transform = mult(model_transform, scale(0.07,0.35,0.07));
+		model_transform = mult(model_transform, scale(0.75,0.75,0.75));
+
+		shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.body);
+	},
+	'populate': function()
+	{
+		this.materials.body = new Material(Color(0.78,0.43,0,1),0.4,1.0,0,10);
+	}
+}, Projectile);
+
 Declare_Any_Class( "Enemy_Bullet", 
 {
 	'hasHitActor': function()
