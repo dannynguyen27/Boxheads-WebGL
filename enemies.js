@@ -21,6 +21,8 @@ Declare_Any_Class( "Enemy",
     	else if (worldHandle.level >= 4)
     		this.moveSpeed = 3.6;
 
+    	this.particles = [];
+
     	this.populate.apply( this, arguments );
     },
     'getVecToPlayer': function(){
@@ -95,9 +97,19 @@ Declare_Any_Class( "Enemy",
 	 	this.velocity=vec4(0,0,0,0);
   		this.restTimer = 0.7;
     },
+    'spurt': function() {
+    	//console.log("let the blood flow");
+    	for(var i = 0; i < 400; i+=2){
+          var theta = Math.floor(Math.random() * 180);
+          var height = (Math.random()*2)-1;
+          var size = Math.random()/25;
+          this.particles.push(new Particle(this, 0.5, theta, height, size));  // need to update
+        }
+    },
     //end navigation interface
     'changeHealth': function(deltaHealth){
 	    this.health += deltaHealth;
+	    this.spurt(); 
 	    if(this.health <= 0)
 	    {
 	    	this.dying = true;
@@ -298,7 +310,16 @@ Declare_Any_Class( "Enemy",
 				shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.midBar);
 			else
 				shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.fullBar);
-    	}    
+    	}
+
+    	// blood animation
+	    for(var i = 0, l = this.particles.length; i < l; ++i) {
+	       this.particles[i].update(graphics_state.animation_delta_time);
+	       this.particles[i].display(graphics_state.animation_delta_time);
+	       if(this.particles[this.particles.length-1].timer <= 0){
+	         this.particles = [];   // reset particle array after life has expired
+	       }
+	    }    
     }
 });
 

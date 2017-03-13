@@ -171,6 +171,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       	this.shared_scratchpad.animate = 1;
         this.skyboxLoaded = false;
         this.numDevils = 0;
+
       	//set up the (static!) world objects
       	shapes_in_use.groundPlane = new Floor();
       	//setup boundary
@@ -198,6 +199,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         shapes_in_use.square = new Square();
         shapes_in_use.flat_square           = Square.prototype.auto_flat_shaded_version();
         shapes_in_use.event_text = new Text_Line( 35 );
+        shapes_in_use.particle = new Triangle();
 
         // *** Mouse controls: ***
         this.mouse = { "from_center": vec2() };
@@ -206,8 +208,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         canvas.addEventListener( "mousedown", ( function(self) { return function(e) { e = e || window.event;    self.mouse.anchor = mouse_position(e);      } } ) (this), false );
         canvas.addEventListener( "mousemove", ( function(self) { return function(e) { e = e || window.event;    self.mouse.from_center = mouse_position(e); } } ) (this), false );
         canvas.addEventListener( "mouseout",  ( function(self) { return function(e) { self.mouse.from_center = vec2(); }; } ) (this), false );    // Stop steering if the mouse leaves the canvas.
-             
-      },
+    },
     'levelUp': function()
     {
       this.level++;
@@ -506,9 +507,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         -----------------------
       */
 	
-	this.drawWalls();    
-
-
+	    this.drawWalls();    
       model_transform = mat4();
       model_transform = mult(model_transform, translation(0, 17, 0.8));
       model_transform = mult(model_transform, rotation(90, 1, 0, 0));
@@ -604,7 +603,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       }   
 
       //draw the ground
-      shapes_in_use.groundPlane.draw(graphics_state, scale(17,17,1), ground);    
+      shapes_in_use.groundPlane.draw(graphics_state, scale(17,17,1), ground);
 
       //let player + each actor do their thing
       this.player.display(graphics_state.animation_delta_time);
@@ -629,6 +628,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         }
         else this.crates.splice(i,1);
       }
+
     },
     'renderScreen': function(title)
       {
@@ -709,7 +709,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
                 if(this.mouse.anchor){
                     if(this.mouse.from_center[0] > -310 && this.mouse.from_center[0] < 320 && this.mouse.from_center[1] > -50 && this.mouse.from_center[1] < 70){
                       this.screenIndex = 1;
-                      this.screenDelay = 1;
+                      this.screenDelay = 0.5;
                     }
                     else if (this.mouse.from_center[0] > -220 && this.mouse.from_center[0] < 234 && this.mouse.from_center[1] < 174 && this.mouse.from_center[1] > 86) {
                       if (!this.hasOpenedHelpPage)
@@ -777,7 +777,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
               if(this.mouse.from_center[0] > -340 && this.mouse.from_center[0] < 340 && this.mouse.from_center[1] > 0 && this.mouse.from_center[1] < 120){
                 this.gameStart = false;
                 this.setGame();
-                this.screenDelay = 1;
+                this.screenDelay = 0.5;
               }
             }
         }
@@ -802,7 +802,8 @@ Declare_Any_Class( "Player",
     this.materials.fullBar = new Material(Color(0,0.7,0,1),1,0,0,10);
     this.materials.midBar = new Material(Color(1,0.6,0,1),1,0,0,10);
     this.materials.lowBar = new Material(Color(0.6,0,0,1),1,0,0,10);
-    this.materials.default = new Material(Color(0.6,0.32,0.138,1),0.8,0,0,20);
+    this.materials.default = new Material(Color(0.95,0.8,0.63,1),0.1,0,0,20);
+    //this.materials.default = new Material(Color(0.6,0.32,0.138,1),0.8,0,0,20);
 
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
