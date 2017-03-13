@@ -266,7 +266,7 @@ Declare_Any_Class( "Canvas_Manager",                      // This class performs
       },
     'register_display_object': function( object ) { this.displayables.unshift( object );  object.init_keys( this.controls ); },
     'render': function( time = 0 )                                                // Animate shapes based upon how much measured real time has transpired.
-      {                                      this.shared_scratchpad.graphics_state.animation_delta_time = time - ( this.prev_time || 0 );
+      {                                     this.shared_scratchpad.graphics_state.animation_delta_time = time - ( this.prev_time || 0 );
         if( this.shared_scratchpad.animate ) this.shared_scratchpad.graphics_state.animation_time      += this.shared_scratchpad.graphics_state.animation_delta_time;
         this.prev_time = time;
 
@@ -313,6 +313,7 @@ Declare_Any_Class( "Texture",                                                   
 Declare_Any_Class( "CubeMap",
   { construct: function(            filenames, bool_will_copy_to_GPU = true )
       { this.define_data_members( { filenames, bool_will_copy_to_GPU,     id: gl.createTexture() } );
+	this.loaded = [false, false, false, false, false, false];
         gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.id );
 	for(var i=0;i<6;i++){
             gl.texImage2D (gl.TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,  new Uint8Array([255, 0, 0, 255]));              // A single red pixel, as a placeholder image to prevent console warning
@@ -330,11 +331,12 @@ Declare_Any_Class( "CubeMap",
 					      gl.texParameteri( gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
 					      gl.texParameteri( gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
 					      gl.texParameteri( gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
+					      texture.loaded[offset]=true;
 					  }
 					} ) ( this, i );
             if( bool_will_copy_to_GPU ) this.images[i].src = this.filenames[i];
-	}
-      } 
+	    }
+      }
   });
 
 Declare_Any_Class( "Animation",           // Animation Superclass -- the base for all displayable sub-programs we can use on a canvas

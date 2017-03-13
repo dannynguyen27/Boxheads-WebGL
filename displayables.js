@@ -8,9 +8,20 @@
 
 // Constants for player ammunition
 const MAX_AMMO = 1000;
-const START_AMMO = 100;
+const PISTOL_START_AMMO = 100;
+const UZI_START_AMMO = 50;
+const SHOTGUN_START_AMMO = 30;
 
-const ATTACK_TIMER = 1 / 5.4; // Three shots per second
+const PISTOL_ATTACK_TIMER = 1 / 5.4; // Three shots per second
+const UZI_ATTACK_TIMER = 1 / 16.2; // Nine shots per second
+const SHOTGUN_ATTACK_TIMER = 1 / 3.6; // Two shots per second
+
+
+/********** CRATE CONSTANTS**********/
+const PISTOL = 0;
+const UZI = 1;
+const SHOTGUN = 2;
+const NUM_GUNS = 3;
 
 /********** CRATE CONSTANTS**********/
 
@@ -26,6 +37,7 @@ const SPEED_BOX = 2;
 const TROLL_BOX = 3;
 
 /********** DECLARE ALL CONSTANTS HERE **********/
+
 
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
   { 'construct': function( context )
@@ -158,13 +170,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
   { 'construct': function( context )
       { this.shared_scratchpad    = context.shared_scratchpad;
       	this.shared_scratchpad.animate = 1;
-
-      	this.level = 0;
-      	this.player = new Player(this);
-      	this.enemies = []; this.enemySpawnTimer = 0; this.maxEnemies = 5;    // actual starting max is 10 because game starts at level 0
-      	this.projectiles = [];
-        this.crates = []; this.crateSpawnTimer = 0; this.maxCrates = MAX_AMMO_CRATES;
-      	this.mapObjects = [];
+        this.skyboxLoaded = false;
         this.numDevils = 0;
 
       	//set up the (static!) world objects
@@ -174,7 +180,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       	this.yMin=-16; this.yMax=16;
 
         this.gameStart = false;
-        this.screenIndex = 0; 
         this.screenDelay = 0.0;
         this.mapNumber = 0;
 
@@ -183,12 +188,8 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         // Pause Option
         this.pause = false;
 
-        // Keeps track of player's score
-        this.score = 0;
-
-        // Keeps track of enemies slain
-        this.waveSpawnCount = 0;
-        this.waveDeathCount = 0;
+        // Set up all other data members
+        this.setGame();
 
       	shapes_in_use.cube = new Cube();
       	shapes_in_use.sphere = new Subdivision_Sphere(3);
@@ -232,9 +233,41 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         	controls.add( "right", this, function() { this.keyBitMap["right"]=true; this.player.moveRight(true); } ); 
         	controls.add( "right",this, function() {this.keyBitMap["right"]=false; this.player.moveRight(false); if(this.keyBitMap["left"]) this.player.moveLeft(true); }, {'type':'keyup'} );
           controls.add( "m", this, function() { this.mute = !this.mute;}); 
-          controls.add( "p", this, function() { this.pause = !this.pause;});        
+          controls.add( "p", this, function() { this.pause = !this.pause;});
+          // Cycles gun leftwardly
+          controls.add( ",", this, function() 
+            { 
+              this.player.gunIndex--; 
+              if (this.player.gunIndex <= -1)
+              {
+                this.player.gunIndex = NUM_GUNS - 1;
+              }
+
+              for (var i = 0; i < NUM_GUNS; i++)
+              {
+                this.player.usingGun[i] = false;
+              }
+
+              this.player.usingGun[this.player.gunIndex] = true;
+            });        
+          // Cycles gun rightwardly
+          controls.add( ".", this, function() 
+            { 
+              this.player.gunIndex++; 
+              if (this.player.gunIndex >= NUM_GUNS)
+              {
+                this.player.gunIndex = 0;
+              }
+
+              for (var i = 0; i < NUM_GUNS; i++)
+              {
+                this.player.usingGun[i] = false;
+              }
+
+              this.player.usingGun[this.player.gunIndex] = true;
+            });        
         
-      	  controls.add( "space", this, function() {this.player.attack();  console.log("it's been pressed");   } ); 
+      	  controls.add( "space", this, function() {this.player.attack();  } ); 
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -459,16 +492,16 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       // Map Indexing
       /*
 
-           -15 <--0--> +15
+           -16 <--0--> +16
         -----------------------
-        |                     | 15
+        |                     | 16
         |                     | +
         |                     | ^
         |                     | |
         |                     | 0
         |                     | |
         |                     | v
-        |                     | -15
+        |                     | -16
         -----------------------
       */
 	
@@ -560,7 +593,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           {
             var randomType = Math.floor(Math.random() * NUM_TYPES_OF_CRATES);
             this.crates.push(new AmmoCrate(this, randomType, translation(randomX,randomY,0)));
-            this.crateSpawnTimer = 2.0; //TODO: update this with a formula later
+            this.crateSpawnTimer = 2 / this.level /*2.0*/; //TODO: update this with a formula later
           }
       }
       else{
@@ -606,7 +639,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         shapes_in_use.flat_square.draw(this.shared_scratchpad.graphics_state, model_transform, title); 
         this.shared_scratchpad.graphics_state.camera_transform = saved_camera;
     },
-    'resetGame': function()
+    'setGame': function()
     {
         this.score = 0;
         this.shared_scratchpad.graphics_state = new Graphics_State( mult(translation(0, 0,-12), rotation(-50,1,0,0)), perspective(45, canvas.width/canvas.height, .1, 1000), 0 );
@@ -625,7 +658,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
       {
         var graphics_state  = this.shared_scratchpad.graphics_state,
             model_transform = mat4();             // We have to reset model_transform every frame, so that as each begins, our basis starts as the identity.
-        shaders_in_use[ "Default" ].activate();
 
         // *** Lights: *** Values of vector or point lights over time.  Arguments to construct a Light(): position or vector (homogeneous coordinates), color, size
         // If you want more than two lights, you're going to need to increase a number in the vertex shader file (index.html).  For some reason this won't work in Firefox.
@@ -637,22 +669,32 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         /**********************************
         Start coding down here!!!!
         **********************************/
-
-	      shaders_in_use["Cube"].activate();
-      	var skybox = new Cube(true);
-      	skybox.copy_onto_graphics_card();
-      	gl.enableVertexAttribArray(g_addrs.shader_attributes[0].index);
-              gl.bindBuffer( gl.ARRAY_BUFFER, skybox.graphics_card_buffers[0] );
-              gl.vertexAttribPointer( g_addrs.shader_attributes[0].index, g_addrs.shader_attributes[0].size, g_addrs.shader_attributes[0].type, g_addrs.shader_attributes[0].normalized, g_addrs.shader_attributes[0].stride, g_addrs.shader_attributes[0].pointer );
-      	gl.uniform1i(g_addrs.cubeMap_loc, 0);
-      	active_shader.update_uniforms(new Graphics_State(rotation(30,1,0,0), perspective(45, canvas.width/canvas.height, .1, 1000), 0 ), mult(rotation(180,0,0,1),scale(40,40,40)));
-      	gl.activeTexture(gl.TEXTURE0);
-      	gl.bindTexture(gl.TEXTURE_CUBE_MAP, textures_in_use["skybox"].id);
-      	gl.disable(gl.DEPTH_TEST);
-      	gl.drawArrays(gl.TRIANGLES,0,skybox.positions.length);
-      	gl.enable(gl.DEPTH_TEST);
-	     
-        shaders_in_use["Default"].activate();
+	if(!this.skyboxLoaded){
+	    var trueCount = 0;
+	    for(i=0;i<6;i++){
+		if(textures_in_use["skybox"].loaded[i])
+		trueCount++;
+	    }
+	    if (trueCount == 6)
+		this.skyboxLoaded = true;
+	}
+	else{
+	    shaders_in_use["Cube"].activate();
+      	    var skybox = new Cube(true);
+      	    skybox.copy_onto_graphics_card();
+      	    gl.enableVertexAttribArray(g_addrs.shader_attributes[0].index);
+            gl.bindBuffer( gl.ARRAY_BUFFER, skybox.graphics_card_buffers[0] );
+            gl.vertexAttribPointer( g_addrs.shader_attributes[0].index, g_addrs.shader_attributes[0].size, g_addrs.shader_attributes[0].type, g_addrs.shader_attributes[0].normalized, g_addrs.shader_attributes[0].stride, g_addrs.shader_attributes[0].pointer );
+      	    gl.uniform1i(g_addrs.cubeMap_loc, 0);
+      	    active_shader.update_uniforms(new Graphics_State(rotation(30,1,0,0), perspective(45, canvas.width/canvas.height, .1, 1000), 0 ), mult(rotation(180,0,0,1),scale(40,40,40)));
+      	    gl.activeTexture(gl.TEXTURE0);
+      	    gl.bindTexture(gl.TEXTURE_CUBE_MAP, textures_in_use["skybox"].id);
+      	    gl.disable(gl.DEPTH_TEST);
+      	    gl.drawArrays(gl.TRIANGLES,0,skybox.positions.length);
+      	    gl.enable(gl.DEPTH_TEST);
+	}
+        
+	  shaders_in_use["Default"].activate();
         
         // initialize start screen
         if(!this.gameStart){
@@ -710,7 +752,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
               this.event_timer = 5.0;
               this.event = "Wave Cleared. Rest Period.";
               this.waveDeathCount+=1;
-              console.log("dead counter increased");
             }
             if(this.event_timer <= 0){
               this.levelUp();
@@ -726,7 +767,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
             if(this.mouse.anchor){
               if(this.mouse.from_center[0] > -340 && this.mouse.from_center[0] < 340 && this.mouse.from_center[1] > 0 && this.mouse.from_center[1] < 120){
                 this.gameStart = false;
-                this.resetGame();
+                this.setGame();
                 this.screenDelay = 0.5;
               }
             }
@@ -742,8 +783,10 @@ Declare_Any_Class( "Player",
         { world: worldHandle, model_transform: modelTransMat, position: mult_vec(modelTransMat,vec4(0,0,0,1)), 
           heading:vec4(0,1,0,0), velocity: vec4(0,0,0,0),
 				  bool_reverseAnimate:false, limbAngle:0,moveSpeed: 4, defaultSpeed: 4, dying: false, alive: true, 
-          health:initHealth, maxHealth:initHealth, autoAttackTimer:0.0, ammo: START_AMMO, materials:{},
-          lowHPThres: 0.4, midHPThres: 0.6, buff_timer: 0.0, deltaTime: 0, fallAngle: 0, fadeTimer: 1, fadeRate: 0, 
+          health:initHealth, maxHealth:initHealth, autoAttackTimer:0.0, materials:{},
+          lowHPThres: 0.4, midHPThres: 0.6, buff_timer: 0.0, deltaTime: 0, fallAngle: 0, fadeTimer: 1, fadeRate: 0,
+          usingGun: [true, false, false], gunIndex: 0,
+          pistolAmmo: PISTOL_START_AMMO, uziAmmo: UZI_START_AMMO, shotgunAmmo: SHOTGUN_START_AMMO
         });
     this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/player_head.jpg");
     this.materials.body = new Material(Color(0,0,0,1),0.8,.4,0,10, "Visuals/player_body.jpg");
@@ -756,8 +799,14 @@ Declare_Any_Class( "Player",
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
-  	  //TODO: may want to update UI with player info later on
-        user_interface_string_manager.info_map["ammo"]  = "Ammo: " + this.ammo;
+  	  //
+        if (this.usingGun[PISTOL])
+          user_interface_string_manager.info_map["ammo"]  = "Pistol Ammo: " + this.pistolAmmo;
+        else if (this.usingGun[UZI])
+          user_interface_string_manager.info_map["ammo"]  = "Uzi Ammo: " + this.uziAmmo;
+        else if (this.usingGun[SHOTGUN])
+          user_interface_string_manager.info_map["ammo"]  = "Shotgun Ammo: " + this.shotgunAmmo;
+
         user_interface_string_manager.info_map["wave"]  = "Enemies Left: " + (this.world.maxEnemies - this.world.waveDeathCount);
         user_interface_string_manager.info_map["score"] = "Score: " + this.world.score;
         if(this.world.event_timer > 0){
@@ -793,9 +842,9 @@ Declare_Any_Class( "Player",
         }
     },
     'changeAmmo': function(deltaAmmo){
-      this.ammo += deltaAmmo;
-      if(this.ammo > MAX_AMMO)
-        this.ammo = MAX_AMMO;
+      this.pistolAmmo += deltaAmmo;
+      if(this.pistolAmmo > MAX_AMMO)
+        this.pistolAmmo = MAX_AMMO;
       },
     'boostSpeed': function(deltaSpeed){
       if(this.buff_timer == 0.0)          // doesn't stack
@@ -803,20 +852,47 @@ Declare_Any_Class( "Player",
       this.buff_timer = 5.0;
       },
     'attack': function(){
-      // Cannot shoot if player has no ammo
+      // Cannot shoot if player has no pistolAmmo
       var audio = new Audio('Audio/gunshot.mp3');
-      if(this.ammo <= 0 || !this.alive )
-        return;
-    	if(this.autoAttackTimer <= 0){
-          this.world.projectiles.push(new Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
-          this.autoAttackTimer = ATTACK_TIMER;
-          this.ammo--;
-          if (!this.world.mute)
-          {
-            var audio = new Audio('Audio/gunshot.mp3');
-            audio.play();
-          }
-    	}
+
+      if (this.usingGun[PISTOL])
+      {
+        if(this.pistolAmmo <= 0 || !this.alive )
+          return;
+        if(this.autoAttackTimer <= 0)
+        {
+            this.world.projectiles.push(new Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
+            this.autoAttackTimer = PISTOL_ATTACK_TIMER;
+            this.pistolAmmo--;
+            if (!this.world.mute)
+            {
+              var audio = new Audio('Audio/gunshot.mp3');
+              audio.play();
+            }
+        }
+      }
+      else if (this.usingGun[UZI])
+      {
+        if(this.uziAmmo <= 0 || !this.alive )
+          return;
+        if(this.autoAttackTimer <= 0)
+        {
+            this.world.projectiles.push(new Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
+            this.autoAttackTimer = UZI_ATTACK_TIMER;
+            this.uziAmmo--;
+            if (!this.world.mute)
+            {
+              var audio = new Audio('Audio/gunshot.mp3');
+              audio.play();
+            }
+        }
+      }
+      else if (this.usingGun[SHOTGUN])
+      {
+
+      }
+
+
     },
     'display': function(delta_time)
       {

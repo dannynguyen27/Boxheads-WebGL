@@ -72,7 +72,6 @@ Declare_Any_Class( "Enemy",
 		discovered[toDiscover[i].position[0].toFixed(1)+','+toDiscover[i].position[1].toFixed(1)]=true; 
 	    }
 	}
-	console.log("not found!")
 	return vec4(0,0,0,0);
     },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
@@ -155,7 +154,8 @@ Declare_Any_Class( "Enemy",
 			    this.velocity = scale_vec(this.moveSpeed,normalize(vec2Player));
 			}
 			else{
-			    this.velocity = vec4(-1,-1,0,0);
+			    this.restTimer = 0.5;
+			    this.velocity = scale_vec(this.moveSpeed,mult_vec(rotation(Math.random()*360, 0,0,1), vec4(1,0,0,0)));
 			}
 		    }
 		    else{
@@ -198,7 +198,6 @@ Declare_Any_Class( "Enemy",
 		var model_transform = this.model_transform; 
 
 		var headingAngle = Math.acos(dot(this.heading,vec4(0,1,0,0))) * 180/Math.PI * (this.heading[0]>0?-1:1);
-		console.log(headingAngle);
 
 		if(this.dying) 
 		{
@@ -370,6 +369,7 @@ Declare_Any_Class( "Normal_Enemy",
 			}
 		}
 	}
+	else this.armAngle = 30;
     },
 	'updateScore': function()
 	{
