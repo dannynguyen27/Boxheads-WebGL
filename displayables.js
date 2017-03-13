@@ -38,6 +38,7 @@ const HEALTH_BOX = 1;
 const SPEED_BOX = 2;
 /*const TROLL_BOX = 3;*/
 
+var bg_music = new Audio("Audio/bg_music.mp3");
 /********** DECLARE ALL CONSTANTS HERE **********/
 
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
@@ -196,8 +197,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         this.setGame();
 
         if(!this.mute){
-          var audio = new Audio("Audio/bg_music.mp3");
-          audio.play();
+          bg_music.play();
         }
 
       	shapes_in_use.cube = new Cube();
@@ -686,6 +686,15 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         /**********************************
         Start coding down here!!!!
         **********************************/
+
+        if(this.mute){
+          bg_music.pause();
+        }
+        else{
+          bg_music.play();
+        }
+
+
   	if(!this.skyboxLoaded){
   	    var trueCount = 0;
   	    for(i=0;i<6;i++){

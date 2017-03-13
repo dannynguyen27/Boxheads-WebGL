@@ -31,8 +31,9 @@ index.html - The web page document containing the canvas (drawing surface), that
 <script type="text/javascript"> "use strict"  
   window.onload = function init()           // ********************* OUR WHOLE PROGRAM'S ENTRY POINT ********************* 
     {	
-      var main_canvas = new Canvas_Manager( "gl-canvas", Color( 0.529, 0.808, 0.980, 1 ) ),    // Make the master canvas manager.  Set your background color here too.
-          g_state = main_canvas.shared_scratchpad.graphics_state;
+      var main_canvas = new Canvas_Manager( "gl-canvas", Color( 0.529, 0.808, 0.980, 1 ) ),    
+      // Make the master canvas manager.  Set your background color here too.
+      g_state = main_canvas.shared_scratchpad.graphics_state;
           
       shaders_in_use[ "Default"     ] = new Phong_or_Gouraud_Shader( g_state );    // Put all our shader programs in the GPU.
       shaders_in_use[ "Cube" ]        = new CubeMap_Shader(g_state);
@@ -66,8 +67,10 @@ index.html - The web page document containing the canvas (drawing surface), that
 
       textures_in_use["skybox"] = new CubeMap(["Visuals/TropicalSunnyDayRight2048.png","Visuals/TropicalSunnyDayLeft2048.png","Visuals/TropicalSunnyDayDown2048.png","Visuals/TropicalSunnyDayUp2048.png","Visuals/TropicalSunnyDayFront2048.png","Visuals/TropicalSunnyDayBack2048.png"]);
 			  
-      main_canvas.register_display_object( new Debug_Screen     ( main_canvas ) );  // We instantiate some of our custom "Animation" subclasses and register these displayable
-      main_canvas.register_display_object( new World( main_canvas ) );  // objects to their master "Canvas_Manager" object -- which OpenGL calls upon every time a
+      main_canvas.register_display_object( new Debug_Screen     ( main_canvas ) );  
+      // We instantiate some of our custom "Animation" subclasses and register these displayable
+      main_canvas.register_display_object( new World( main_canvas ) );  
+      // objects to their master "Canvas_Manager" object -- which OpenGL calls upon every time a
       main_canvas.register_display_object( new Camera   ( main_canvas ) );  // draw / keyboard / mouse event happens.
       main_canvas.render();
     }
@@ -81,7 +84,7 @@ index.html - The web page document containing the canvas (drawing surface), that
 </head>
 
 <body>
-  <canvas id="gl-canvas" width="1378" height="768"></canvas>
+  <canvas id="gl-canvas" width="1200" height="720"></canvas>
 </body>
 
 </html>
