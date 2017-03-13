@@ -1,0 +1,30 @@
+h1
+{
+	text-align: center;
+}
+
+p
+{
+	text-align: center;
+}
+
+#gene
+{
+	height:200px;
+}
+
+#doge
+{
+	height:200px;
+}
+
+#cat
+{
+	height:200px;
+}
+
+.crate
+{
+	width:150px;
+	height:150px;
+}
