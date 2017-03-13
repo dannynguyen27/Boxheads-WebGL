@@ -851,10 +851,27 @@ Declare_Any_Class( "Player",
         }
     },
     'changeAmmo': function(deltaAmmo){
-      this.pistolAmmo += deltaAmmo;
-      if(this.pistolAmmo > MAX_AMMO)
-        this.pistolAmmo = MAX_AMMO;
-      },
+      
+      var ammoIndex = Math.floor(Math.random() * NUM_GUNS);
+      if(ammoIndex == 0)
+      {
+        this.pistolAmmo += deltaAmmo;
+        if(this.pistolAmmo > MAX_AMMO)
+          this.pistolAmmo = MAX_AMMO;
+      }
+      else if(ammoIndex == 1)
+      {
+        this.uziAmmo += deltaAmmo;
+        if(this.uziAmmo > MAX_AMMO)
+          this.uziAmmo = MAX_AMMO;
+      }
+      else if(ammoIndex == 2)
+      {
+        this.shotgunAmmo += deltaAmmo;
+        if(this.shotgunAmmo > MAX_AMMO)
+          this.shotgunAmmo = MAX_AMMO;
+      }
+    },
     'boostSpeed': function(deltaSpeed){
       if(this.buff_timer == 0.0)          // doesn't stack
         this.moveSpeed += deltaSpeed;
