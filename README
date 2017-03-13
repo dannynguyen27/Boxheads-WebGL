@@ -1,15 +1,14 @@
 WebGL Rendition of Popular Arcade Game Boxheads. 
 
-Advanced Features
-	Bump Mapping
-	Collision Detection
-	Particle Effects
+The idea behind our game stems from the desire to create a game that was simple, fun, intuitive, and utilized the topics that we have grown accustomed to from the lectures. We went back to our middle school days and recalled the game, "Boxheads" which all of us had a great time playing with friends. We decided that a WebGL variant of this product with our own twist would be what we would want to implement for this project and we spent a lot of time ensuring that the little details stayed consistent. We had a lot of fun working on this game, and still have more stretch ideas for how we will improve it as our WebGL skills advance even further in the future.
 
-Requests For Grading
-	 
-	 We occasionaly come across loading errors. Please host this using python -m
-	 SimpleHTTPServer and run using Chrome's Incognito Mode. This seemed to reduce
-	 the number of times that our game failed to load.
+The way the game works is you first enter the title screen, move to the map selection screen and then the actual game begins. You have a plethora of weapons at your disposal and you have the ability to cycle through weapons as you will. You can make use of these tools in your assenal to battle two different types of opponents, Doges, which are melee enemies, and Cates, which are ranged. There will be successive waves with increasing difficulty but you will also have a variety of crates that you can use to boost your health, speed, etc. The game can run infinitely until you die, and afterwards, you can check your stats to see how long you lasted.
 
-Group Members
-	Allan Chen, Jonathan Lin, Prateek Singh, Danny Nguyen
+Some of the advanced features that we implemented are: bump mapping, collision detection, and particle effects.
+
+Some additional info for grading:
+We occasionally come across loading errors. Please host this using python -m SimpleHTTPServer and run using Chrome's Incognito Mode. This seemed to reduce the number of times that our game failed to load.
+
+Our group members are Allan Chen, Jonathan Lin, Prateek Singh, Danny Nguyen.
+
+We hope you enjoy this project we have had so much fun bringing to reality.
