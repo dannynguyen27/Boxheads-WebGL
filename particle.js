@@ -8,12 +8,13 @@ Declare_Any_Class( "Particle",
 		});
 
 		this.timer = timer;
+		this.theta = theta;
+		this.height = height;
 		this.size = size;
 		
 		var orientation = Math.acos(dot(this.owner.heading,vec4(0,1,0,0))) * 180/Math.PI * (this.owner.heading[0]>0?-1:1);
 
 		var thetaInRadians = (theta+orientation) * Math.PI / 180;
-		//var phiInRadians = phi * Math.PI / 180;
 		this.velocity_x = this.moveSpeed * Math.cos(thetaInRadians);
 		this.velocity_y = -this.moveSpeed * Math.sin(thetaInRadians);
 		this.velocity_z = this.moveSpeed * height;

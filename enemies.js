@@ -1,6 +1,8 @@
 const ENEMY_SHOOT_RANGE = 7;
 const ENEMY_MELEE_RANGE = 1.3;
 
+const NUM_BLOOD_PARTICLES = 200;
+
 Declare_Any_Class( "Enemy", 
   { 
   	'construct': function( worldHandle, modelTransMat=mat4(), initHealth=3)
@@ -22,6 +24,13 @@ Declare_Any_Class( "Enemy",
     		this.moveSpeed = 3.6;
 
     	this.particles = [];
+    	this.savedBlood = [];
+    	for(var i = 0; i < NUM_BLOOD_PARTICLES; i++){
+          var theta = Math.floor(Math.random() * 180);
+          var height = (Math.random()*2)-1;
+          var size = Math.random()/25;
+          this.savedBlood.push(new Particle(this, 0.5, theta, height, size));  // need to update
+        }
 
     	this.populate.apply( this, arguments );
     },
@@ -98,12 +107,8 @@ Declare_Any_Class( "Enemy",
   		this.restTimer = 0.7;
     },
     'spurt': function() {
-    	//console.log("let the blood flow");
-    	for(var i = 0; i < 400; i+=2){
-          var theta = Math.floor(Math.random() * 180);
-          var height = (Math.random()*2)-1;
-          var size = Math.random()/25;
-          this.particles.push(new Particle(this, 0.5, theta, height, size));  // need to update
+    	for(var i = 0; i < NUM_BLOOD_PARTICLES; i++){
+          this.particles.push(new Particle(this, 0.5, this.savedBlood[i].theta, this.savedBlood[i].height, this.savedBlood[i].size));  // need to update
         }
     },
     //end navigation interface
@@ -272,8 +277,6 @@ Declare_Any_Class( "Enemy",
 		model_transform = mult(model_transform, scale(0.1,0.1,0.8));	  
 
 		shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.default);
-
-		
 
 		// left arm
 		model_transform = body_center;  

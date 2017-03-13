@@ -8,8 +8,8 @@
 
 // Constants for player ammunition
 const MAX_AMMO = 1000;
-const PISTOL_START_AMMO = 100;
-const UZI_START_AMMO = 50;
+const PISTOL_START_AMMO = 300;
+const UZI_START_AMMO = 100;
 const SHOTGUN_START_AMMO = 30;
 
 const PISTOL_ATTACK_TIMER = 1 / 5.4; // Three shots per second
@@ -239,6 +239,10 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           // Cycles gun leftwardly
           controls.add( ",", this, function() 
             { 
+              if(!this.mute){
+                var audio = new Audio('Audio/cycle_weapon.mp3');
+                audio.play();
+              }
               this.player.gunIndex--; 
               if (this.player.gunIndex <= -1)
               {
@@ -255,6 +259,10 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
           // Cycles gun rightwardly
           controls.add( ".", this, function() 
             { 
+              if(!this.mute){
+                var audio = new Audio('Audio/cycle_weapon.mp3');
+                audio.play();
+              }
               this.player.gunIndex++; 
               if (this.player.gunIndex >= NUM_GUNS)
               {
@@ -862,8 +870,6 @@ Declare_Any_Class( "Player",
       },
     'attack': function(){
       // Cannot shoot if player has no pistolAmmo
-      var audio = new Audio('Audio/gunshot.mp3');
-
       if (this.usingGun[PISTOL])
       {
         if(this.pistolAmmo <= 0 || !this.alive )
@@ -875,7 +881,7 @@ Declare_Any_Class( "Player",
             this.pistolAmmo--;
             if (!this.world.mute)
             {
-              var audio = new Audio('Audio/gunshot.mp3');
+              var audio = new Audio('Audio/pistol.mp3');
               audio.play();
             }
         }
@@ -886,22 +892,39 @@ Declare_Any_Class( "Player",
           return;
         if(this.autoAttackTimer <= 0)
         {
-            this.world.projectiles.push(new Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
+            this.world.projectiles.push(new UZI_Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
             this.autoAttackTimer = UZI_ATTACK_TIMER;
             this.uziAmmo--;
             if (!this.world.mute)
             {
-              var audio = new Audio('Audio/gunshot.mp3');
+              var audio = new Audio('Audio/uzi.mp3');
               audio.play();
             }
         }
       }
       else if (this.usingGun[SHOTGUN])
       {
+        if(this.shotgunAmmo <= 0 || !this.alive )
+          return;
+        if(this.autoAttackTimer <= 0)
+        {
+            this.world.projectiles.push(new Shotgun_Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
+            var leftBullet_x = Math.cos(Math.acos(this.heading[0])+45);
+            var leftBullet_y = Math.sin(Math.asin(this.heading[1])+45);
+            this.world.projectiles.push(new Shotgun_Bullet(this.world, vec4(leftBullet_x, leftBullet_y, 0, 0), translation(this.position[0],this.position[1],this.position[2]+1)));
+            var rightBullet_x = Math.cos(Math.acos(this.heading[0])-45);
+            var rightBullet_y = Math.sin(Math.asin(this.heading[1])-45);
+            this.world.projectiles.push(new Shotgun_Bullet(this.world, vec4(rightBullet_x, rightBullet_y, 0, 0), translation(this.position[0],this.position[1],this.position[2]+1)));                        
 
+            this.autoAttackTimer = SHOTGUN_ATTACK_TIMER;
+            this.shotgunAmmo--;
+            if (!this.world.mute)
+            {
+              var audio = new Audio('Audio/shotgun.mp3');
+              audio.play();
+            }
+        }
       }
-
-
     },
     'display': function(delta_time)
       {
