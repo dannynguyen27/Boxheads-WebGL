@@ -30,11 +30,11 @@ const MAX_AMMO_CRATES = 10;
 const AMMO_SPAWN_RADIUS = 15;
 const CRATE_DESPAWN_TIMER = 15;
 
-const NUM_TYPES_OF_CRATES = 4; // Specifies the different types of crates possible
+const NUM_TYPES_OF_CRATES = 3; // Specifies the different types of crates possible
 const AMMO_BOX = 0;
 const HEALTH_BOX = 1;
 const SPEED_BOX = 2;
-const TROLL_BOX = 3;
+/*const TROLL_BOX = 3;*/
 
 /********** DECLARE ALL CONSTANTS HERE **********/
 
@@ -859,10 +859,27 @@ Declare_Any_Class( "Player",
         }
     },
     'changeAmmo': function(deltaAmmo){
-      this.pistolAmmo += deltaAmmo;
-      if(this.pistolAmmo > MAX_AMMO)
-        this.pistolAmmo = MAX_AMMO;
-      },
+      
+      var ammoIndex = Math.floor(Math.random() * NUM_GUNS);
+      if(ammoIndex == 0)
+      {
+        this.pistolAmmo += deltaAmmo;
+        if(this.pistolAmmo > MAX_AMMO)
+          this.pistolAmmo = MAX_AMMO;
+      }
+      else if(ammoIndex == 1)
+      {
+        this.uziAmmo += deltaAmmo;
+        if(this.uziAmmo > MAX_AMMO)
+          this.uziAmmo = MAX_AMMO;
+      }
+      else if(ammoIndex == 2)
+      {
+        this.shotgunAmmo += deltaAmmo;
+        if(this.shotgunAmmo > MAX_AMMO)
+          this.shotgunAmmo = MAX_AMMO;
+      }
+    },
     'boostSpeed': function(deltaSpeed){
       if(this.buff_timer == 0.0)          // doesn't stack
         this.moveSpeed += deltaSpeed;
