@@ -38,7 +38,6 @@ const TROLL_BOX = 3;
 
 /********** DECLARE ALL CONSTANTS HERE **********/
 
-
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
   { 'construct': function( context )
       { this.define_data_members( { string_map: context.shared_scratchpad.string_map, info_map: context.shared_scratchpad.info_map,
@@ -187,6 +186,9 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         // Pause Option
         this.pause = false;
 
+        // Checks to see if help page has been opened since starting game
+        this.hasOpenedHelpPage = false;
+
         // Set up all other data members
         this.setGame();
 
@@ -266,7 +268,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
               this.player.usingGun[this.player.gunIndex] = true;
             });        
         
-      	  controls.add( "space", this, function() {this.player.attack();  console.log("it's been pressed");   } ); 
+      	  controls.add( "space", this, function() {this.player.attack(); } ); 
       },
     'update_strings': function( user_interface_string_manager )       // Strings that this displayable object (Animation) contributes to the UI:
       {
@@ -695,7 +697,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
 	}
         
 	  shaders_in_use["Default"].activate();
-        
         // initialize start screen
         if(!this.gameStart){
             switch(this.screenIndex){
@@ -706,9 +707,18 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
                   return;
                 }
                 if(this.mouse.anchor){
+                  console.log(this.mouse.from_center);
                     if(this.mouse.from_center[0] > -310 && this.mouse.from_center[0] < 320 && this.mouse.from_center[1] > -50 && this.mouse.from_center[1] < 70){
                       this.screenIndex = 1;
                       this.screenDelay = 1;
+                    }
+                    else if (this.mouse.from_center[0] > -220 && this.mouse.from_center[0] < 234 && this.mouse.from_center[1] < 174 && this.mouse.from_center[1] > 86) {
+                      if (!this.hasOpenedHelpPage)
+                      {
+                        window.open('GameHelp.html');
+                        this.hasOpenedHelpPage = true;
+                        this.mouse.anchor = false;
+                      }
                     }
                 }
                 break;
@@ -752,7 +762,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
               this.event_timer = 5.0;
               this.event = "Wave Cleared. Rest Period.";
               this.waveDeathCount+=1;
-              console.log("dead counter increased");
             }
             if(this.event_timer <= 0){
               this.levelUp();
