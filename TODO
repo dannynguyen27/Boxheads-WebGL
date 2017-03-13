@@ -1,10 +1,15 @@
-Particle effects, statistics
+Future goals: 2P, recoil, making levels more challenging
+Better pathing for devils using bfs from player, obj files
+Statistics screen
 
--------------------------------------------------
-Future goals: 2P, recoil, multiple weapons
-Better pathing for devils using bfs from player
+Simple demo (live) and discussion of what each member contributed by that member. All members must be present.  
+You should have tested whatever computer you plan to use by now and make sure you have whatever adapter needed for your computer.
 
-Fix textures for floor and wall
-extra parameter for gen face cubes texture for wall
-
-advanced features: collision and bump, and cube mapping
+Advanced features: collision and bump, and cube mapping, particle effects
+Shadows
+Normal Mapping (we have that?)
+Environment Mapping
+Picking
+Collision Detection
+Physics - simple is fine, newton's laws good for bouncing off things, gravity, particle effects.
+Volume Rendering

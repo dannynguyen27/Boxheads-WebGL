@@ -26,7 +26,6 @@ const ROCKET = 3;
 const NUM_GUNS = 4;
 
 /********** CRATE CONSTANTS**********/
-
 const AMMO_PER_CRATE = 10;
 const MAX_AMMO_CRATES = 10;
 const AMMO_SPAWN_RADIUS = 15;
@@ -197,6 +196,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         this.setGame();
 
         if(!this.mute){
+          bg_music.loop = true;
           bg_music.play();
         }
 
@@ -290,7 +290,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
               this.player.usingGun[this.player.gunIndex] = true;
             });        
         
-      	  controls.add( "space", this, function() {this.player.attack(); } ); 
+      	  controls.add( "space", this, function() { if(this.gameStart) this.player.attack(); } ); 
           controls.add( "i", this, function() { this.shadow = !this.shadow;});        
 
       },
@@ -913,7 +913,6 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         else{
             this.renderScreen("screens/end.jpg");
             if(this.mouse.anchor){
-              console.log(this.mouse.from_center);
               if(this.mouse.from_center[0] > -340 && this.mouse.from_center[0] < 340 && this.mouse.from_center[1] > 0 && this.mouse.from_center[1] < 120){
                 this.gameStart = false;
                 this.setGame();
@@ -921,13 +920,13 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
               }
               else if (this.mouse.from_center[0] > -236 && this.mouse.from_center[0] < 246 && this.mouse.from_center[1] < 196 && this.mouse.from_center[1] > 115)
               {
-
-                console.log("Begin Time: " + this.timeBegin);
+                //console.log("Begin Time: " + this.timeBegin);
                 var timeNow = Date.now();
-                console.log("End Time: " + timeNow);
+                //console.log("End Time: " + timeNow);
 
                 var timeDiff = timeNow - this.timeBegin;
-                alert("You have been playing for " + this.millisToMinutesAndSeconds(timeDiff) + " minutes. " + "\n" +
+                alert("You survived until Wave " + this.level + ".\n" +
+                      "You have been playing for " + this.millisToMinutesAndSeconds(timeDiff) + " minutes. " + "\n" +
                       "Your score was " + this.score + ".\n" + 
                       "You killed " + this.enemiesKilled + " enemies.\n");
               }
@@ -999,10 +998,12 @@ Declare_Any_Class( "Player",
     'changeHealth': function(deltaHealth){
 	     this.health += deltaHealth;
        this.health = Math.min(this.health, this.maxHealth);
-	      if(this.health <= 0 && !this.dying && !this.world.mute){
+	      if(this.health <= 0 && !this.dying){
+            this.dying = true;
+        }
+        if(this.dying && !this.world.mute){
             var audio = new Audio('Audio/dying.mp3');
             audio.play();
-            this.dying = true;
         }
     },
     'changeAmmo': function(ammoIndex, deltaAmmo){
@@ -1077,7 +1078,6 @@ Declare_Any_Class( "Player",
           return;
         if(this.autoAttackTimer <= 0)
         {
-            console.log(this.heading);
             this.world.projectiles.push(new Shotgun_Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
             var leftBullet_x = Math.cos(( Math.acos(this.heading[0]) + (30 * Math.PI/180)));
             var leftBullet_y = Math.sin(( Math.asin(this.heading[1]) + (30 * Math.PI/180)));
