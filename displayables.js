@@ -11,17 +11,19 @@ const MAX_AMMO = 1000;
 const PISTOL_START_AMMO = 300;
 const UZI_START_AMMO = 100;
 const SHOTGUN_START_AMMO = 30;
+const ROCKET_START_AMMO = 5;
 
 const PISTOL_ATTACK_TIMER = 1 / 5.4; // Three shots per second
 const UZI_ATTACK_TIMER = 1 / 16.2; // Nine shots per second
 const SHOTGUN_ATTACK_TIMER = 1 / 3.6; // Two shots per second
-
+const ROCKET_ATTACK_TIMER = 1.5;
 
 /********** CRATE CONSTANTS**********/
 const PISTOL = 0;
 const UZI = 1;
 const SHOTGUN = 2;
-const NUM_GUNS = 3;
+const ROCKET = 3;
+const NUM_GUNS = 4;
 
 /********** CRATE CONSTANTS**********/
 
@@ -802,8 +804,8 @@ Declare_Any_Class( "Player",
 				  bool_reverseAnimate:false, limbAngle:0,moveSpeed: 4, defaultSpeed: 4, dying: false, alive: true, 
           health:initHealth, maxHealth:initHealth, autoAttackTimer:0.0, materials:{},
           lowHPThres: 0.4, midHPThres: 0.6, buff_timer: 0.0, deltaTime: 0, fallAngle: 0, fadeTimer: 1, fadeRate: 0,
-          usingGun: [true, false, false], gunIndex: 0,
-          pistolAmmo: PISTOL_START_AMMO, uziAmmo: UZI_START_AMMO, shotgunAmmo: SHOTGUN_START_AMMO
+          usingGun: [true, false, false, false], gunIndex: 0,
+          pistolAmmo: PISTOL_START_AMMO, uziAmmo: UZI_START_AMMO, shotgunAmmo: SHOTGUN_START_AMMO, rocketAmmo: ROCKET_START_AMMO
         });
     this.materials.head = new Material(Color(0,0,0,1),1,.4,0,10, "Visuals/player_head.jpg");
     this.materials.body = new Material(Color(0,0,0,1),0.8,.4,0,10, "Visuals/player_body.jpg");
@@ -823,6 +825,8 @@ Declare_Any_Class( "Player",
           user_interface_string_manager.info_map["ammo"]  = "Uzi Ammo: " + this.uziAmmo;
         else if (this.usingGun[SHOTGUN])
           user_interface_string_manager.info_map["ammo"]  = "Shotgun Ammo: " + this.shotgunAmmo;
+        else if (this.usingGun[ROCKET])
+          user_interface_string_manager.info_map["ammo"]  = "Rocket Ammo: " + this.rocketAmmo;         
 
         user_interface_string_manager.info_map["wave"]  = "Enemies Left: " + (this.world.maxEnemies - this.world.waveDeathCount);
         user_interface_string_manager.info_map["score"] = "Score: " + this.world.score;
@@ -877,6 +881,12 @@ Declare_Any_Class( "Player",
         this.shotgunAmmo += deltaAmmo;
         if(this.shotgunAmmo > MAX_AMMO)
           this.shotgunAmmo = MAX_AMMO;
+      }
+      else if(ammoIndex == 3)
+      {
+        this.rocketAmmo += deltaAmmo;
+        if(this.rocketAmmo > MAX_AMMO)
+          this.rocketAmmo = MAX_AMMO;
       }
     },
     'boostSpeed': function(deltaSpeed){
@@ -938,6 +948,22 @@ Declare_Any_Class( "Player",
             if (!this.world.mute)
             {
               var audio = new Audio('Audio/shotgun.mp3');
+              audio.play();
+            }
+        }
+      }
+      else if (this.usingGun[ROCKET])
+      {
+        if(this.rocketAmmo <= 0 || !this.alive )
+          return;
+        if(this.autoAttackTimer <= 0)
+        {
+            this.world.projectiles.push(new Rocket(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
+            this.autoAttackTimer = ROCKET_ATTACK_TIMER;
+            this.rocketAmmo--;
+            if (!this.world.mute)
+            {
+              var audio = new Audio('Audio/rocket.mp3');
               audio.play();
             }
         }

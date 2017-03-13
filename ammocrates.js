@@ -61,6 +61,9 @@ Declare_Any_Class( "AmmoCrate",
             case 2:
               this.world.event = "Picked up: Shotgun Crate";
               break;
+            case 3:
+              this.world.event = "Picked up: Rocket Crate";
+              break;
           }
           this.alive = false;
           return;

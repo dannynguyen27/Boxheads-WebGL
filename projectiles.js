@@ -283,7 +283,7 @@ Declare_Any_Class( "Rocket",
 
 		if (enemyID != -1)
 		{
-			this.world.enemies[enemyID].changeHealth(-1);
+			this.world.enemies[enemyID].changeHealth(-10);
 			this.world.enemies[enemyID].recoil();
 			if (!this.world.mute)
 			{
@@ -332,13 +332,14 @@ Declare_Any_Class( "Rocket",
 		model_transform = mult(model_transform, translation(0,0,0.5));
 		model_transform = mult(model_transform, rotation(this.headingAngle,0,0,1));
 		model_transform = mult(model_transform, scale(0.07,0.35,0.07));
-		model_transform = mult(model_transform, scale(0.75,0.75,0.75));
+		model_transform = mult(model_transform, scale(2.75,2.75,2.75));
 
-		shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.body);
+		shapes_in_use.sphere.draw(graphics_state, model_transform, this.materials.body);
 	},
 	'populate': function()
 	{
-		this.materials.body = new Material(Color(0.78,0.43,0,1),0.4,1.0,0,10);
+		this.velocity = scale_vec(0.5, this.velocity);
+		this.materials.body = new Material(Color(0.78,0.73,0.7,1),0.7,1.0,0,10);
 	}
 }, Projectile);
 
