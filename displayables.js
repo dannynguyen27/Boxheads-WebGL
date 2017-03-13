@@ -38,6 +38,7 @@ const HEALTH_BOX = 1;
 const SPEED_BOX = 2;
 /*const TROLL_BOX = 3;*/
 
+var bg_music = new Audio("Audio/bg_music.mp3");
 /********** DECLARE ALL CONSTANTS HERE **********/
 
 Declare_Any_Class( "Debug_Screen",  // Debug_Screen - An example of a displayable object that our class Canvas_Manager can manage.  Displays a text user interface.
@@ -192,15 +193,11 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         // Pause Option
         this.pause = false;
 
-        // Checks to see if help page has been opened since starting game
-        this.hasOpenedHelpPage = false;
-
         // Set up all other data members
         this.setGame();
 
         if(!this.mute){
-          var audio = new Audio("Audio/bg_music.mp3");
-          audio.play();
+          bg_music.play();
         }
 
       	shapes_in_use.cube = new Cube();
@@ -697,6 +694,15 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
         /**********************************
         Start coding down here!!!!
         **********************************/
+
+        if(this.mute){
+          bg_music.pause();
+        }
+        else{
+          bg_music.play();
+        }
+
+
   	if(!this.skyboxLoaded){
   	    var trueCount = 0;
   	    for(i=0;i<6;i++){
@@ -738,11 +744,7 @@ Declare_Any_Class( "World",  // An example of a displayable object that our clas
                       this.screenDelay = 1;
                     }
                     else if (this.mouse.from_center[0] > -220 && this.mouse.from_center[0] < 234 && this.mouse.from_center[1] < 174 && this.mouse.from_center[1] > 86) {
-                      if (!this.hasOpenedHelpPage)
-                      {
                         window.open('GameHelp.html');
-                        this.hasOpenedHelpPage = true;
-                      }
                     }
                     this.mouse.anchor = false;
                 }
