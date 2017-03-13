@@ -925,12 +925,13 @@ Declare_Any_Class( "Player",
           return;
         if(this.autoAttackTimer <= 0)
         {
+            console.log(this.heading);
             this.world.projectiles.push(new Shotgun_Bullet(this.world, this.heading, translation(this.position[0],this.position[1],this.position[2]+1)));
-            var leftBullet_x = Math.cos(Math.acos(this.heading[0])+45);
-            var leftBullet_y = Math.sin(Math.asin(this.heading[1])+45);
+            var leftBullet_x = Math.cos(( Math.acos(this.heading[0]) + (30 * Math.PI/180)));
+            var leftBullet_y = Math.sin(( Math.asin(this.heading[1]) + (30 * Math.PI/180)));
             this.world.projectiles.push(new Shotgun_Bullet(this.world, vec4(leftBullet_x, leftBullet_y, 0, 0), translation(this.position[0],this.position[1],this.position[2]+1)));
-            var rightBullet_x = Math.cos(Math.acos(this.heading[0])-45);
-            var rightBullet_y = Math.sin(Math.asin(this.heading[1])-45);
+            var rightBullet_x = Math.cos(Math.acos(this.heading[0]) - (30 * Math.PI/180));
+            var rightBullet_y = Math.sin(Math.asin(this.heading[1]) - (30 * Math.PI/180));
             this.world.projectiles.push(new Shotgun_Bullet(this.world, vec4(rightBullet_x, rightBullet_y, 0, 0), translation(this.position[0],this.position[1],this.position[2]+1)));                        
 
             this.autoAttackTimer = SHOTGUN_ATTACK_TIMER;
@@ -1081,7 +1082,6 @@ Declare_Any_Class( "Player",
 	  model_transform = mult(model_transform, scale(0.1,0.1,0.5));
 	  shapes_in_use.cube.draw(graphics_state, model_transform, this.materials.default);
      
-
     // health bar
     var scaling_factor = 1/this.maxHealth;
     for(var i = 0; i < this.health; i++){
